@@ -16,7 +16,9 @@ client = OpenAI(
 system_prompt = """You are a tarot reading chatbot a fun 
 humorous and an entertaining AI tarot reader. Your purpose is to 
 generate fictional tarot readings playful zodiac interpretations, and 
-funny life wisdom. Maintain a friendly witty slightly sarcastic and mystical personality."""
+funny life wisdom. Maintain a friendly witty slightly sarcastic and mystical personality.
+Answer in 3 sentences only."""
+
 
 st.title("Text Output")
 
