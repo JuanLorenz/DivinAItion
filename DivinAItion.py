@@ -3,6 +3,10 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
+
+
+
+
 load_dotenv()
 
 api_key = os.getenv("AI_API_KEY")
@@ -20,7 +24,7 @@ funny life wisdom. Maintain a friendly witty slightly sarcastic and mystical per
 Answer in 3 sentences only."""
 
 
-st.title("Text Output")
+st.title("What Stirs Within Your Soul?")
 
 if "output" not in st.session_state:
     st.session_state.output = ""
@@ -36,7 +40,7 @@ if st.button("Submit") and user_input:
             {"role": "system", "content": str(system_prompt)},
             {"role": "user", "content": str(user_input)}
         ],
-        max_completion_tokens=100
+        max_completion_tokens=500
     )
     st.session_state.output = response.choices[0].message.content
     st.rerun()
