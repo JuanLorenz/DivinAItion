@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pinched Theater Curtain with Gold Tie-Backs</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        overflow: hidden;
+        background: #0d0d0d;
+    }
+
+    /* Stage / Content Underneath */
+    .stage {
+        position: relative;
+        z-index: 1;
+        width: 100vw;
+        height: 100vh;
+        background: radial-gradient(circle at center, #ffffff 0%, #f3f4f6 68%, #dce0e6 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .stage-content {
+        opacity: 0;
+        transform: scale(0.95) translateY(14px);
+        transition: opacity 1.1s ease 0.35s, transform 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.35s;
+    }
+
+    body.curtain-open .stage-content {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+    .stage h1 {
+        font-size: clamp(2rem, 5vw, 3.6rem);
+        color: #18181b;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.6rem;
+    }
+
+    .stage p {
+        font-size: 1.15rem;
+        color: #52525b;
+        max-width: 460px;
+        line-height: 1.5;
+    }
+
+    /* Curtain Container */
+    .curtain-stage {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        pointer-events: auto;
+    }
+
+    body.curtain-open .curtain-stage {
+        pointer-events: none;
+    }
+
+    #curtainCanvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Braided Gold Tie-Back Ropes */
+    .tieback {
+        position: absolute;
+        top: 54%; /* Matches PINCH_Y in shader */
+        height: 28px;
+        z-index: 20;
+        pointer-events: none;
+        transform: translateY(-50%);
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
+        will-change: width, opacity;
+        opacity: 0;
+    }
+
+    .tieback--left {
+        left: -6px;
+    }
+
+    .tieback--right {
+        right: -6px;
+        transform: translateY(-50%) scaleX(-1);
+    }
+
+    /* Action Button */
+    .toggle-btn {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 30;
+        padding: 14px 34px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #fff;
+        background: linear-gradient(135deg, #b80014, #70000b);
+        border: 1px solid rgba(255, 215, 130, 0.35);
+        border-radius: 999px;
+        box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+        transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    }
+
+    .toggle-btn:hover {
+        transform: translateX(-50%) translateY(-2px);
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.6);
+        background: linear-gradient(135deg, #d60018, #8c000e);
+    }
+
+    .toggle-btn:active {
+        transform: translateX(-50%) translateY(0);
+    }
+</style>
+</head>
+<body>
+
+    <!-- Stage Content -->
+    <main class="stage">
+        <div class="stage-content">
+            <h1>Grand Premiere</h1>
+            <p>Smooth cloth physics gather the velvet pleats into braided gold tie-backs while framing your stage.</p>
+        </div>
+    </main>
+
+    <!-- WebGL Warped Curtain Canvas & Gold Tie-Backs -->
+    <div class="curtain-stage" id="curtainStage">
+        <canvas id="curtainCanvas"></canvas>
+
+        <!-- Left Braided Gold Rope -->
+        <svg class="tieback tieback--left" id="tiebackLeft" viewBox="0 0 220 36" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#fff0a6"/>
+                    <stop offset="35%" stop-color="#e5b342"/>
+                    <stop offset="75%" stop-color="#9e6d14"/>
+                    <stop offset="100%" stop-color="#f5cf6b"/>
+                </linearGradient>
+                <pattern id="braidPattern" width="18" height="18" patternUnits="userSpaceOnUse">
+                    <path d="M-4,18 L18,-4 M0,22 L22,0" stroke="#5c3b04" stroke-width="3.5"/>
+                    <path d="M-2,16 L16,-2" stroke="#fff6c7" stroke-width="2"/>
+                </pattern>
+            </defs>
+            <path d="M 0,6 Q 110,16 212,12 C 218,12 218,20 210,20 Q 110,23 0,14 Z" fill="url(#goldGrad)" stroke="#4a2e00" stroke-width="1"/>
+            <path d="M 0,6 Q 110,16 212,12 C 218,12 218,20 210,20 Q 110,23 0,14 Z" fill="url(#braidPattern)" opacity="0.65"/>
+            <path d="M 0,15 Q 110,24 210,19 C 216,19 216,27 208,27 Q 110,31 0,23 Z" fill="url(#goldGrad)" stroke="#4a2e00" stroke-width="1"/>
+            <path d="M 0,15 Q 110,24 210,19 C 216,19 216,27 208,27 Q 110,31 0,23 Z" fill="url(#braidPattern)" opacity="0.65"/>
+        </svg>
+
+        <!-- Right Braided Gold Rope -->
+        <svg class="tieback tieback--right" id="tiebackRight" viewBox="0 0 220 36" preserveAspectRatio="none">
+            <path d="M 0,6 Q 110,16 212,12 C 218,12 218,20 210,20 Q 110,23 0,14 Z" fill="url(#goldGrad)" stroke="#4a2e00" stroke-width="1"/>
+            <path d="M 0,6 Q 110,16 212,12 C 218,12 218,20 210,20 Q 110,23 0,14 Z" fill="url(#braidPattern)" opacity="0.65"/>
+            <path d="M 0,15 Q 110,24 210,19 C 216,19 216,27 208,27 Q 110,31 0,23 Z" fill="url(#goldGrad)" stroke="#4a2e00" stroke-width="1"/>
+            <path d="M 0,15 Q 110,24 210,19 C 216,19 216,27 208,27 Q 110,31 0,23 Z" fill="url(#braidPattern)" opacity="0.65"/>
+        </svg>
+    </div>
+
+    <button class="toggle-btn" id="toggleBtn">Open Curtain</button>
+
+    <script>
+        // Optional: Set to an image URL if you want to warp a custom curtain image instead
+        const CUSTOM_IMAGE_URL = null;
+
+        const canvas = document.getElementById('curtainCanvas');
+        const tiebackLeft = document.getElementById('tiebackLeft');
+        const tiebackRight = document.getElementById('tiebackRight');
+        const toggleBtn = document.getElementById('toggleBtn');
+
+        const PINCH_Y = 0.54; // Tie-back waist height (54% from top)
+
+        const gl = canvas.getContext('webgl', {
+            alpha: true,
+            antialias: true,
+            premultipliedAlpha: true
+        });
+
+        // ---------------------------------------------------------------------
+        // 1. Shaders: Smooth Continuous Curve Warping & Velvet Lighting
+        // ---------------------------------------------------------------------
+        const vertexShaderSource = `
+            precision highp float;
+
+            attribute vec2 aUv;
+            attribute float aSide; // -1.0 = left curtain, +1.0 = right curtain, 0.0 = top valance
+
+            uniform float uProgress;
+            uniform float uIsShadow;
+            uniform vec2 uResolution;
+
+            varying vec2 vUv;
+            varying float vCompression;
+            varying float vLocalP;
+            varying float vFeatherU;
+            varying float vFeatherV;
+            varying float vSide;
+            varying float vScreenY;
+
+            float getOpenWidth(float v) {
+                float topW = 0.80;
+                float waistW = 0.185;
+                float botW = 0.33;
+
+                if (v <= 0.54) {
+                    float t = clamp(v / 0.54, 0.0, 1.0);
+                    float ease = t * t * (3.0 - 2.0 * t);
+                    float curve = mix(ease, pow(max(t, 0.0001), 1.15), 0.25);
+                    return mix(topW, waistW, curve);
+                } else {
+                    float t = clamp((v - 0.54) / 0.46, 0.0, 1.0);
+                    float ease = 1.0 - cos(t * 1.5707963);
+                    return mix(waistW, botW, pow(max(ease, 0.0001), 1.05));
+                }
+            }
+
+            void main() {
+                float u = aUv.x;
+                float v = aUv.y;
+                vSide = aSide;
+
+                // Top Valance
+                if (abs(aSide) < 0.5) {
+                    float sx = u;
+                    float hemWave = 0.0055 * sin(u * 75.3982) + 0.002 * sin(u * 150.796);
+                    float sy = v * (0.092 + hemWave);
+
+                    if (uIsShadow > 0.5) {
+                        sy += 0.015;
+                    }
+
+                    vUv = vec2(u * 2.0, v);
+                    vCompression = 0.2;
+                    vLocalP = 0.0;
+                    vScreenY = sy;
+                    vFeatherU = 0.0;
+                    vFeatherV = (uIsShadow > 0.5 ? 18.0 : 1.5) / max(uResolution.y * 0.092, 1.0);
+
+                    gl_Position = vec4(sx * 2.0 - 1.0, 1.0 - sy * 2.0, 0.0, 1.0);
+                    return;
+                }
+
+                // Main Left & Right Curtains
+                float distFromWaist = abs(v - 0.54);
+                float p = uProgress;
+                // Waist pulls slightly ahead of top and bottom while keeping endpoints exact at 0 and 1
+                float localP = p + (p * (1.0 - p)) * (0.35 - distFromWaist * 1.1);
+                float openW = getOpenWidth(v);
+                float widthScale = mix(1.0, openW, localP);
+
+                // Smoothly gather pleats horizontally toward the tie-back waist
+                float waistFocus = exp(-pow((v - 0.54) / 0.28, 2.0));
+                float uWarped = mix(u, pow(max(u, 0.0001), 1.0 + 0.16 * localP * waistFocus), 0.75);
+                float sxHalf = 0.5 * uWarped * widthScale;
+
+                // Gravity sag in the diagonal upper drape
+                float upperT = clamp(v / 0.54, 0.0, 1.0);
+                float upperMask = smoothstep(0.58, 0.44, v);
+                float sag = 0.022 * localP * sin(u * 3.14159265) * sin(upperT * 3.14159265) * upperMask;
+
+                // Smooth upward lift of the bottom-inner corner & scalloped hem ripple
+                float hemZone = smoothstep(0.52, 1.0, v);
+                float lift = 0.088 * localP * pow(max(u, 0.0001), 1.45) * hemZone;
+                float pleatWave = 0.0085 * localP * sin(u * 44.0) * smoothstep(0.75, 1.0, v);
+
+                float sx = (aSide < 0.0) ? sxHalf : (1.0 - sxHalf);
+                float sy = v + sag - lift + pleatWave;
+
+                if (uIsShadow > 0.5) {
+                    sx += (-aSide) * 0.011;
+                    sy += 0.009;
+                }
+
+                vUv = vec2(u, v);
+                vCompression = clamp(1.0 - widthScale, 0.0, 1.0);
+                vLocalP = localP;
+                vScreenY = sy;
+
+                // Resolution-aware anti-aliasing feather width (eliminates jagged outer edges)
+                float pxWidth = max(uResolution.x * 0.5 * widthScale, 1.0);
+                float featherScale = (uIsShadow > 0.5) ? 18.0 : 1.5;
+                vFeatherU = featherScale / pxWidth;
+                vFeatherV = featherScale / max(uResolution.y, 1.0);
+
+                gl_Position = vec4(sx * 2.0 - 1.0, 1.0 - sy * 2.0, 0.0, 1.0);
+            }
+        `;
+
+        const fragmentShaderSource = `
+            precision highp float;
+
+            uniform sampler2D uSampler;
+            uniform float uIsShadow;
+
+            varying vec2 vUv;
+            varying float vCompression;
+            varying float vLocalP;
+            varying float vFeatherU;
+            varying float vFeatherV;
+            varying float vSide;
+            varying float vScreenY;
+
+            void main() {
+                // Soft anti-aliased boundaries on inner edge (u=1) and bottom hem (v=1)
+                float alphaU = (vFeatherU > 0.0) ? smoothstep(1.0, 1.0 - vFeatherU, vUv.x) : 1.0;
+                float alphaV = smoothstep(1.0, 1.0 - vFeatherV, vUv.y);
+                float edgeAlpha = alphaU * alphaV;
+
+                if (uIsShadow > 0.5) {
+                    float shadowAlpha = 0.42 * edgeAlpha;
+                    gl_FragColor = vec4(0.0, 0.0, 0.0, shadowAlpha);
+                    return;
+                }
+
+                vec3 tex = texture2D(uSampler, vUv).rgb;
+
+                if (abs(vSide) > 0.5) {
+                    // Deepen velvet folds as cloth compresses into the tie-back
+                    float foldDepth = mix(1.0, 0.72 + 0.48 * tex.r, vCompression * 0.75);
+                    tex *= foldDepth;
+
+                    // Crease shadow right where the gold tie-back cinches the waist
+                    float pinchShadow = exp(-pow((vUv.y - 0.54) * 18.0, 2.0)) * clamp(vLocalP, 0.0, 1.0);
+                    tex *= (1.0 - 0.34 * pinchShadow);
+
+                    // Cast shadow from the top valance onto the upper main curtain
+                    float valanceShadow = mix(0.55, 1.0, smoothstep(0.088, 0.145, vScreenY));
+                    tex *= valanceShadow;
+
+                    // Subtle rim highlight along the inner edge
+                    float innerEdgeGlow = smoothstep(0.92, 0.995, vUv.x) * 0.08;
+                    tex += vec3(innerEdgeGlow, innerEdgeGlow * 0.12, innerEdgeGlow * 0.12);
+                } else {
+                    // Subtle lower shading on the top valance
+                    tex *= mix(0.95, 1.06, sin(vUv.y * 3.14159));
+                }
+
+                // Premultiplied alpha output for clean compositing
+                gl_FragColor = vec4(tex * edgeAlpha, edgeAlpha);
+            }
+        `;
+
+        function compileShader(type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(shader));
+            }
+            return shader;
+        }
+
+        const program = gl.createProgram();
+        gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexShaderSource));
+        gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentShaderSource));
+        gl.linkProgram(program);
+        gl.useProgram(program);
+
+        // ---------------------------------------------------------------------
+        // 2. Build Cloth Grids (Left Curtain, Right Curtain, Top Valance)
+        // ---------------------------------------------------------------------
+        function buildGrid(cols, rows, side) {
+            const positions = [];
+            const indices = [];
+
+            for (let r = 0; r <= rows; r++) {
+                const v = r / rows;
+                for (let c = 0; c <= cols; c++) {
+                    const u = c / cols;
+                    positions.push(u, v, side);
+                }
+            }
+
+            const stride = cols + 1;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const i0 = r * stride + c;
+                    const i1 = i0 + 1;
+                    const i2 = i0 + stride;
+                    const i3 = i2 + 1;
+                    indices.push(i0, i2, i1, i1, i2, i3);
+                }
+            }
+
+            const vbo = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+            const ibo = gl.createBuffer();
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+            return { vbo, ibo, count: indices.length };
+        }
+
+        const leftCurtainMesh = buildGrid(96, 128, -1.0);
+        const rightCurtainMesh = buildGrid(96, 128, 1.0);
+        const valanceMesh = buildGrid(110, 10, 0.0);
+
+        const aUvLoc = gl.getAttribLocation(program, 'aUv');
+        const aSideLoc = gl.getAttribLocation(program, 'aSide');
+        const uProgressLoc = gl.getUniformLocation(program, 'uProgress');
+        const uIsShadowLoc = gl.getUniformLocation(program, 'uIsShadow');
+        const uResolutionLoc = gl.getUniformLocation(program, 'uResolution');
+        const uSamplerLoc = gl.getUniformLocation(program, 'uSampler');
+
+        function drawMesh(mesh) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
+            gl.enableVertexAttribArray(aUvLoc);
+            gl.vertexAttribPointer(aUvLoc, 2, gl.FLOAT, false, 12, 0);
+            gl.enableVertexAttribArray(aSideLoc);
+            gl.vertexAttribPointer(aSideLoc, 1, gl.FLOAT, false, 12, 8);
+
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.ibo);
+            gl.drawElements(gl.TRIANGLES, mesh.count, gl.UNSIGNED_SHORT, 0);
+        }
+
+        // ---------------------------------------------------------------------
+        // 3. Create Lush Crimson Velvet Texture (or load CUSTOM_IMAGE_URL)
+        // ---------------------------------------------------------------------
+        function createVelvetCanvas() {
+            const w = 1024;
+            const h = 512;
+            const texCanvas = document.createElement('canvas');
+            texCanvas.width = w;
+            texCanvas.height = h;
+            const ctx = texCanvas.getContext('2d');
+            const imgData = ctx.createImageData(w, h);
+            const data = imgData.data;
+
+            for (let x = 0; x < w; x++) {
+                const u = x / w;
+                // Periodic multi-frequency pleats so left/right edges tile seamlessly
+                const phase = u * Math.PI * 2.0 * 9.0 + 0.35 * Math.sin(u * Math.PI * 2.0 * 2.0);
+                const ridge = 0.5 + 0.5 * Math.cos(phase);
+                const subFold = 0.5 + 0.5 * Math.cos(phase * 2.0 + 0.7);
+                const crest = Math.pow(ridge, 1.45) * 0.85 + Math.pow(subFold, 2.2) * 0.15;
+
+                // Asymmetric highlight simulating directional stage lighting
+                const sheen = Math.pow(Math.max(0, Math.cos(phase - 0.55)), 4.0) * 0.35;
+
+                for (let y = 0; y < h; y++) {
+                    const v = y / h;
+                    const verticalGrad = 0.84 + 0.16 * Math.sin(v * Math.PI);
+                    // Subtle velvet fabric micro-nap
+                    const nap = (Math.sin(x * 1.7 + y * 0.35) * Math.cos(y * 1.3)) * 0.018;
+
+                    const lum = Math.min(1.0, Math.max(0.0, (0.14 + crest * 0.72 + sheen + nap) * verticalGrad));
+
+                    const r = Math.round(40 + lum * 208);
+                    const g = Math.round(Math.pow(lum, 3.2) * 42);
+                    const b = Math.round(4 + Math.pow(lum, 2.8) * 38);
+
+                    const idx = (y * w + x) * 4;
+                    data[idx] = r;
+                    data[idx + 1] = g;
+                    data[idx + 2] = b;
+                    data[idx + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+            return texCanvas;
+        }
+
+        const texture = gl.createTexture();
+        function uploadTexture(source) {
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            gl.generateMipmap(gl.TEXTURE_2D);
+        }
+
+        uploadTexture(createVelvetCanvas());
+
+        if (CUSTOM_IMAGE_URL) {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+                const offscreen = document.createElement('canvas');
+                offscreen.width = 1024;
+                offscreen.height = 512;
+                offscreen.getContext('2d').drawImage(img, 0, 0, 1024, 512);
+                uploadTexture(offscreen);
+            };
+            img.src = CUSTOM_IMAGE_URL;
+        }
+
+        // ---------------------------------------------------------------------
+        // 4. Resize & Spring-Damper Physics Animation Loop
+        // ---------------------------------------------------------------------
+        function resize() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            canvas.width = Math.floor(window.innerWidth * dpr);
+            canvas.height = Math.floor(window.innerHeight * dpr);
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        let targetProgress = 0; // 0 = closed, 1 = open
+        let currentProgress = 0;
+        let velocity = 0;
+        let lastTime = performance.now();
+
+        function renderCurtains(progress) {
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.uniform1i(uSamplerLoc, 0);
+            gl.uniform1f(uProgressLoc, progress);
+            gl.uniform2f(uResolutionLoc, canvas.width, canvas.height);
+
+            // 1. Main curtains drop shadow pass
+            gl.uniform1f(uIsShadowLoc, 1.0);
+            drawMesh(leftCurtainMesh);
+            drawMesh(rightCurtainMesh);
+
+            // 2. Main curtains velvet cloth pass
+            gl.uniform1f(uIsShadowLoc, 0.0);
+            drawMesh(leftCurtainMesh);
+            drawMesh(rightCurtainMesh);
+
+            // 3. Top valance shadow & cloth pass
+            gl.uniform1f(uIsShadowLoc, 1.0);
+            drawMesh(valanceMesh);
+            gl.uniform1f(uIsShadowLoc, 0.0);
+            drawMesh(valanceMesh);
+
+            // Update braided gold tie-back ropes to match exact pinched waist width
+            const waistProgress = progress + (progress * (1.0 - progress)) * 0.35;
+            const waistScale = 1.0 - (1.0 - 0.185) * waistProgress;
+            const halfScreenPx = window.innerWidth * 0.5;
+            const ropeWidth = Math.max(0, halfScreenPx * waistScale + 12);
+
+            tiebackLeft.style.width = `${ropeWidth}px`;
+            tiebackRight.style.width = `${ropeWidth}px`;
+
+            const ropeOpacity = Math.min(1, Math.max(0, (progress - 0.12) / 0.35));
+            tiebackLeft.style.opacity = ropeOpacity;
+            tiebackRight.style.opacity = ropeOpacity;
+        }
+
+        function animate(now) {
+            const dt = Math.min((now - lastTime) / 1000, 0.05);
+            lastTime = now;
+
+            // Spring constants tuned for heavy, graceful theater velvet
+            const stiffness = 14;
+            const damping = 6.8;
+
+            const force = (targetProgress - currentProgress) * stiffness;
+            velocity = (velocity + force * dt) * Math.exp(-damping * dt);
+            currentProgress += velocity * dt;
+
+            if (Math.abs(targetProgress - currentProgress) < 0.0002 && Math.abs(velocity) < 0.0002) {
+                currentProgress = targetProgress;
+                velocity = 0;
+            }
+
+            renderCurtains(currentProgress);
+            requestAnimationFrame(animate);
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            const isOpen = document.body.classList.toggle('curtain-open');
+            targetProgress = isOpen ? 1 : 0;
+            toggleBtn.textContent = isOpen ? 'Close Curtain' : 'Open Curtain';
+        });
+
+        requestAnimationFrame(animate);
+    </script>
+
+</body>
+</html>
