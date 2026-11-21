@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DivinAItion</title>
+  <style>
+    :root {
+      --star-speed: 1;
+      --star-trail-opacity: 1;
+      --star-twinkle-intensity: 1;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #020524;
+      color: #f1f5f9;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    /* 1. Nocturne Starfield Background */
+    .starfield-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 85% 45% at 50% 0%, rgba(16, 34, 118, 0.32) 0%, transparent 72%),
+        radial-gradient(ellipse 90% 40% at 50% 100%, rgba(56, 18, 102, 0.38) 0%, transparent 75%),
+        linear-gradient(
+          180deg,
+          #020836 0%,
+          #030833 34%,
+          #04041f 62%,
+          #140632 84%,
+          #210948 100%
+        );
+    }
+
+    .starfield-layer {
+      position: absolute;
+      inset: 0;
+    }
+
+    .falling-star {
+      position: absolute;
+      top: 0;
+      left: var(--x, 50%);
+      width: var(--trail-w, 1.5px);
+      height: var(--tail, 36vh);
+      transform: translate3d(0, calc(-100% - 2vh), 0);
+      opacity: 0;
+      will-change: transform, opacity;
+      animation: star-fall calc(var(--dur, 9.5s) / var(--star-speed)) linear infinite;
+      animation-delay: calc(var(--delay, 0s) / var(--star-speed));
+    }
+
+    .falling-star__trail {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      opacity: var(--star-trail-opacity);
+      background: linear-gradient(
+        to bottom,
+        rgba(215, 224, 255, 0) 0%,
+        rgba(215, 224, 255, 0.08) 38%,
+        rgba(232, 236, 250, 0.34) 76%,
+        var(--trail-tip, rgba(255, 252, 244, 0.78)) 100%
+      );
+    }
+
+    .falling-star__head {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: var(--head, 6px);
+      height: var(--head, 6px);
+      transform: translate(-50%, 50%);
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        #ffffff 0%,
+        var(--tint, #eef2ff) 48%,
+        transparent 76%
+      );
+      box-shadow:
+        0 0 calc(var(--head, 6px) * 1.5) calc(var(--head, 6px) * 0.35) var(--glow, rgba(226, 232, 255, 0.72)),
+        0 0 calc(var(--head, 6px) * 3.6) calc(var(--head, 6px) * 0.9) var(--halo, rgba(180, 198, 255, 0.28));
+    }
+
+    .falling-star__head::before,
+    .falling-star__head::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: calc(var(--head, 6px) * 2.1);
+      height: 1.5px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, transparent 72%);
+      transform: translate(-50%, -50%);
+      opacity: 0.75;
+    }
+
+    .falling-star__head::after {
+      transform: translate(-50%, -50%) rotate(90deg);
+    }
+
+    .falling-star--silver {
+      --tint: #eef2ff;
+      --trail-tip: rgba(235, 240, 255, 0.74);
+      --glow: rgba(226, 233, 255, 0.72);
+      --halo: rgba(176, 196, 255, 0.28);
+    }
+
+    .falling-star--ivory {
+      --tint: #fff9ec;
+      --trail-tip: rgba(255, 248, 232, 0.72);
+      --glow: rgba(255, 244, 218, 0.68);
+      --halo: rgba(242, 224, 185, 0.25);
+    }
+
+    .falling-star--champagne {
+      --tint: #f8e9cc;
+      --trail-tip: rgba(247, 230, 198, 0.72);
+      --glow: rgba(245, 222, 178, 0.7);
+      --halo: rgba(232, 198, 138, 0.26);
+    }
+
+    @keyframes star-fall {
+      0% { transform: translate3d(0, calc(-100% - 2vh), 0); opacity: 0; }
+      10% { opacity: var(--peak, 0.88); }
+      42% { opacity: var(--peak, 0.88); }
+      74% { opacity: calc(var(--peak, 0.88) * 0.42); }
+      100% { transform: translate3d(0, calc(var(--fall, 58vh) - 100%), 0); opacity: 0; }
+    }
+
+    .micro-star {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: var(--size, 2px);
+      height: var(--size, 2px);
+      border-radius: 50%;
+      background: rgba(232, 234, 248, 0.85);
+      opacity: var(--base-op, 0.25);
+      will-change: opacity, transform;
+      animation: micro-shimmer var(--dur, 6s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+
+    @keyframes micro-shimmer {
+      0%, 100% { opacity: calc(var(--base-op, 0.25) * 0.5); transform: scale(0.85); }
+      50% { opacity: calc(var(--base-op, 0.25) * 1.25); transform: scale(1.1); }
+    }
+
+    .twinkle-star {
+      position: absolute;
+      left: var(--x);
+      bottom: var(--bottom);
+      width: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px));
+      height: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px));
+      background: var(--color, #65547c);
+      clip-path: polygon(
+        50% 0%, 55% 32%, 60% 40%, 68% 45%,
+        100% 50%, 68% 55%, 60% 60%, 55% 68%,
+        50% 100%, 45% 68%, 40% 60%, 32% 55%,
+        0% 50%, 32% 45%, 40% 40%, 45% 32%
+      );
+      opacity: var(--base-op, 0.72);
+      will-change: opacity, transform;
+      animation: star-twinkle var(--dur, 6s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+
+    @keyframes star-twinkle {
+      0%, 100% {
+        opacity: max(0.08, calc(var(--base-op, 0.72) * (1 - 0.55 * var(--star-twinkle-intensity))));
+        transform: scale(0.86);
+      }
+      50% {
+        opacity: min(1, calc(var(--base-op, 0.72) * (1 + 0.28 * var(--star-twinkle-intensity))));
+        transform: scale(calc(1 + 0.12 * var(--star-twinkle-intensity)));
+      }
+    }
+
+    /* 2. Tarot Stage & VFX */
+    .tarot-app {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100dvh;
+    }
+
+    .tarot-stage {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 24px 16px 115px;
+    }
+
+    .tarot-origin {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tarot-card {
+      position: absolute;
+      border-radius: 9px;
+      background: #060508;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.82);
+      will-change: transform, opacity;
+      user-select: none;
+    }
+
+    .tarot-card.is-interactive { cursor: pointer; }
+    .tarot-card.is-interactive:hover { filter: brightness(1.12); }
+
+    .tarot-card--singularity {
+      pointer-events: none;
+      opacity: 0;
+      z-index: 30;
+      box-shadow: 0 0 48px rgba(240, 192, 110, 0.45), 0 0 96px rgba(139, 92, 246, 0.35);
+    }
+
+    .tarot-card svg { display: block; width: 100%; height: 100%; }
+
+    .vfx-altar, .vfx-ring, .vfx-core, .vfx-shockwave, .vfx-shockwave-inner {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .vfx-altar > div {
+      width: 100%; height: 100%; border-radius: 999px;
+      background: radial-gradient(ellipse at center, rgba(167, 139, 250, 0.24) 0%, rgba(109, 40, 217, 0.12) 45%, transparent 72%);
+      filter: blur(22px);
+    }
+
+    .vfx-ring { opacity: 0; }
+    .vfx-ring .r1 { position: absolute; inset: 0; border-radius: 999px; border: 1px solid rgba(252, 211, 77, 0.26); }
+    .vfx-ring .r2 { position: absolute; inset: 7%; border-radius: 999px; border: 1px dashed rgba(196, 181, 253, 0.3); }
+    .vfx-ring .r3 { position: absolute; inset: 16%; border-radius: 999px; border: 1px solid rgba(253, 230, 138, 0.15); }
+
+    .vfx-core { opacity: 0; }
+    .vfx-core > div {
+      width: 100%; height: 100%; border-radius: 999px;
+      background: radial-gradient(circle, rgba(255, 245, 214, 0.9) 0%, rgba(232, 175, 92, 0.45) 28%, rgba(124, 58, 237, 0.28) 58%, transparent 76%);
+      filter: blur(24px);
+    }
+
+    .vfx-shockwave {
+      opacity: 0; border-radius: 999px;
+      border: 2px solid rgba(253, 230, 138, 0.85);
+      box-shadow: 0 0 40px rgba(251, 191, 36, 0.65);
+    }
+
+    .vfx-shockwave-inner {
+      opacity: 0; border-radius: 999px;
+      border: 1px solid rgba(221, 214, 254, 0.72);
+    }
+
+    .vfx-flash {
+      position: fixed; inset: 0; z-index: 20; pointer-events: none; opacity: 0;
+      background: radial-gradient(circle at center, rgba(255, 244, 214, 0.75) 0%, rgba(167, 139, 250, 0.25) 32%, transparent 68%);
+    }
+
+    .controls {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      max-width: calc(100vw - 24px);
+    }
+
+    .status { font-size: 12px; color: rgba(203, 213, 225, 0.92); text-align: center; }
+    .status strong { color: #fde68a; }
+
+    .bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(7, 10, 38, 0.85);
+      backdrop-filter: blur(12px);
+      overflow-x: auto;
+      max-width: 100%;
+    }
+
+    .btn {
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 150ms ease, opacity 150ms ease;
+    }
+
+    .btn-primary { background: #fbbf24; color: #020617; }
+    .btn-primary:hover { background: #fcd34d; }
+    .btn-ghost { background: transparent; color: #e2e8f0; }
+    .btn-ghost:hover { background: rgba(255, 255, 255, 0.1); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 2px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .stepper .btn { min-height: 36px; min-width: 34px; padding: 6px 10px; }
+    .stepper-label {
+      min-width: 66px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #fde68a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 3. WebGL Velvet Curtain */
+    .curtain-stage {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      pointer-events: auto;
+    }
+
+    body.curtain-open .curtain-stage {
+      pointer-events: none;
+    }
+
+    #curtainCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .tieback {
+      position: absolute;
+      top: 54%;
+      height: 28px;
+      z-index: 55;
+      pointer-events: none;
+      transform: translateY(-50%);
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
+      will-change: width, opacity;
+      opacity: 0;
+    }
+
+    .tieback--left { left: -6px; }
+    .tieback--right {
+      right: -6px;
+      transform: translateY(-50%) scaleX(-1);
+    }
+
+    .toggle-btn {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      padding: 14px 34px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+      background: linear-gradient(135deg, #b80014, #70000b);
+      border: 1px solid rgba(255, 215, 130, 0.35);
+      border-radius: 999px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, padding 0.25s ease, font-size 0.25s ease;
+    }
+
+    .toggle-btn:hover {
+      transform: translateX(-50%) translateY(-2px);
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.6);
+      background: linear-gradient(135deg, #d60018, #8c000e);
+    }
+
+    .toggle-btn:active {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    body.curtain-open .toggle-btn {
+      bottom: auto;
+      left: auto;
+      top: 16px;
+      right: 16px;
+      transform: none;
+      padding: 10px 20px;
+      font-size: 0.78rem;
+    }
+
+    body.curtain-open .toggle-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    body.curtain-open .toggle-btn:active {
+      transform: translateY(0);
+    }
+
+    @media (max-width: 640px) {
+      .star--desktop-only { display: none; }
+      .falling-star__head {
+        width: calc(var(--head, 6px) * 0.88);
+        height: calc(var(--head, 6px) * 0.88);
+      }
+      .twinkle-star {
+        width: calc(var(--size, 14px) * 0.72);
+        height: calc(var(--size, 14px) * 0.72);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .falling-star {
+        animation: none;
+        transform: translate3d(0, calc(var(--fall, 50vh) * 0.72 - 100%), 0);
+        opacity: calc(var(--peak, 0.85) * 0.8);
+      }
+      .twinkle-star,
+      .micro-star {
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Nocturne Starfield Background -->
+  <div class="starfield-bg" aria-hidden="true">
+    <div class="starfield-layer">
+      <span class="falling-star falling-star--silver" style="--x:2.5%;--tail:38vh;--fall:52vh;--head:7px;--trail-w:1.5px;--dur:9.2s;--delay:-3.8s;--peak:0.92"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:5.8%;--tail:34vh;--fall:48vh;--head:5.5px;--trail-w:1px;--dur:11.4s;--delay:-6.9s;--peak:0.72"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--champagne" style="--x:8.2%;--tail:44vh;--fall:62vh;--head:6.5px;--trail-w:1.5px;--dur:8.6s;--delay:-5.4s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:13.5%;--tail:46vh;--fall:60vh;--head:6px;--trail-w:1.5px;--dur:10.2s;--delay:-4.6s;--peak:0.86"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:16%;--tail:54vh;--fall:74vh;--head:5.5px;--trail-w:1px;--dur:12.1s;--delay:-8.3s;--peak:0.78"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:19.2%;--tail:28vh;--fall:42vh;--head:5px;--trail-w:1px;--dur:9.8s;--delay:-2.9s;--peak:0.65"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--ivory" style="--x:21%;--tail:32vh;--fall:46vh;--head:5.5px;--trail-w:1.5px;--dur:8.9s;--delay:-5.1s;--peak:0.84"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver star--desktop-only" style="--x:22.6%;--tail:20vh;--fall:36vh;--head:5.5px;--trail-w:1.5px;--dur:7.8s;--delay:-2.1s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:26.2%;--tail:50vh;--fall:70vh;--head:6.5px;--trail-w:1.5px;--dur:10.6s;--delay:-6.7s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--champagne" style="--x:30.1%;--tail:36vh;--fall:50vh;--head:5.5px;--trail-w:1.5px;--dur:9.4s;--delay:-4.2s;--peak:0.82"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver star--desktop-only" style="--x:33.2%;--tail:16vh;--fall:30vh;--head:5px;--trail-w:1px;--dur:7.4s;--delay:-1.6s;--peak:0.72"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--ivory" style="--x:36.8%;--tail:48vh;--fall:64vh;--head:5px;--trail-w:1px;--dur:11.6s;--delay:-7.8s;--peak:0.76"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:38.9%;--tail:38vh;--fall:55vh;--head:6.5px;--trail-w:1.5px;--dur:8.8s;--delay:-4.8s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:44.4%;--tail:14vh;--fall:28vh;--head:6px;--trail-w:1.5px;--dur:7.2s;--delay:-1.1s;--peak:0.92"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:51%;--tail:46vh;--fall:66vh;--head:6.5px;--trail-w:1.5px;--dur:9.9s;--delay:-5.9s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--ivory" style="--x:52.1%;--tail:54vh;--fall:74vh;--head:5.5px;--trail-w:1px;--dur:11.8s;--delay:-7.2s;--peak:0.8"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--champagne star--desktop-only" style="--x:53.5%;--tail:36vh;--fall:50vh;--head:5.5px;--trail-w:1px;--dur:10.4s;--delay:-4.5s;--peak:0.78"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:60.9%;--tail:31vh;--fall:45vh;--head:5.5px;--trail-w:1.5px;--dur:8.7s;--delay:-3.3s;--peak:0.82"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:63.8%;--tail:56vh;--fall:78vh;--head:6.5px;--trail-w:1.5px;--dur:10.8s;--delay:-6.4s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:66.2%;--tail:36vh;--fall:52vh;--head:5px;--trail-w:1px;--dur:11.2s;--delay:-5.8s;--peak:0.68"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:70.6%;--tail:20vh;--fall:34vh;--head:6px;--trail-w:1.5px;--dur:7.9s;--delay:-2.2s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--champagne" style="--x:74.1%;--tail:50vh;--fall:70vh;--head:5.5px;--trail-w:1px;--dur:10.9s;--delay:-7.1s;--peak:0.76"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:80.2%;--tail:33vh;--fall:48vh;--head:6.5px;--trail-w:1.5px;--dur:9.1s;--delay:-3.7s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:82.8%;--tail:44vh;--fall:60vh;--head:5.5px;--trail-w:1px;--dur:10.5s;--delay:-5.5s;--peak:0.82"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:88%;--tail:18vh;--fall:32vh;--head:6px;--trail-w:1.5px;--dur:7.6s;--delay:-1.9s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--silver" style="--x:90.4%;--tail:36vh;--fall:52vh;--head:6.5px;--trail-w:1.5px;--dur:9.3s;--delay:-4.1s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:94.5%;--tail:26vh;--fall:40vh;--head:5px;--trail-w:1px;--dur:8.4s;--delay:-2.7s;--peak:0.74"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+      <span class="falling-star falling-star--champagne" style="--x:97.6%;--tail:52vh;--fall:72vh;--head:6.5px;--trail-w:1.5px;--dur:10.7s;--delay:-6.5s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
+    </div>
+    <div class="starfield-layer">
+      <span class="micro-star" style="--x:1.4%;--y:58.2%;--size:2px;--base-op:0.28;--dur:5.4s;--delay:-1.2s"></span>
+      <span class="micro-star" style="--x:7.2%;--y:61.5%;--size:2px;--base-op:0.24;--dur:6.8s;--delay:-3.4s"></span>
+      <span class="micro-star" style="--x:18.4%;--y:48%;--size:2px;--base-op:0.22;--dur:7.2s;--delay:-2.1s"></span>
+      <span class="micro-star" style="--x:29.8%;--y:42.5%;--size:2px;--base-op:0.25;--dur:5.9s;--delay:-4.5s"></span>
+      <span class="micro-star" style="--x:41.7%;--y:55.8%;--size:2.5px;--base-op:0.3;--dur:6.1s;--delay:-0.9s"></span>
+      <span class="micro-star" style="--x:43.2%;--y:35.6%;--size:2px;--base-op:0.26;--dur:7.5s;--delay:-5.2s"></span>
+      <span class="micro-star" style="--x:46.2%;--y:41%;--size:2.5px;--base-op:0.34;--dur:5.2s;--delay:-2.8s"></span>
+      <span class="micro-star" style="--x:55.6%;--y:26.8%;--size:2px;--base-op:0.22;--dur:6.4s;--delay:-3.9s"></span>
+      <span class="micro-star" style="--x:67.4%;--y:49.3%;--size:2px;--base-op:0.24;--dur:6.9s;--delay:-1.7s"></span>
+      <span class="micro-star" style="--x:77.8%;--y:52.1%;--size:2px;--base-op:0.22;--dur:5.8s;--delay:-4.1s"></span>
+      <span class="micro-star" style="--x:95.3%;--y:64.5%;--size:2.5px;--base-op:0.3;--dur:6.3s;--delay:-2.4s"></span>
+    </div>
+    <div class="starfield-layer">
+      <span class="twinkle-star" style="--x:2.8%;--bottom:6.2%;--size:8px;--color:#58476e;--base-op:0.72;--dur:5.2s;--delay:-1.1s"></span>
+      <span class="twinkle-star" style="--x:5.1%;--bottom:9.8%;--size:18px;--color:#6b567f;--base-op:0.78;--dur:6.4s;--delay:-3.2s"></span>
+      <span class="twinkle-star" style="--x:8.6%;--bottom:5.2%;--size:14px;--color:#5d4c73;--base-op:0.7;--dur:5.8s;--delay:-0.7s"></span>
+      <span class="twinkle-star" style="--x:9.4%;--bottom:2.8%;--size:20px;--color:#6f5a83;--base-op:0.76;--dur:7.1s;--delay:-4.3s"></span>
+      <span class="twinkle-star" style="--x:12.7%;--bottom:22.8%;--size:16px;--color:#6c5a82;--base-op:0.78;--dur:4.9s;--delay:-2.4s"></span>
+      <span class="twinkle-star" style="--x:15.8%;--bottom:29.6%;--size:16px;--color:#68557c;--base-op:0.75;--dur:6.2s;--delay:-1.8s"></span>
+      <span class="twinkle-star" style="--x:16%;--bottom:1.2%;--size:13px;--color:#5b4b70;--base-op:0.72;--dur:5.5s;--delay:-3.9s"></span>
+      <span class="twinkle-star" style="--x:18.2%;--bottom:10.8%;--size:14px;--color:#5f4e74;--base-op:0.74;--dur:6.7s;--delay:-2.1s"></span>
+      <span class="twinkle-star" style="--x:18.9%;--bottom:25.4%;--size:20px;--color:#75628b;--base-op:0.82;--dur:5.1s;--delay:-4.6s"></span>
+      <span class="twinkle-star" style="--x:19.7%;--bottom:22.6%;--size:10px;--color:#58496d;--base-op:0.68;--dur:4.6s;--delay:-0.4s"></span>
+      <span class="twinkle-star" style="--x:21%;--bottom:22.1%;--size:9px;--color:#5c4d72;--base-op:0.7;--dur:5.9s;--delay:-3.1s"></span>
+      <span class="twinkle-star star--desktop-only" style="--x:22.1%;--bottom:25.1%;--size:18px;--color:#725f88;--base-op:0.8;--dur:6.5s;--delay:-1.5s"></span>
+      <span class="twinkle-star" style="--x:24%;--bottom:4.5%;--size:7px;--color:#544469;--base-op:0.65;--dur:4.8s;--delay:-2.8s"></span>
+      <span class="twinkle-star" style="--x:26.6%;--bottom:32.1%;--size:22px;--color:#6f5c84;--base-op:0.78;--dur:7.4s;--delay:-5s"></span>
+      <span class="twinkle-star" style="--x:28.8%;--bottom:16.2%;--size:14px;--color:#5b4b72;--base-op:0.72;--dur:5.6s;--delay:-1.9s"></span>
+      <span class="twinkle-star star--desktop-only" style="--x:29.2%;--bottom:28.2%;--size:10px;--color:#62527a;--base-op:0.74;--dur:4.7s;--delay:-3.5s"></span>
+      <span class="twinkle-star" style="--x:30.2%;--bottom:24.2%;--size:17px;--color:#685780;--base-op:0.76;--dur:6.3s;--delay:-0.9s"></span>
+      <span class="twinkle-star star--desktop-only" style="--x:28.1%;--bottom:10.3%;--size:7px;--color:#524367;--base-op:0.66;--dur:5.3s;--delay:-2.2s"></span>
+      <span class="twinkle-star star--desktop-only" style="--x:32.6%;--bottom:17.8%;--size:16px;--color:#63527b;--base-op:0.74;--dur:6.9s;--delay:-4.1s"></span>
+      <span class="twinkle-star" style="--x:33.5%;--bottom:24.8%;--size:18px;--color:#6a5882;--base-op:0.78;--dur:5.7s;--delay:-2.7s"></span>
+      <span class="twinkle-star" style="--x:34.1%;--bottom:8.8%;--size:13px;--color:#594970;--base-op:0.7;--dur:6.1s;--delay:-1.3s"></span>
+      <span class="twinkle-star" style="--x:35.5%;--bottom:0.6%;--size:9px;--color:#534468;--base-op:0.68;--dur:5s;--delay:-3.8s"></span>
+      <span class="twinkle-star" style="--x:61.6%;--bottom:10.8%;--size:8px;--color:#59486d;--base-op:0.68;--dur:5.4s;--delay:-2s"></span>
+      <span class="twinkle-star" style="--x:63.2%;--bottom:20.6%;--size:17px;--color:#65547c;--base-op:0.76;--dur:6.6s;--delay:-4.4s"></span>
+      <span class="twinkle-star star--desktop-only" style="--x:67.4%;--bottom:21.8%;--size:12px;--color:#5d4c73;--base-op:0.72;--dur:5.1s;--delay:-1.2s"></span>
+      <span class="twinkle-star" style="--x:69.5%;--bottom:1.9%;--size:15px;--color:#66537b;--base-op:0.75;--dur:6.8s;--delay:-3.6s"></span>
+      <span class="twinkle-star" style="--x:72.7%;--bottom:5.6%;--size:16px;--color:#68557d;--base-op:0.76;--dur:5.9s;--delay:-0.8s"></span>
+      <span class="twinkle-star" style="--x:72.8%;--bottom:30.2%;--size:19px;--color:#6c5a84;--base-op:0.8;--dur:7.2s;--delay:-4.9s"></span>
+      <span class="twinkle-star" style="--x:75.8%;--bottom:15.8%;--size:12px;--color:#6d577e;--base-op:0.74;--dur:4.8s;--delay:-2.5s"></span>
+      <span class="twinkle-star star--desktop-only" style="--x:75.9%;--bottom:27.6%;--size:8px;--color:#5e4d74;--base-op:0.7;--dur:5.3s;--delay:-1.6s"></span>
+      <span class="twinkle-star" style="--x:76.3%;--bottom:25.8%;--size:12px;--color:#68547b;--base-op:0.74;--dur:6.4s;--delay:-3.7s"></span>
+      <span class="twinkle-star" style="--x:82.1%;--bottom:23.8%;--size:7px;--color:#57476c;--base-op:0.68;--dur:4.9s;--delay:-0.5s"></span>
+      <span class="twinkle-star" style="--x:86.2%;--bottom:34.4%;--size:8px;--color:#56476d;--base-op:0.7;--dur:6s;--delay:-2.9s"></span>
+      <span class="twinkle-star" style="--x:86.8%;--bottom:1.6%;--size:11px;--color:#5f4d73;--base-op:0.72;--dur:5.7s;--delay:-4.2s"></span>
+      <span class="twinkle-star" style="--x:88.1%;--bottom:19.2%;--size:22px;--color:#6d5b85;--base-op:0.8;--dur:7s;--delay:-1.4s"></span>
+      <span class="twinkle-star" style="--x:91.6%;--bottom:9.2%;--size:9px;--color:#5b4b71;--base-op:0.7;--dur:5.2s;--delay:-3.3s"></span>
+      <span class="twinkle-star" style="--x:95%;--bottom:4%;--size:20px;--color:#705b84;--base-op:0.78;--dur:6.3s;--delay:-2.6s"></span>
+      <span class="twinkle-star star--desktop-only" style="--x:97.6%;--bottom:1.5%;--size:14px;--color:#64527a;--base-op:0.74;--dur:5.6s;--delay:-0.9s"></span>
+    </div>
+  </div>
+
+  <!-- 2. Tarot Card Shuffle Stage -->
+  <div class="tarot-app">
+    <main class="tarot-stage" id="stage">
+      <div class="vfx-altar" id="altarGlow"><div></div></div>
+      <div class="vfx-ring" id="mandalaRing"><div class="r1"></div><div class="r2"></div><div class="r3"></div></div>
+      <div class="vfx-core" id="coreGlow"><div></div></div>
+      <div class="vfx-shockwave" id="swOuter"></div>
+      <div class="vfx-shockwave-inner" id="swInner"></div>
+      <div class="vfx-flash" id="flash"></div>
+      <div class="tarot-origin" id="origin">
+        <div class="tarot-card tarot-card--singularity" id="singularity"></div>
+      </div>
+    </main>
+
+    <footer class="controls">
+      <div class="status" id="status"><strong>Formation</strong> · 78 cards aligned</div>
+      <div class="bar">
+        <button type="button" class="btn btn-primary" id="shuffleBtn">Shuffle Cards</button>
+        <button type="button" class="btn btn-ghost" id="resetBtn" disabled>Reset</button>
+        <div class="stepper" aria-label="Number of cards">
+          <button type="button" class="btn btn-ghost" id="decBtn" aria-label="Decrease cards">-</button>
+          <span class="stepper-label" id="countLabel">78 cards</span>
+          <button type="button" class="btn btn-ghost" id="incBtn" aria-label="Increase cards">+</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- 3. WebGL Velvet Curtain & Gold Tie-Backs -->
+  <div class="curtain-stage" id="curtainStage">
+    <canvas id="curtainCanvas"></canvas>
+
+    <svg class="tieback tieback--left" id="tiebackLeft" viewBox="0 0 220 36" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff0a6"/>
+          <stop offset="35%" stop-color="#e5b342"/>
+          <stop offset="75%" stop-color="#9e6d14"/>
+          <stop offset="100%" stop-color="#f5cf6b"/>
+        </linearGradient>
+        <pattern id="braidPattern" width="18" height="18" patternUnits="userSpaceOnUse">
+          <path d="M-4,18 L18,-4 M0,22 L22,0" stroke="#5c3b04" stroke-width="3.5"/>
+          <path d="M-2,16 L16,-2" stroke="#fff6c7" stroke-width="2"/>
+        </pattern>
+      </defs>
+      <path d="M 0,6 Q 110,16 212,12 C 218,12 218,20 210,20 Q 110,23 0,14 Z" fill="url(#goldGrad)" stroke="#4a2e00" stroke-width="1"/>
+      <path d="M 0,6 Q 110,16 212,12 C 218,12 218,20 210,20 Q 110,23 0,14 Z" fill="url(#braidPattern)" opacity="0.65"/>
+      <path d="M 0,15 Q 110,24 210,19 C 216,19 216,27 208,27 Q 110,31 0,23 Z" fill="url(#goldGrad)" stroke="#4a2e00" stroke-width="1"/>
+      <path d="M 0,15 Q 110,24 210,19 C 216,19 216,27 208,27 Q 110,31 0,23 Z" fill="url(#braidPattern)" opacity="0.65"/>
+    </svg>
+
+    <svg class="tieback tieback--right" id="tiebackRight" viewBox="0 0 220 36" preserveAspectRatio="none">
+      <path d="M 0,6 Q 110,16 212,12 C 218,12 218,20 210,20 Q 110,23 0,14 Z" fill="url(#goldGrad)" stroke="#4a2e00" stroke-width="1"/>
+      <path d="M 0,6 Q 110,16 212,12 C 218,12 218,20 210,20 Q 110,23 0,14 Z" fill="url(#braidPattern)" opacity="0.65"/>
+      <path d="M 0,15 Q 110,24 210,19 C 216,19 216,27 208,27 Q 110,31 0,23 Z" fill="url(#goldGrad)" stroke="#4a2e00" stroke-width="1"/>
+      <path d="M 0,15 Q 110,24 210,19 C 216,19 216,27 208,27 Q 110,31 0,23 Z" fill="url(#braidPattern)" opacity="0.65"/>
+    </svg>
+  </div>
+
+  <button type="button" class="toggle-btn" id="toggleBtn">Open Curtain</button>
+
+  <!-- Tarot Shuffle Script -->
+  <script>
+    (function () {
+      const MIN_CARDS = 4;
+      const MAX_CARDS = 78;
+      let cardCount = 78;
+
+      const REFERENCE_12 = [
+        { dx: 0, dy: -82, z: 1 }, { dx: -82, dy: -58, z: 4 }, { dx: 82, dy: -58, z: 4 },
+        { dx: -136, dy: -36, z: 3 }, { dx: 136, dy: -36, z: 3 }, { dx: -174, dy: -12, z: 2 },
+        { dx: 174, dy: -12, z: 2 }, { dx: -134, dy: 24, z: 5 }, { dx: 134, dy: 24, z: 5 },
+        { dx: -72, dy: 58, z: 6 }, { dx: 72, dy: 58, z: 6 }, { dx: 0, dy: 86, z: 7 },
+      ];
+
+      function buildCardSlots(count) {
+        if (count === 12) return REFERENCE_12;
+        return Array.from({ length: count }, (_, i) => {
+          const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+          return {
+            dx: Math.round(Math.cos(angle) * 174),
+            dy: Math.round(Math.sin(angle) * 84),
+            z: Math.round(((Math.sin(angle) + 1) / 2) * count) + 1,
+          };
+        });
+      }
+
+      function cardSvg(id) {
+        return `<svg viewBox="0 0 200 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g-${id}" x1="20" y1="10" x2="180" y2="310" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#f2c47d"/><stop offset="50%" stop-color="#d48c3e"/><stop offset="100%" stop-color="#b8722c"/>
+            </linearGradient>
+          </defs>
+          <rect width="200" height="320" rx="10" fill="#050408"/>
+          <rect x="5.5" y="5.5" width="189" height="309" rx="7.5" stroke="url(#g-${id})" stroke-width="2.2"/>
+          <rect x="10.5" y="10.5" width="179" height="299" rx="5" stroke="url(#g-${id})" stroke-width="1.1" opacity="0.8"/>
+          <g stroke="url(#g-${id})" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 56 C16 28,32 17,56 17 C42 22,34 31,35 44 C36 53,45 55,49 48" stroke-width="1.5"/>
+            <path d="M184 56 C184 28,168 17,144 17 C158 22,166 31,165 44 C164 53,155 55,151 48" stroke-width="1.5"/>
+            <path d="M100 18 C88 32,86 50,100 66 C114 50,112 32,100 18 Z M100 58 C82 40,62 34,50 48 C65 49,77 59,86 78 M100 58 C118 40,138 34,150 48 C135 49,123 59,114 78 M100 22 L100 124" stroke-width="1.5"/>
+            <g transform="translate(0,320) scale(1,-1)">
+              <path d="M16 56 C16 28,32 17,56 17 C42 22,34 31,35 44 C36 53,45 55,49 48" stroke-width="1.5"/>
+              <path d="M184 56 C184 28,168 17,144 17 C158 22,166 31,165 44 C164 53,155 55,151 48" stroke-width="1.5"/>
+              <path d="M100 18 C88 32,86 50,100 66 C114 50,112 32,100 18 Z M100 58 C82 40,62 34,50 48 C65 49,77 59,86 78 M100 58 C118 40,138 34,150 48 C135 49,123 59,114 78 M100 22 L100 124" stroke-width="1.5"/>
+            </g>
+            <ellipse cx="100" cy="160" rx="54" ry="31" fill="#060408" stroke-width="1.7"/>
+            <ellipse cx="100" cy="160" rx="34" ry="18.5" stroke-width="1.6"/>
+            <ellipse cx="100" cy="160" rx="22" ry="12.5" fill="#030204" stroke-width="1.9"/>
+          </g>
+        </svg>`;
+      }
+
+      const T_SHUFFLE = 2.25, T_CIRCLE = 5.15, T_CONVERGE = 6.75, T_SINGULARITY = 8.15;
+      const stage = document.getElementById('stage');
+      const origin = document.getElementById('origin');
+      const altarGlow = document.getElementById('altarGlow');
+      const mandalaRing = document.getElementById('mandalaRing');
+      const coreGlow = document.getElementById('coreGlow');
+      const swOuter = document.getElementById('swOuter');
+      const swInner = document.getElementById('swInner');
+      const flash = document.getElementById('flash');
+      const singularity = document.getElementById('singularity');
+      const statusEl = document.getElementById('status');
+      const shuffleBtn = document.getElementById('shuffleBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const decBtn = document.getElementById('decBtn');
+      const incBtn = document.getElementById('incBtn');
+      const countLabel = document.getElementById('countLabel');
+
+      singularity.innerHTML = cardSvg('sing');
+
+      const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+      const easeOutCubic = (t) => 1 - Math.pow(1 - clamp01(t), 3);
+      const easeInOutCubic = (t) => { const x = clamp01(t); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+      const easeInQuad = (t) => clamp01(t) * clamp01(t);
+      const easeInQuart = (t) => Math.pow(clamp01(t), 4);
+      const easeOutQuint = (t) => 1 - Math.pow(1 - clamp01(t), 5);
+
+      let slots = [], cards = [], scale = 1, radius = 220, phase = 'idle', rafId = 0;
+
+      function rebuildDeck(nextCount) {
+        cardCount = Math.max(MIN_CARDS, Math.min(MAX_CARDS, nextCount));
+        countLabel.textContent = cardCount + ' cards';
+        decBtn.disabled = cardCount <= MIN_CARDS;
+        incBtn.disabled = cardCount >= MAX_CARDS;
+
+        cards.forEach((el) => el.remove());
+        slots = buildCardSlots(cardCount);
+        cards = slots.map((_, i) => {
+          const el = document.createElement('div');
+          el.className = 'tarot-card is-interactive';
+          el.innerHTML = cardSvg(i);
+          el.addEventListener('click', () => { if (phase === 'idle' || phase === 'deck') start(); });
+          origin.insertBefore(el, singularity);
+          return el;
+        });
+        measure();
+        reset();
+      }
+
+      function measure() {
+        const rect = stage.getBoundingClientRect();
+        scale = Math.max(0.54, Math.min(rect.width / 540, rect.height / 470, 1.2));
+        const w = Math.round(92 * scale), h = Math.round(w * 1.6);
+        radius = Math.max(96, Math.min(rect.width * 0.30, rect.height * 0.29, 232));
+        cards.forEach((el) => { el.style.width = w + 'px'; el.style.height = h + 'px'; });
+        singularity.style.width = w + 'px'; singularity.style.height = h + 'px';
+        altarGlow.style.width = Math.round(380 * scale) + 'px'; altarGlow.style.height = Math.round(240 * scale) + 'px';
+        mandalaRing.style.width = Math.round(radius * 2.18) + 'px'; mandalaRing.style.height = Math.round(radius * 2.18) + 'px';
+        coreGlow.style.width = Math.round(280 * scale) + 'px'; coreGlow.style.height = Math.round(280 * scale) + 'px';
+        swOuter.style.width = Math.round(210 * scale) + 'px'; swOuter.style.height = Math.round(210 * scale) + 'px';
+        swInner.style.width = Math.round(180 * scale) + 'px'; swInner.style.height = Math.round(180 * scale) + 'px';
+        if (phase === 'idle') reset();
+      }
+
+      function reset() {
+        cancelAnimationFrame(rafId);
+        phase = 'idle';
+        statusEl.innerHTML = `<strong>Formation</strong> · ${cardCount} cards aligned`;
+        shuffleBtn.textContent = 'Shuffle Cards';
+        resetBtn.disabled = true;
+        slots.forEach((s, i) => {
+          cards[i].classList.add('is-interactive');
+          cards[i].style.transform = `translate3d(${s.dx * scale}px, ${s.dy * scale}px, 0) rotate(0deg) scale(1)`;
+          cards[i].style.opacity = '1';
+          cards[i].style.zIndex = String(s.z);
+        });
+        altarGlow.style.opacity = '1';
+        altarGlow.style.transform = `translateY(${Math.round(118 * scale)}px)`;
+        mandalaRing.style.opacity = coreGlow.style.opacity = swOuter.style.opacity = swInner.style.opacity = flash.style.opacity = singularity.style.opacity = '0';
+      }
+
+      function start() {
+        cancelAnimationFrame(rafId);
+        phase = 'shuffling';
+        shuffleBtn.textContent = 'Replay Sequence';
+        resetBtn.disabled = false;
+        cards.forEach((el) => el.classList.remove('is-interactive'));
+
+        const count = cardCount;
+        const mid = (count - 1) / 2;
+        const stepX = Math.min(1.15, 13 / count);
+        const stepY = Math.min(1.8, 20 / count);
+        const stagger = Math.min(0.032, 0.38 / count);
+        const halfRank = Math.max(1, Math.floor(count / 4));
+        let last = performance.now(), elapsed = 0;
+
+        function tick(now) {
+          const dt = Math.min((now - last) / 1000, 0.05);
+          last = now; elapsed += dt;
+
+          if (elapsed < T_SHUFFLE) {
+            statusEl.innerHTML = '<strong>Shuffling</strong> · Riffle weave';
+            const t = elapsed;
+            slots.forEach((s, i) => {
+              const sx = s.dx * scale, sy = s.dy * scale, side = i % 2 === 0 ? -1 : 1, rank = Math.floor(i / 2);
+              let x = 0, y = 0, rot = 0, sc = 1, z = s.z;
+              if (t < 0.42) {
+                const u = easeOutCubic(t / 0.42);
+                x = sx + (side * (95 + (rank % 6) * 18) * scale - sx) * u;
+                y = sy + ((rank - halfRank) * Math.min(14, 70 / count) * scale - sy) * u;
+                rot = side * (11 + (rank % 6) * 3.2) * u; sc = 1 + 0.04 * u; z = i + 2;
+              } else if (t < 1.8) {
+                const p = (t - 0.42) / 1.38, wp = p * Math.PI * 3 + i * (3.12 / count), sw = Math.cos(wp);
+                const env = Math.sin(Math.min(1, p * 1.15) * Math.PI * 0.5) * (1 - 0.25 * p);
+                x = side * sw * (128 + (i % 3) * 24) * scale * (0.45 + 0.55 * env);
+                y = Math.sin(wp * 2) * 28 * scale + (rank - halfRank) * 4 * scale * (1 - p);
+                rot = side * sw * 17; sc = 1.04 + 0.04 * Math.abs(Math.sin(wp));
+                z = Math.round(count * 0.6 + Math.sin(wp) * (count * 0.5));
+              } else {
+                const u = easeInOutCubic((t - 1.8) / 0.45), we = Math.PI * 3 + i * (3.12 / count), se = Math.cos(we);
+                x = side * se * (128 + (i % 3) * 24) * scale * 0.86 * (1 - u);
+                y = Math.sin(we * 2) * 28 * scale * (1 - u);
+                rot = side * se * 17 * (1 - u); sc = 1.04 - 0.04 * u; z = i + 1;
+              }
+              cards[i].style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+              cards[i].style.opacity = '1'; cards[i].style.zIndex = String(z);
+            });
+            altarGlow.style.opacity = clamp01(1 - elapsed / 1.4).toFixed(3);
+          } else if (elapsed < T_CIRCLE) {
+            if (phase !== 'circle') { phase = 'circle'; statusEl.innerHTML = '<strong>Orbital Circle</strong> · Rotating ring'; }
+            const tau = elapsed - T_SHUFFLE, bu = clamp01(tau / 0.85), r = radius * easeOutQuint(bu);
+            const theta = 0.35 * tau + 0.38 * tau * tau, rb = easeOutCubic(clamp01(tau / 0.5));
+            slots.forEach((_, i) => {
+              const ang = (i / count) * Math.PI * 2 - Math.PI / 2 + theta;
+              cards[i].style.transform = `translate3d(${(r * Math.cos(ang)).toFixed(2)}px, ${(r * Math.sin(ang)).toFixed(2)}px, 0) rotate(${(((ang * 180) / Math.PI + 90) * rb).toFixed(2)}deg) scale(1)`;
+              cards[i].style.opacity = '1'; cards[i].style.zIndex = String(i + 2);
+            });
+            mandalaRing.style.opacity = (easeOutCubic(clamp01(tau / 0.75)) * 0.85).toFixed(3);
+            mandalaRing.style.transform = `scale(${(0.35 + 0.65 * easeOutQuint(bu)).toFixed(3)}) rotate(${(-(theta * 180) / Math.PI * 0.55).toFixed(2)}deg)`;
+          } else if (elapsed < T_CONVERGE) {
+            if (phase !== 'converging') { phase = 'converging'; statusEl.innerHTML = '<strong>Convergence</strong> · Spiraling inward'; }
+            const dur = T_CONVERGE - T_CIRCLE, s = clamp01((elapsed - T_CIRCLE) / dur);
+            const cd = T_CIRCLE - T_SHUFFLE, t0 = 0.35 * cd + 0.38 * cd * cd, w0 = 0.35 + 0.76 * cd;
+            const theta = t0 + dur * (w0 * s + 6.2 * Math.pow(s, 2.35)), r = radius * (1 - easeInQuart(s));
+            const sc = 1 - 0.16 * easeInQuad(s), op = s > 0.9 ? clamp01(1 - (s - 0.9) / 0.1) : 1;
+            slots.forEach((_, i) => {
+              const ang = (i / count) * Math.PI * 2 - Math.PI / 2 + theta;
+              cards[i].style.transform = `translate3d(${(r * Math.cos(ang)).toFixed(2)}px, ${(r * Math.sin(ang)).toFixed(2)}px, 0) rotate(${((ang * 180) / Math.PI + 90).toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+              cards[i].style.opacity = op.toFixed(3);
+            });
+            mandalaRing.style.opacity = (0.85 * (1 - easeInQuad(s))).toFixed(3);
+            coreGlow.style.opacity = (0.5 + 0.5 * easeInQuad(s)).toFixed(3);
+            coreGlow.style.transform = `scale(${(0.7 + 0.85 * easeInQuart(s)).toFixed(3)})`;
+          } else if (elapsed < T_SINGULARITY) {
+            if (phase !== 'singularity') { phase = 'singularity'; statusEl.innerHTML = `<strong>Singularity</strong> · All ${count} cards fused into one`; }
+            const post = elapsed - T_CONVERGE;
+            if (post < 0.1) cards.forEach((el) => { el.style.opacity = '0'; });
+            mandalaRing.style.opacity = '0';
+            const sw = clamp01(post / 1.05);
+            swOuter.style.opacity = (sw < 1 ? (1 - sw) * 0.92 : 0).toFixed(3);
+            swOuter.style.transform = `scale(${(0.15 + 3.1 * easeOutQuint(sw)).toFixed(3)})`;
+            const sw2 = clamp01((post - 0.08) / 0.85);
+            swInner.style.opacity = (post > 0.08 && sw2 < 1 ? (1 - sw2) * 0.75 : 0).toFixed(3);
+            swInner.style.transform = `scale(${(0.12 + 2.2 * easeOutCubic(sw2)).toFixed(3)})`;
+            const fl = clamp01(post / 0.55);
+            flash.style.opacity = (fl < 1 ? Math.pow(1 - fl, 2) * 0.85 : 0).toFixed(3);
+            const em = easeOutQuint(clamp01(post / 0.45));
+            singularity.style.opacity = em.toFixed(3);
+            singularity.style.transform = `translate3d(0, ${(Math.sin(post * 2.2) * 5 * scale).toFixed(2)}px, 0) scale(${(0.72 + 0.5 * em).toFixed(3)})`;
+          } else {
+            if (phase !== 'deck') {
+              phase = 'deck';
+              statusEl.innerHTML = `<strong>Deck Ready</strong> · Stacked ${count}-card deck`;
+              cards.forEach((el) => el.classList.add('is-interactive'));
+            }
+            const pd = elapsed - T_SINGULARITY;
+            swOuter.style.opacity = swInner.style.opacity = flash.style.opacity = '0';
+            singularity.style.opacity = clamp01(1 - pd / 0.32).toFixed(3);
+            singularity.style.transform = `scale(${(1.22 - 0.16 * easeOutCubic(clamp01(pd / 0.32))).toFixed(3)})`;
+            const cf = easeOutCubic(clamp01(pd / 0.85));
+            coreGlow.style.opacity = (0.75 * (1 - cf) + 0.32 * cf).toFixed(3);
+            coreGlow.style.transform = `scale(${(1.15 - 0.25 * cf).toFixed(3)})`;
+            slots.forEach((_, i) => {
+              const d = i * stagger, u = easeOutQuint(clamp01((pd - d) / 0.56)), ap = clamp01((pd - d * 0.5) / 0.18);
+              const x = (i - mid) * stepX * scale * u;
+              const y = (-18 * scale) * (1 - u) + (mid - i) * stepY * scale * u;
+              const rot = (i === count - 1 ? 0 : ((i % 3) - 1) * 0.55) * u;
+              cards[i].style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${(1.22 - 0.16 * u).toFixed(3)})`;
+              cards[i].style.opacity = ap.toFixed(3);
+              cards[i].style.zIndex = String(i + 2);
+            });
+          }
+          rafId = requestAnimationFrame(tick);
+        }
+        rafId = requestAnimationFrame(tick);
+      }
+
+      shuffleBtn.addEventListener('click', start);
+      resetBtn.addEventListener('click', reset);
+      decBtn.addEventListener('click', () => rebuildDeck(cardCount - 1));
+      incBtn.addEventListener('click', () => rebuildDeck(cardCount + 1));
+      window.addEventListener('resize', measure);
+
+      rebuildDeck(cardCount);
+    })();
+  </script>
+
+  <!-- WebGL Velvet Curtain Script -->
+  <script>
+    (function () {
+      const CUSTOM_IMAGE_URL = null;
+
+      const canvas = document.getElementById('curtainCanvas');
+      const tiebackLeft = document.getElementById('tiebackLeft');
+      const tiebackRight = document.getElementById('tiebackRight');
+      const toggleBtn = document.getElementById('toggleBtn');
+
+      const gl = canvas.getContext('webgl', {
+        alpha: true,
+        antialias: true,
+        premultipliedAlpha: true
+      });
+
+      if (!gl) return;
+
+      const vertexShaderSource = `
+        precision highp float;
+
+        attribute vec2 aUv;
+        attribute float aSide;
+
+        uniform float uProgress;
+        uniform float uIsShadow;
+        uniform vec2 uResolution;
+
+        varying vec2 vUv;
+        varying float vCompression;
+        varying float vLocalP;
+        varying float vFeatherU;
+        varying float vFeatherV;
+        varying float vSide;
+        varying float vScreenY;
+
+        float getOpenWidth(float v) {
+          float topW = 0.24;
+          float waistW = 0.11;
+          float botW = 0.20;
+
+          if (v <= 0.54) {
+            float t = clamp(v / 0.54, 0.0, 1.0);
+            float ease = t * t * (3.0 - 2.0 * t);
+            float curve = mix(ease, pow(max(t, 0.0001), 1.15), 0.25);
+            return mix(topW, waistW, curve);
+          } else {
+            float t = clamp((v - 0.54) / 0.46, 0.0, 1.0);
+            float ease = 1.0 - cos(t * 1.5707963);
+            return mix(waistW, botW, pow(max(ease, 0.0001), 1.05));
+          }
+        }
+
+        void main() {
+          float u = aUv.x;
+          float v = aUv.y;
+          vSide = aSide;
+
+          if (abs(aSide) < 0.5) {
+            float sx = u;
+            float hemWave = 0.0055 * sin(u * 75.3982) + 0.002 * sin(u * 150.796);
+            float sy = v * (0.05 + hemWave);
+
+            if (uIsShadow > 0.5) {
+              sy += 0.015;
+            }
+
+            vUv = vec2(u * 2.0, v);
+            vCompression = 0.2;
+            vLocalP = 0.0;
+            vScreenY = sy;
+            vFeatherU = 0.0;
+            vFeatherV = (uIsShadow > 0.5 ? 18.0 : 1.5) / max(uResolution.y * 0.05, 1.0);
+
+            gl_Position = vec4(sx * 2.0 - 1.0, 1.0 - sy * 2.0, 0.0, 1.0);
+            return;
+          }
+
+          float distFromWaist = abs(v - 0.54);
+          float p = uProgress;
+          float localP = p + (p * (1.0 - p)) * (0.35 - distFromWaist * 1.1);
+          float openW = getOpenWidth(v);
+          float widthScale = mix(1.0, openW, localP);
+
+          float waistFocus = exp(-pow((v - 0.54) / 0.28, 2.0));
+          float uWarped = mix(u, pow(max(u, 0.0001), 1.0 + 0.08 * localP * waistFocus), 0.55);
+          float sxHalf = 0.5 * uWarped * widthScale;
+
+          float upperT = clamp(v / 0.54, 0.0, 1.0);
+          float upperMask = smoothstep(0.58, 0.44, v);
+          float sag = 0.014 * localP * sin(u * 3.14159265) * sin(upperT * 3.14159265) * upperMask;
+
+          float hemZone = smoothstep(0.52, 1.0, v);
+          float lift = 0.045 * localP * pow(max(u, 0.0001), 1.35) * hemZone;
+          float pleatWave = 0.0065 * localP * sin(u * 44.0) * smoothstep(0.75, 1.0, v);
+
+          float sx = (aSide < 0.0) ? sxHalf : (1.0 - sxHalf);
+          float sy = v + sag - lift + pleatWave;
+
+          if (uIsShadow > 0.5) {
+            sx += (-aSide) * 0.011;
+            sy += 0.009;
+          }
+
+          vUv = vec2(u, v);
+          vCompression = clamp(1.0 - widthScale, 0.0, 1.0);
+          vLocalP = localP;
+          vScreenY = sy;
+
+          float pxWidth = max(uResolution.x * 0.5 * widthScale, 1.0);
+          float featherScale = (uIsShadow > 0.5) ? 18.0 : 1.5;
+          vFeatherU = featherScale / pxWidth;
+          vFeatherV = featherScale / max(uResolution.y, 1.0);
+
+          gl_Position = vec4(sx * 2.0 - 1.0, 1.0 - sy * 2.0, 0.0, 1.0);
+        }
+      `;
+
+      const fragmentShaderSource = `
+        precision highp float;
+
+        uniform sampler2D uSampler;
+        uniform float uIsShadow;
+
+        varying vec2 vUv;
+        varying float vCompression;
+        varying float vLocalP;
+        varying float vFeatherU;
+        varying float vFeatherV;
+        varying float vSide;
+        varying float vScreenY;
+
+        void main() {
+          float openMask = smoothstep(0.0, 0.06, vLocalP);
+          float alphaU = (vFeatherU > 0.0) ? mix(1.0, smoothstep(1.0, 1.0 - vFeatherU, vUv.x), openMask) : 1.0;
+          float alphaV = smoothstep(1.0, 1.0 - vFeatherV, vUv.y);
+          float edgeAlpha = alphaU * alphaV;
+
+          if (uIsShadow > 0.5) {
+            float shadowAlpha = 0.42 * edgeAlpha;
+            gl_FragColor = vec4(0.0, 0.0, 0.0, shadowAlpha);
+            return;
+          }
+
+          vec3 tex = texture2D(uSampler, vUv).rgb;
+
+          if (abs(vSide) > 0.5) {
+            float foldDepth = mix(1.0, 0.72 + 0.48 * tex.r, vCompression * 0.75);
+            tex *= foldDepth;
+
+            float pinchShadow = exp(-pow((vUv.y - 0.54) * 18.0, 2.0)) * clamp(vLocalP, 0.0, 1.0);
+            tex *= (1.0 - 0.34 * pinchShadow);
+
+            float innerEdgeGlow = smoothstep(0.92, 0.995, vUv.x) * 0.08;
+            tex += vec3(innerEdgeGlow, innerEdgeGlow * 0.12, innerEdgeGlow * 0.12);
+          } else {
+            tex *= mix(0.95, 1.06, sin(vUv.y * 3.14159));
+          }
+
+          gl_FragColor = vec4(tex * edgeAlpha, edgeAlpha);
+        }
+      `;
+
+      function compileShader(type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(shader));
+        }
+        return shader;
+      }
+
+      const program = gl.createProgram();
+      gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexShaderSource));
+      gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentShaderSource));
+      gl.linkProgram(program);
+      gl.useProgram(program);
+
+      function buildGrid(cols, rows, side) {
+        const positions = [];
+        const indices = [];
+
+        for (let r = 0; r <= rows; r++) {
+          const v = r / rows;
+          for (let c = 0; c <= cols; c++) {
+            const u = c / cols;
+            positions.push(u, v, side);
+          }
+        }
+
+        const stride = cols + 1;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const i0 = r * stride + c;
+            const i1 = i0 + 1;
+            const i2 = i0 + stride;
+            const i3 = i2 + 1;
+            indices.push(i0, i2, i1, i1, i2, i3);
+          }
+        }
+
+        const vbo = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+        const ibo = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+        return { vbo, ibo, count: indices.length };
+      }
+
+      const leftCurtainMesh = buildGrid(96, 128, -1.0);
+      const rightCurtainMesh = buildGrid(96, 128, 1.0);
+
+      const aUvLoc = gl.getAttribLocation(program, 'aUv');
+      const aSideLoc = gl.getAttribLocation(program, 'aSide');
+      const uProgressLoc = gl.getUniformLocation(program, 'uProgress');
+      const uIsShadowLoc = gl.getUniformLocation(program, 'uIsShadow');
+      const uResolutionLoc = gl.getUniformLocation(program, 'uResolution');
+      const uSamplerLoc = gl.getUniformLocation(program, 'uSampler');
+
+      function drawMesh(mesh) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vbo);
+        gl.enableVertexAttribArray(aUvLoc);
+        gl.vertexAttribPointer(aUvLoc, 2, gl.FLOAT, false, 12, 0);
+        gl.enableVertexAttribArray(aSideLoc);
+        gl.vertexAttribPointer(aSideLoc, 1, gl.FLOAT, false, 12, 8);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.ibo);
+        gl.drawElements(gl.TRIANGLES, mesh.count, gl.UNSIGNED_SHORT, 0);
+      }
+
+      function createVelvetCanvas() {
+        const w = 1024;
+        const h = 512;
+        const texCanvas = document.createElement('canvas');
+        texCanvas.width = w;
+        texCanvas.height = h;
+        const ctx = texCanvas.getContext('2d');
+        const imgData = ctx.createImageData(w, h);
+        const data = imgData.data;
+
+        for (let x = 0; x < w; x++) {
+          const u = x / w;
+          const phase = u * Math.PI * 2.0 * 9.0 + 0.35 * Math.sin(u * Math.PI * 2.0 * 2.0);
+          const ridge = 0.5 + 0.5 * Math.cos(phase);
+          const subFold = 0.5 + 0.5 * Math.cos(phase * 2.0 + 0.7);
+          const crest = Math.pow(ridge, 1.45) * 0.85 + Math.pow(subFold, 2.2) * 0.15;
+          const sheen = Math.pow(Math.max(0, Math.cos(phase - 0.55)), 4.0) * 0.35;
+
+          for (let y = 0; y < h; y++) {
+            const v = y / h;
+            const verticalGrad = 0.84 + 0.16 * Math.sin(v * Math.PI);
+            const nap = (Math.sin(x * 1.7 + y * 0.35) * Math.cos(y * 1.3)) * 0.018;
+            const lum = Math.min(1.0, Math.max(0.0, (0.14 + crest * 0.72 + sheen + nap) * verticalGrad));
+
+            const r = Math.round(40 + lum * 208);
+            const g = Math.round(Math.pow(lum, 3.2) * 42);
+            const b = Math.round(4 + Math.pow(lum, 2.8) * 38);
+
+            const idx = (y * w + x) * 4;
+            data[idx] = r;
+            data[idx + 1] = g;
+            data[idx + 2] = b;
+            data[idx + 3] = 255;
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        return texCanvas;
+      }
+
+      const texture = gl.createTexture();
+      function uploadTexture(source) {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.generateMipmap(gl.TEXTURE_2D);
+      }
+
+      uploadTexture(createVelvetCanvas());
+
+      if (CUSTOM_IMAGE_URL) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const offscreen = document.createElement('canvas');
+          offscreen.width = 1024;
+          offscreen.height = 512;
+          offscreen.getContext('2d').drawImage(img, 0, 0, 1024, 512);
+          uploadTexture(offscreen);
+          renderCurtains(currentProgress);
+        };
+        img.src = CUSTOM_IMAGE_URL;
+      }
+
+      let targetProgress = 0;
+      let currentProgress = 0;
+      let velocity = 0;
+      let lastTime = performance.now();
+      let isAnimating = false;
+
+      function renderCurtains(progress) {
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(uSamplerLoc, 0);
+        gl.uniform1f(uProgressLoc, progress);
+        gl.uniform2f(uResolutionLoc, canvas.width, canvas.height);
+
+        gl.uniform1f(uIsShadowLoc, 1.0);
+        drawMesh(leftCurtainMesh);
+        drawMesh(rightCurtainMesh);
+
+        gl.uniform1f(uIsShadowLoc, 0.0);
+        drawMesh(leftCurtainMesh);
+        drawMesh(rightCurtainMesh);
+
+        const waistProgress = progress + (progress * (1.0 - progress)) * 0.35;
+        const waistScale = 1.0 - (1.0 - 0.11) * waistProgress;
+        const halfScreenPx = window.innerWidth * 0.5;
+        const ropeWidth = Math.max(0, halfScreenPx * waistScale + 12);
+
+        tiebackLeft.style.width = `${ropeWidth}px`;
+        tiebackRight.style.width = `${ropeWidth}px`;
+
+        const ropeOpacity = Math.min(1, Math.max(0, (progress - 0.12) / 0.35));
+        tiebackLeft.style.opacity = ropeOpacity;
+        tiebackRight.style.opacity = ropeOpacity;
+      }
+
+      function animate(now) {
+        const dt = Math.min((now - lastTime) / 1000, 0.05);
+        lastTime = now;
+
+        const stiffness = 14;
+        const damping = 6.8;
+
+        const force = (targetProgress - currentProgress) * stiffness;
+        velocity = (velocity + force * dt) * Math.exp(-damping * dt);
+        currentProgress += velocity * dt;
+
+        if (Math.abs(targetProgress - currentProgress) < 0.0002 && Math.abs(velocity) < 0.0002) {
+          currentProgress = targetProgress;
+          velocity = 0;
+          renderCurtains(currentProgress);
+          isAnimating = false;
+          return;
+        }
+
+        renderCurtains(currentProgress);
+        requestAnimationFrame(animate);
+      }
+
+      function startAnimation() {
+        if (!isAnimating) {
+          isAnimating = true;
+          lastTime = performance.now();
+          requestAnimationFrame(animate);
+        }
+      }
+
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        renderCurtains(currentProgress);
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+
+      toggleBtn.addEventListener('click', () => {
+        const isOpen = document.body.classList.toggle('curtain-open');
+        targetProgress = isOpen ? 1 : 0;
+        toggleBtn.textContent = isOpen ? 'Close Curtain' : 'Open Curtain';
+        startAnimation();
+      });
+    })();
+  </script>
+</body>
+</html>

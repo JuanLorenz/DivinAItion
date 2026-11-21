@@ -1,0 +1,630 @@
+/* ==========================================================================
+   Combined Nocturne Starfield + Tarot Stage + Velvet Curtain (Streamlit-Safe)
+   ========================================================================== */
+
+:root {
+  --star-speed: 1;
+  --star-trail-opacity: 1;
+  --star-twinkle-intensity: 1;
+}
+
+/* --- Streamlit Host Overrides --- */
+[data-testid="stAppViewContainer"],
+.stApp {
+  background: #020524 !important;
+  color: #f1f5f9;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+[data-testid="stHeader"] {
+  background: transparent !important;
+}
+
+[data-testid="stMainBlockContainer"] {
+  position: relative;
+  z-index: 5;
+}
+
+/* Scoped Box-Sizing (avoids breaking Streamlit native widgets) */
+.starfield-bg,
+.starfield-bg *,
+.tarot-app,
+.tarot-app *,
+.stage,
+.stage *,
+.curtain-stage,
+.curtain-stage *,
+.controls,
+.controls *,
+.toggle-btn {
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   1. Nocturne Starfield Background
+   ========================================================================== */
+.starfield-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 85% 45% at 50% 0%, rgba(16, 34, 118, 0.32) 0%, transparent 72%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(56, 18, 102, 0.38) 0%, transparent 75%),
+    linear-gradient(
+      180deg,
+      #020836 0%,
+      #030833 34%,
+      #04041f 62%,
+      #140632 84%,
+      #210948 100%
+    );
+}
+
+.starfield-layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* Top Falling Stars */
+.falling-star {
+  position: absolute;
+  top: 0;
+  left: var(--x, 50%);
+  width: var(--trail-w, 1.5px);
+  height: var(--tail, 36vh);
+  transform: translate3d(0, calc(-100% - 2vh), 0);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: star-fall calc(var(--dur, 9.5s) / var(--star-speed)) linear infinite;
+  animation-delay: calc(var(--delay, 0s) / var(--star-speed));
+}
+
+.falling-star__trail {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  opacity: var(--star-trail-opacity);
+  background: linear-gradient(
+    to bottom,
+    rgba(215, 224, 255, 0) 0%,
+    rgba(215, 224, 255, 0.08) 38%,
+    rgba(232, 236, 250, 0.34) 76%,
+    var(--trail-tip, rgba(255, 252, 244, 0.78)) 100%
+  );
+}
+
+.falling-star__head {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: var(--head, 6px);
+  height: var(--head, 6px);
+  transform: translate(-50%, 50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #ffffff 0%,
+    var(--tint, #eef2ff) 48%,
+    transparent 76%
+  );
+  box-shadow:
+    0 0 calc(var(--head, 6px) * 1.5) calc(var(--head, 6px) * 0.35) var(--glow, rgba(226, 232, 255, 0.72)),
+    0 0 calc(var(--head, 6px) * 3.6) calc(var(--head, 6px) * 0.9) var(--halo, rgba(180, 198, 255, 0.28));
+}
+
+.falling-star__head::before,
+.falling-star__head::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--head, 6px) * 2.1);
+  height: 1.5px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, transparent 72%);
+  transform: translate(-50%, -50%);
+  opacity: 0.75;
+}
+
+.falling-star__head::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.falling-star--silver {
+  --tint: #eef2ff;
+  --trail-tip: rgba(235, 240, 255, 0.74);
+  --glow: rgba(226, 233, 255, 0.72);
+  --halo: rgba(176, 196, 255, 0.28);
+}
+
+.falling-star--ivory {
+  --tint: #fff9ec;
+  --trail-tip: rgba(255, 248, 232, 0.72);
+  --glow: rgba(255, 244, 218, 0.68);
+  --halo: rgba(242, 224, 185, 0.25);
+}
+
+.falling-star--champagne {
+  --tint: #f8e9cc;
+  --trail-tip: rgba(247, 230, 198, 0.72);
+  --glow: rgba(245, 222, 178, 0.7);
+  --halo: rgba(232, 198, 138, 0.26);
+}
+
+@keyframes star-fall {
+  0% {
+    transform: translate3d(0, calc(-100% - 2vh), 0);
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--peak, 0.88);
+  }
+  42% {
+    opacity: var(--peak, 0.88);
+  }
+  74% {
+    opacity: calc(var(--peak, 0.88) * 0.42);
+  }
+  100% {
+    transform: translate3d(0, calc(var(--fall, 58vh) - 100%), 0);
+    opacity: 0;
+  }
+}
+
+/* Mid-Sky Faint Micro-Stars */
+.micro-star {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size, 2px);
+  height: var(--size, 2px);
+  border-radius: 50%;
+  background: rgba(232, 234, 248, 0.85);
+  opacity: var(--base-op, 0.25);
+  will-change: opacity, transform;
+  animation: micro-shimmer var(--dur, 6s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes micro-shimmer {
+  0%, 100% {
+    opacity: calc(var(--base-op, 0.25) * 0.5);
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: calc(var(--base-op, 0.25) * 1.25);
+    transform: scale(1.1);
+  }
+}
+
+/* Bottom Subtle Twinkling 4-Point Astroid Stars */
+.twinkle-star {
+  position: absolute;
+  left: var(--x);
+  bottom: var(--bottom);
+  width: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px));
+  height: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px));
+  background: var(--color, #65547c);
+  clip-path: polygon(
+    50% 0%, 55% 32%, 60% 40%, 68% 45%,
+    100% 50%, 68% 55%, 60% 60%, 55% 68%,
+    50% 100%, 45% 68%, 40% 60%, 32% 55%,
+    0% 50%, 32% 45%, 40% 40%, 45% 32%
+  );
+  opacity: var(--base-op, 0.72);
+  will-change: opacity, transform;
+  animation: star-twinkle var(--dur, 6s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes star-twinkle {
+  0%, 100% {
+    opacity: max(0.08, calc(var(--base-op, 0.72) * (1 - 0.55 * var(--star-twinkle-intensity))));
+    transform: scale(0.86);
+  }
+  50% {
+    opacity: min(1, calc(var(--base-op, 0.72) * (1 + 0.28 * var(--star-twinkle-intensity))));
+    transform: scale(calc(1 + 0.12 * var(--star-twinkle-intensity)));
+  }
+}
+
+/* ==========================================================================
+   2. Tarot Stage & VFX Layers
+   ========================================================================== */
+.tarot-app {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+}
+
+.tarot-stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 24px 16px 115px;
+}
+
+.tarot-origin {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tarot-card {
+  position: absolute;
+  border-radius: 9px;
+  background: #060508;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.82);
+  will-change: transform, opacity;
+  user-select: none;
+}
+
+.tarot-card.is-interactive {
+  cursor: pointer;
+}
+
+.tarot-card.is-interactive:hover {
+  filter: brightness(1.12);
+}
+
+.tarot-card--singularity {
+  pointer-events: none;
+  opacity: 0;
+  z-index: 30;
+  box-shadow: 0 0 48px rgba(240, 192, 110, 0.45), 0 0 96px rgba(139, 92, 246, 0.35);
+}
+
+.tarot-card svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* VFX Layers */
+.vfx-altar,
+.vfx-ring,
+.vfx-core,
+.vfx-shockwave,
+.vfx-shockwave-inner {
+  position: absolute;
+  pointer-events: none;
+}
+
+.vfx-altar > div {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(167, 139, 250, 0.24) 0%,
+    rgba(109, 40, 217, 0.12) 45%,
+    transparent 72%
+  );
+  filter: blur(22px);
+}
+
+.vfx-ring {
+  opacity: 0;
+}
+
+.vfx-ring .r1 {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(252, 211, 77, 0.26);
+}
+
+.vfx-ring .r2 {
+  position: absolute;
+  inset: 7%;
+  border-radius: 999px;
+  border: 1px dashed rgba(196, 181, 253, 0.3);
+}
+
+.vfx-ring .r3 {
+  position: absolute;
+  inset: 16%;
+  border-radius: 999px;
+  border: 1px solid rgba(253, 230, 138, 0.15);
+}
+
+.vfx-core {
+  opacity: 0;
+}
+
+.vfx-core > div {
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 245, 214, 0.9) 0%,
+    rgba(232, 175, 92, 0.45) 28%,
+    rgba(124, 58, 237, 0.28) 58%,
+    transparent 76%
+  );
+  filter: blur(24px);
+}
+
+.vfx-shockwave {
+  opacity: 0;
+  border-radius: 999px;
+  border: 2px solid rgba(253, 230, 138, 0.85);
+  box-shadow: 0 0 40px rgba(251, 191, 36, 0.65);
+}
+
+.vfx-shockwave-inner {
+  opacity: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(221, 214, 254, 0.72);
+}
+
+.vfx-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 244, 214, 0.75) 0%,
+    rgba(167, 139, 250, 0.25) 32%,
+    transparent 68%
+  );
+}
+
+/* Tarot Controls Bar */
+.controls {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 24px);
+}
+
+.status {
+  font-size: 12px;
+  color: rgba(203, 213, 225, 0.92);
+  text-align: center;
+}
+
+.status strong {
+  color: #fde68a;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 10, 38, 0.85);
+  backdrop-filter: blur(12px);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.btn {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 150ms ease, opacity 150ms ease;
+}
+
+.btn-primary {
+  background: #fbbf24;
+  color: #020617;
+}
+
+.btn-primary:hover {
+  background: #fcd34d;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: #e2e8f0;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.stepper .btn {
+  min-height: 36px;
+  min-width: 34px;
+  padding: 6px 10px;
+}
+
+.stepper-label {
+  min-width: 66px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fde68a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   3. Reveal Stage & Velvet Curtain Overlay
+   ========================================================================== */
+.stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 100dvh;
+  background: radial-gradient(circle at center, #ffffff 0%, #f3f4f6 68%, #dce0e6 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Optional transparent modifier if using .stage over .starfield-bg */
+.stage--transparent {
+  background: transparent;
+}
+
+.stage-content {
+  opacity: 0;
+  transform: scale(0.95) translateY(14px);
+  transition: opacity 1.1s ease 0.35s, transform 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.35s;
+}
+
+body.curtain-open .stage-content,
+.curtain-open .stage-content {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.stage h1 {
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  color: #18181b;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.6rem;
+}
+
+.stage p {
+  font-size: 1.15rem;
+  color: #52525b;
+  max-width: 460px;
+  line-height: 1.5;
+  margin: 0 auto;
+}
+
+/* Curtain Container */
+.curtain-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+body.curtain-open .curtain-stage,
+.curtain-open .curtain-stage,
+.curtain-stage.curtain-open {
+  pointer-events: none;
+}
+
+#curtainCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Braided Gold Tie-Back Ropes */
+.tieback {
+  position: absolute;
+  top: 54%; /* Matches PINCH_Y in shader */
+  height: 28px;
+  z-index: 55;
+  pointer-events: none;
+  transform: translateY(-50%);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55));
+  will-change: width, opacity;
+  opacity: 0;
+}
+
+.tieback--left {
+  left: -6px;
+}
+
+.tieback--right {
+  right: -6px;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+/* Curtain Toggle Button */
+.toggle-btn {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  padding: 14px 34px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, #b80014, #70000b);
+  border: 1px solid rgba(255, 215, 130, 0.35);
+  border-radius: 999px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.toggle-btn:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(135deg, #d60018, #8c000e);
+}
+
+.toggle-btn:active {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   4. Responsive & Accessibility
+   ========================================================================== */
+@media (max-width: 640px) {
+  .star--desktop-only {
+    display: none;
+  }
+  .falling-star__head {
+    width: calc(var(--head, 6px) * 0.88);
+    height: calc(var(--head, 6px) * 0.88);
+  }
+  .twinkle-star {
+    width: calc(var(--size, 14px) * 0.72);
+    height: calc(var(--size, 14px) * 0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .falling-star {
+    animation: none;
+    transform: translate3d(0, calc(var(--fall, 50vh) * 0.72 - 100%), 0);
+    opacity: calc(var(--peak, 0.85) * 0.8);
+  }
+  .twinkle-star,
+  .micro-star {
+    animation: none;
+  }
+}
