@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tarot Shuffle, Singularity &amp; Deck</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #020524;
+      color: #f1f5f9;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    /* Starry Night Background */
+    .starfield-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 85% 45% at 50% 0%, rgba(16, 34, 118, 0.32) 0%, transparent 72%),
+        radial-gradient(ellipse 90% 40% at 50% 100%, rgba(56, 18, 102, 0.38) 0%, transparent 75%),
+        linear-gradient(180deg, #020836 0%, #030833 34%, #04041f 62%, #140632 84%, #210948 100%);
+    }
+    .starfield-layer { position: absolute; inset: 0; }
+
+    .falling-star {
+      position: absolute;
+      top: 0;
+      left: var(--x, 50%);
+      width: var(--trail-w, 1.5px);
+      height: var(--tail, 36vh);
+      transform: translate3d(0, calc(-100% - 2vh), 0);
+      opacity: 0;
+      will-change: transform, opacity;
+      animation: star-fall var(--dur, 9.5s) linear infinite;
+      animation-delay: var(--delay, 0s);
+    }
+    .falling-star__trail {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      background: linear-gradient(
+        to bottom,
+        rgba(215, 224, 255, 0) 0%,
+        rgba(215, 224, 255, 0.08) 38%,
+        rgba(232, 236, 250, 0.34) 76%,
+        rgba(255, 252, 244, 0.78) 100%
+      );
+    }
+    .falling-star__head {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: var(--head, 6px);
+      height: var(--head, 6px);
+      transform: translate(-50%, 50%);
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff 0%, #eef2ff 48%, transparent 76%);
+      box-shadow:
+        0 0 calc(var(--head, 6px) * 1.5) calc(var(--head, 6px) * 0.35) rgba(226, 233, 255, 0.72),
+        0 0 calc(var(--head, 6px) * 3.6) calc(var(--head, 6px) * 0.9) rgba(176, 196, 255, 0.28);
+    }
+    @keyframes star-fall {
+      0% { transform: translate3d(0, calc(-100% - 2vh), 0); opacity: 0; }
+      10% { opacity: var(--peak, 0.88); }
+      42% { opacity: var(--peak, 0.88); }
+      74% { opacity: calc(var(--peak, 0.88) * 0.42); }
+      100% { transform: translate3d(0, calc(var(--fall, 58vh) - 100%), 0); opacity: 0; }
+    }
+
+    .twinkle-star {
+      position: absolute;
+      left: var(--x);
+      bottom: var(--bottom);
+      width: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px));
+      height: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px));
+      background: var(--color, #65547c);
+      clip-path: polygon(
+        50% 0%, 55% 32%, 60% 40%, 68% 45%,
+        100% 50%, 68% 55%, 60% 60%, 55% 68%,
+        50% 100%, 45% 68%, 40% 60%, 32% 55%,
+        0% 50%, 32% 45%, 40% 40%, 45% 32%
+      );
+      opacity: var(--base-op, 0.72);
+      will-change: opacity, transform;
+      animation: star-twinkle var(--dur, 6s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+    @keyframes star-twinkle {
+      0%, 100% { opacity: calc(var(--base-op, 0.72) * 0.45); transform: scale(0.86); }
+      50% { opacity: min(1, calc(var(--base-op, 0.72) * 1.25)); transform: scale(1.12); }
+    }
+
+    /* Tarot Stage */
+    .tarot-app {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100dvh;
+    }
+    .tarot-stage {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 24px 16px 115px;
+    }
+    .tarot-origin {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tarot-card {
+      position: absolute;
+      border-radius: 9px;
+      background: #060508;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.82);
+      will-change: transform, opacity;
+      user-select: none;
+    }
+    .tarot-card.is-interactive { cursor: pointer; }
+    .tarot-card.is-interactive:hover { filter: brightness(1.12); }
+    .tarot-card--singularity {
+      pointer-events: none;
+      opacity: 0;
+      z-index: 30;
+      box-shadow: 0 0 48px rgba(240, 192, 110, 0.45), 0 0 96px rgba(139, 92, 246, 0.35);
+    }
+    .tarot-card svg { display: block; width: 100%; height: 100%; }
+
+    /* VFX Layers */
+    .vfx-altar, .vfx-ring, .vfx-core, .vfx-shockwave, .vfx-shockwave-inner {
+      position: absolute;
+      pointer-events: none;
+    }
+    .vfx-altar > div {
+      width: 100%; height: 100%; border-radius: 999px;
+      background: radial-gradient(ellipse at center, rgba(167, 139, 250, 0.24) 0%, rgba(109, 40, 217, 0.12) 45%, transparent 72%);
+      filter: blur(22px);
+    }
+    .vfx-ring { opacity: 0; }
+    .vfx-ring .r1 { position: absolute; inset: 0; border-radius: 999px; border: 1px solid rgba(252, 211, 77, 0.26); }
+    .vfx-ring .r2 { position: absolute; inset: 7%; border-radius: 999px; border: 1px dashed rgba(196, 181, 253, 0.3); }
+    .vfx-ring .r3 { position: absolute; inset: 16%; border-radius: 999px; border: 1px solid rgba(253, 230, 138, 0.15); }
+    .vfx-core { opacity: 0; }
+    .vfx-core > div {
+      width: 100%; height: 100%; border-radius: 999px;
+      background: radial-gradient(circle, rgba(255, 245, 214, 0.9) 0%, rgba(232, 175, 92, 0.45) 28%, rgba(124, 58, 237, 0.28) 58%, transparent 76%);
+      filter: blur(24px);
+    }
+    .vfx-shockwave {
+      opacity: 0; border-radius: 999px;
+      border: 2px solid rgba(253, 230, 138, 0.85);
+      box-shadow: 0 0 40px rgba(251, 191, 36, 0.65);
+    }
+    .vfx-shockwave-inner {
+      opacity: 0; border-radius: 999px;
+      border: 1px solid rgba(221, 214, 254, 0.72);
+    }
+    .vfx-flash {
+      position: fixed; inset: 0; z-index: 20; pointer-events: none; opacity: 0;
+      background: radial-gradient(circle at center, rgba(255, 244, 214, 0.75) 0%, rgba(167, 139, 250, 0.25) 32%, transparent 68%);
+    }
+
+    /* Controls */
+    .controls {
+      position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 40;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      max-width: calc(100vw - 24px);
+    }
+    .status { font-size: 12px; color: rgba(203, 213, 225, 0.92); text-align: center; }
+    .status strong { color: #fde68a; }
+    .bar {
+      display: flex; align-items: center; gap: 6px; padding: 6px;
+      border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(7, 10, 38, 0.85); backdrop-filter: blur(12px);
+      overflow-x: auto; max-width: 100%;
+    }
+    .btn {
+      min-height: 40px; padding: 8px 14px; border: 0; border-radius: 8px;
+      font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
+      transition: background-color 150ms ease, opacity 150ms ease;
+    }
+    .btn-primary { background: #fbbf24; color: #020617; }
+    .btn-primary:hover { background: #fcd34d; }
+    .btn-ghost { background: transparent; color: #e2e8f0; }
+    .btn-ghost:hover { background: rgba(255, 255, 255, 0.1); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .stepper {
+      display: inline-flex; align-items: center; gap: 2px;
+      padding: 2px; border-radius: 8px; background: rgba(255, 255, 255, 0.06);
+    }
+    .stepper .btn { min-height: 36px; min-width: 34px; padding: 6px 10px; }
+    .stepper-label {
+      min-width: 66px; text-align: center; font-size: 12px;
+      font-weight: 600; color: #fde68a; font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 640px) {
+      .star--desktop-only { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .falling-star, .twinkle-star { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="starfield-bg" aria-hidden="true">
+    <div class="starfield-layer" id="fallingLayer"></div>
+    <div class="starfield-layer" id="twinkleLayer"></div>
+  </div>
+
+  <div class="tarot-app">
+    <main class="tarot-stage" id="stage">
+      <div class="vfx-altar" id="altarGlow"><div></div></div>
+      <div class="vfx-ring" id="mandalaRing"><div class="r1"></div><div class="r2"></div><div class="r3"></div></div>
+      <div class="vfx-core" id="coreGlow"><div></div></div>
+      <div class="vfx-shockwave" id="swOuter"></div>
+      <div class="vfx-shockwave-inner" id="swInner"></div>
+      <div class="vfx-flash" id="flash"></div>
+      <div class="tarot-origin" id="origin">
+        <div class="tarot-card tarot-card--singularity" id="singularity"></div>
+      </div>
+    </main>
+
+    <footer class="controls">
+      <div class="status" id="status"><strong>Formation</strong> · 12 cards aligned</div>
+      <div class="bar">
+        <button type="button" class="btn btn-primary" id="shuffleBtn">Shuffle Cards</button>
+        <button type="button" class="btn btn-ghost" id="resetBtn" disabled>Reset</button>
+        <div class="stepper" aria-label="Number of cards">
+          <button type="button" class="btn btn-ghost" id="decBtn" aria-label="Decrease cards">-</button>
+          <span class="stepper-label" id="countLabel">12 cards</span>
+          <button type="button" class="btn btn-ghost" id="incBtn" aria-label="Increase cards">+</button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      // =========================================================
+      // ADJUST NUMBER OF CARDS HERE (or use - / + buttons below)
+      // =========================================================
+      const MIN_CARDS = 4;
+      const MAX_CARDS = 78;
+      let cardCount = 78;
+
+      // Populate starry sky background
+      const fallingLayer = document.getElementById('fallingLayer');
+      const twinkleLayer = document.getElementById('twinkleLayer');
+      for (let i = 0; i < 24; i++) {
+        const s = document.createElement('span');
+        s.className = 'falling-star' + (i % 3 === 1 ? ' star--desktop-only' : '');
+        const x = (3 + i * 4.1 + (i % 2) * 1.3).toFixed(1);
+        const tail = 18 + ((i * 11) % 36);
+        const fall = 30 + ((i * 13) % 46);
+        const dur = (7.4 + (i % 5) * 0.9).toFixed(1);
+        const delay = (-1.1 - ((i * 1.7) % 7.5)).toFixed(1);
+        s.style.cssText = `--x:${x}%;--tail:${tail}vh;--fall:${fall}vh;--head:${5 + (i % 3)}px;--dur:${dur}s;--delay:${delay}s;--peak:${(0.7 + (i % 4) * 0.06).toFixed(2)}`;
+        s.innerHTML = '<span class="falling-star__trail"></span><span class="falling-star__head"></span>';
+        fallingLayer.appendChild(s);
+      }
+      for (let i = 0; i < 32; i++) {
+        const t = document.createElement('span');
+        t.className = 'twinkle-star' + (i % 4 === 2 ? ' star--desktop-only' : '');
+        const isLeft = i < 16;
+        const x = isLeft ? (3 + (i * 2.1) % 33) : (62 + ((i - 16) * 2.2) % 35);
+        const bottom = 2 + ((i * 7) % 31);
+        const size = 7 + (i % 5) * 3;
+        t.style.cssText = `--x:${x.toFixed(1)}%;--bottom:${bottom}%;--size:${size}px;--color:#65547c;--base-op:${(0.65 + (i % 3) * 0.07).toFixed(2)};--dur:${(4.6 + (i % 5) * 0.6).toFixed(1)}s;--delay:${(-0.6 - (i * 0.45) % 4.5).toFixed(1)}s`;
+        twinkleLayer.appendChild(t);
+      }
+
+      // Hand-tuned 12-card layout + dynamic layout for any other count
+      const REFERENCE_12 = [
+        { dx: 0, dy: -82, z: 1 }, { dx: -82, dy: -58, z: 4 }, { dx: 82, dy: -58, z: 4 },
+        { dx: -136, dy: -36, z: 3 }, { dx: 136, dy: -36, z: 3 }, { dx: -174, dy: -12, z: 2 },
+        { dx: 174, dy: -12, z: 2 }, { dx: -134, dy: 24, z: 5 }, { dx: 134, dy: 24, z: 5 },
+        { dx: -72, dy: 58, z: 6 }, { dx: 72, dy: 58, z: 6 }, { dx: 0, dy: 86, z: 7 },
+      ];
+
+      function buildCardSlots(count) {
+        if (count === 12) return REFERENCE_12;
+        return Array.from({ length: count }, (_, i) => {
+          const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+          return {
+            dx: Math.round(Math.cos(angle) * 174),
+            dy: Math.round(Math.sin(angle) * 84),
+            z: Math.round(((Math.sin(angle) + 1) / 2) * count) + 1,
+          };
+        });
+      }
+
+      function cardSvg(id) {
+        return `<svg viewBox="0 0 200 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="g-${id}" x1="20" y1="10" x2="180" y2="310" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#f2c47d"/><stop offset="50%" stop-color="#d48c3e"/><stop offset="100%" stop-color="#b8722c"/>
+            </linearGradient>
+          </defs>
+          <rect width="200" height="320" rx="10" fill="#050408"/>
+          <rect x="5.5" y="5.5" width="189" height="309" rx="7.5" stroke="url(#g-${id})" stroke-width="2.2"/>
+          <rect x="10.5" y="10.5" width="179" height="299" rx="5" stroke="url(#g-${id})" stroke-width="1.1" opacity="0.8"/>
+          <g stroke="url(#g-${id})" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 56 C16 28,32 17,56 17 C42 22,34 31,35 44 C36 53,45 55,49 48" stroke-width="1.5"/>
+            <path d="M184 56 C184 28,168 17,144 17 C158 22,166 31,165 44 C164 53,155 55,151 48" stroke-width="1.5"/>
+            <path d="M100 18 C88 32,86 50,100 66 C114 50,112 32,100 18 Z M100 58 C82 40,62 34,50 48 C65 49,77 59,86 78 M100 58 C118 40,138 34,150 48 C135 49,123 59,114 78 M100 22 L100 124" stroke-width="1.5"/>
+            <g transform="translate(0,320) scale(1,-1)">
+              <path d="M16 56 C16 28,32 17,56 17 C42 22,34 31,35 44 C36 53,45 55,49 48" stroke-width="1.5"/>
+              <path d="M184 56 C184 28,168 17,144 17 C158 22,166 31,165 44 C164 53,155 55,151 48" stroke-width="1.5"/>
+              <path d="M100 18 C88 32,86 50,100 66 C114 50,112 32,100 18 Z M100 58 C82 40,62 34,50 48 C65 49,77 59,86 78 M100 58 C118 40,138 34,150 48 C135 49,123 59,114 78 M100 22 L100 124" stroke-width="1.5"/>
+            </g>
+            <ellipse cx="100" cy="160" rx="54" ry="31" fill="#060408" stroke-width="1.7"/>
+            <ellipse cx="100" cy="160" rx="34" ry="18.5" stroke-width="1.6"/>
+            <ellipse cx="100" cy="160" rx="22" ry="12.5" fill="#030204" stroke-width="1.9"/>
+          </g>
+        </svg>`;
+      }
+
+      const T_SHUFFLE = 2.25, T_CIRCLE = 5.15, T_CONVERGE = 6.75, T_SINGULARITY = 8.15;
+      const stage = document.getElementById('stage');
+      const origin = document.getElementById('origin');
+      const altarGlow = document.getElementById('altarGlow');
+      const mandalaRing = document.getElementById('mandalaRing');
+      const coreGlow = document.getElementById('coreGlow');
+      const swOuter = document.getElementById('swOuter');
+      const swInner = document.getElementById('swInner');
+      const flash = document.getElementById('flash');
+      const singularity = document.getElementById('singularity');
+      const statusEl = document.getElementById('status');
+      const shuffleBtn = document.getElementById('shuffleBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const decBtn = document.getElementById('decBtn');
+      const incBtn = document.getElementById('incBtn');
+      const countLabel = document.getElementById('countLabel');
+
+      singularity.innerHTML = cardSvg('sing');
+
+      const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+      const easeOutCubic = (t) => 1 - Math.pow(1 - clamp01(t), 3);
+      const easeInOutCubic = (t) => { const x = clamp01(t); return x < 0.5 ? 4*x*x*x : 1 - Math.pow(-2*x+2,3)/2; };
+      const easeInQuad = (t) => clamp01(t) * clamp01(t);
+      const easeInQuart = (t) => Math.pow(clamp01(t), 4);
+      const easeOutQuint = (t) => 1 - Math.pow(1 - clamp01(t), 5);
+
+      let slots = [], cards = [], scale = 1, radius = 220, phase = 'idle', rafId = 0;
+
+      function rebuildDeck(nextCount) {
+        cardCount = Math.max(MIN_CARDS, Math.min(MAX_CARDS, nextCount));
+        countLabel.textContent = cardCount + ' cards';
+        decBtn.disabled = cardCount <= MIN_CARDS;
+        incBtn.disabled = cardCount >= MAX_CARDS;
+
+        cards.forEach((el) => el.remove());
+        slots = buildCardSlots(cardCount);
+        cards = slots.map((_, i) => {
+          const el = document.createElement('div');
+          el.className = 'tarot-card is-interactive';
+          el.innerHTML = cardSvg(i);
+          el.addEventListener('click', () => { if (phase === 'idle' || phase === 'deck') start(); });
+          origin.insertBefore(el, singularity);
+          return el;
+        });
+        measure();
+        reset();
+      }
+
+      function measure() {
+        const rect = stage.getBoundingClientRect();
+        scale = Math.max(0.54, Math.min(rect.width / 540, rect.height / 470, 1.2));
+        const w = Math.round(92 * scale), h = Math.round(w * 1.6);
+        radius = Math.max(96, Math.min(rect.width * 0.30, rect.height * 0.29, 232));
+        cards.forEach((el) => { el.style.width = w + 'px'; el.style.height = h + 'px'; });
+        singularity.style.width = w + 'px'; singularity.style.height = h + 'px';
+        altarGlow.style.width = Math.round(380 * scale) + 'px'; altarGlow.style.height = Math.round(240 * scale) + 'px';
+        mandalaRing.style.width = Math.round(radius * 2.18) + 'px'; mandalaRing.style.height = Math.round(radius * 2.18) + 'px';
+        coreGlow.style.width = Math.round(280 * scale) + 'px'; coreGlow.style.height = Math.round(280 * scale) + 'px';
+        swOuter.style.width = Math.round(210 * scale) + 'px'; swOuter.style.height = Math.round(210 * scale) + 'px';
+        swInner.style.width = Math.round(180 * scale) + 'px'; swInner.style.height = Math.round(180 * scale) + 'px';
+        if (phase === 'idle') reset();
+      }
+
+      function reset() {
+        cancelAnimationFrame(rafId);
+        phase = 'idle';
+        statusEl.innerHTML = `<strong>Formation</strong> · ${cardCount} cards aligned`;
+        shuffleBtn.textContent = 'Shuffle Cards';
+        resetBtn.disabled = true;
+        slots.forEach((s, i) => {
+          cards[i].classList.add('is-interactive');
+          cards[i].style.transform = `translate3d(${s.dx * scale}px, ${s.dy * scale}px, 0) rotate(0deg) scale(1)`;
+          cards[i].style.opacity = '1';
+          cards[i].style.zIndex = String(s.z);
+        });
+        altarGlow.style.opacity = '1';
+        altarGlow.style.transform = `translateY(${Math.round(118 * scale)}px)`;
+        mandalaRing.style.opacity = coreGlow.style.opacity = swOuter.style.opacity = swInner.style.opacity = flash.style.opacity = singularity.style.opacity = '0';
+      }
+
+      function start() {
+        cancelAnimationFrame(rafId);
+        phase = 'shuffling';
+        shuffleBtn.textContent = 'Replay Sequence';
+        resetBtn.disabled = false;
+        cards.forEach((el) => el.classList.remove('is-interactive'));
+
+        const count = cardCount;
+        const mid = (count - 1) / 2;
+        const stepX = Math.min(1.15, 13 / count);
+        const stepY = Math.min(1.8, 20 / count);
+        const stagger = Math.min(0.032, 0.38 / count);
+        const halfRank = Math.max(1, Math.floor(count / 4));
+        let last = performance.now(), elapsed = 0;
+
+        function tick(now) {
+          const dt = Math.min((now - last) / 1000, 0.05);
+          last = now; elapsed += dt;
+
+          if (elapsed < T_SHUFFLE) {
+            statusEl.innerHTML = '<strong>Shuffling</strong> · Riffle weave';
+            const t = elapsed;
+            slots.forEach((s, i) => {
+              const sx = s.dx * scale, sy = s.dy * scale, side = i % 2 === 0 ? -1 : 1, rank = Math.floor(i / 2);
+              let x = 0, y = 0, rot = 0, sc = 1, z = s.z;
+              if (t < 0.42) {
+                const u = easeOutCubic(t / 0.42);
+                x = sx + (side * (95 + (rank % 6) * 18) * scale - sx) * u;
+                y = sy + ((rank - halfRank) * Math.min(14, 70 / count) * scale - sy) * u;
+                rot = side * (11 + (rank % 6) * 3.2) * u; sc = 1 + 0.04 * u; z = i + 2;
+              } else if (t < 1.8) {
+                const p = (t - 0.42) / 1.38, wp = p * Math.PI * 3 + i * (3.12 / count), sw = Math.cos(wp);
+                const env = Math.sin(Math.min(1, p * 1.15) * Math.PI * 0.5) * (1 - 0.25 * p);
+                x = side * sw * (128 + (i % 3) * 24) * scale * (0.45 + 0.55 * env);
+                y = Math.sin(wp * 2) * 28 * scale + (rank - halfRank) * 4 * scale * (1 - p);
+                rot = side * sw * 17; sc = 1.04 + 0.04 * Math.abs(Math.sin(wp));
+                z = Math.round(count * 0.6 + Math.sin(wp) * (count * 0.5));
+              } else {
+                const u = easeInOutCubic((t - 1.8) / 0.45), we = Math.PI * 3 + i * (3.12 / count), se = Math.cos(we);
+                x = side * se * (128 + (i % 3) * 24) * scale * 0.86 * (1 - u);
+                y = Math.sin(we * 2) * 28 * scale * (1 - u);
+                rot = side * se * 17 * (1 - u); sc = 1.04 - 0.04 * u; z = i + 1;
+              }
+              cards[i].style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+              cards[i].style.opacity = '1'; cards[i].style.zIndex = String(z);
+            });
+            altarGlow.style.opacity = clamp01(1 - elapsed / 1.4).toFixed(3);
+          } else if (elapsed < T_CIRCLE) {
+            if (phase !== 'circle') { phase = 'circle'; statusEl.innerHTML = '<strong>Orbital Circle</strong> · Rotating ring'; }
+            const tau = elapsed - T_SHUFFLE, bu = clamp01(tau / 0.85), r = radius * easeOutQuint(bu);
+            const theta = 0.35 * tau + 0.38 * tau * tau, rb = easeOutCubic(clamp01(tau / 0.5));
+            slots.forEach((_, i) => {
+              const ang = (i / count) * Math.PI * 2 - Math.PI / 2 + theta;
+              cards[i].style.transform = `translate3d(${(r * Math.cos(ang)).toFixed(2)}px, ${(r * Math.sin(ang)).toFixed(2)}px, 0) rotate(${(((ang * 180) / Math.PI + 90) * rb).toFixed(2)}deg) scale(1)`;
+              cards[i].style.opacity = '1'; cards[i].style.zIndex = String(i + 2);
+            });
+            mandalaRing.style.opacity = (easeOutCubic(clamp01(tau / 0.75)) * 0.85).toFixed(3);
+            mandalaRing.style.transform = `scale(${(0.35 + 0.65 * easeOutQuint(bu)).toFixed(3)}) rotate(${(-(theta * 180) / Math.PI * 0.55).toFixed(2)}deg)`;
+          } else if (elapsed < T_CONVERGE) {
+            if (phase !== 'converging') { phase = 'converging'; statusEl.innerHTML = '<strong>Convergence</strong> · Spiraling inward'; }
+            const dur = T_CONVERGE - T_CIRCLE, s = clamp01((elapsed - T_CIRCLE) / dur);
+            const cd = T_CIRCLE - T_SHUFFLE, t0 = 0.35 * cd + 0.38 * cd * cd, w0 = 0.35 + 0.76 * cd;
+            const theta = t0 + dur * (w0 * s + 6.2 * Math.pow(s, 2.35)), r = radius * (1 - easeInQuart(s));
+            const sc = 1 - 0.16 * easeInQuad(s), op = s > 0.9 ? clamp01(1 - (s - 0.9) / 0.1) : 1;
+            slots.forEach((_, i) => {
+              const ang = (i / count) * Math.PI * 2 - Math.PI / 2 + theta;
+              cards[i].style.transform = `translate3d(${(r * Math.cos(ang)).toFixed(2)}px, ${(r * Math.sin(ang)).toFixed(2)}px, 0) rotate(${((ang * 180) / Math.PI + 90).toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+              cards[i].style.opacity = op.toFixed(3);
+            });
+            mandalaRing.style.opacity = (0.85 * (1 - easeInQuad(s))).toFixed(3);
+            coreGlow.style.opacity = (0.5 + 0.5 * easeInQuad(s)).toFixed(3);
+            coreGlow.style.transform = `scale(${(0.7 + 0.85 * easeInQuart(s)).toFixed(3)})`;
+          } else if (elapsed < T_SINGULARITY) {
+            if (phase !== 'singularity') { phase = 'singularity'; statusEl.innerHTML = `<strong>Singularity</strong> · All ${count} cards fused into one`; }
+            const post = elapsed - T_CONVERGE;
+            if (post < 0.1) cards.forEach((el) => { el.style.opacity = '0'; });
+            mandalaRing.style.opacity = '0';
+            const sw = clamp01(post / 1.05);
+            swOuter.style.opacity = (sw < 1 ? (1 - sw) * 0.92 : 0).toFixed(3);
+            swOuter.style.transform = `scale(${(0.15 + 3.1 * easeOutQuint(sw)).toFixed(3)})`;
+            const sw2 = clamp01((post - 0.08) / 0.85);
+            swInner.style.opacity = (post > 0.08 && sw2 < 1 ? (1 - sw2) * 0.75 : 0).toFixed(3);
+            swInner.style.transform = `scale(${(0.12 + 2.2 * easeOutCubic(sw2)).toFixed(3)})`;
+            const fl = clamp01(post / 0.55);
+            flash.style.opacity = (fl < 1 ? Math.pow(1 - fl, 2) * 0.85 : 0).toFixed(3);
+            const em = easeOutQuint(clamp01(post / 0.45));
+            singularity.style.opacity = em.toFixed(3);
+            singularity.style.transform = `translate3d(0, ${(Math.sin(post * 2.2) * 5 * scale).toFixed(2)}px, 0) scale(${(0.72 + 0.5 * em).toFixed(3)})`;
+          } else {
+            if (phase !== 'deck') {
+              phase = 'deck';
+              statusEl.innerHTML = `<strong>Deck Ready</strong> · Stacked ${count}-card deck`;
+              cards.forEach((el) => el.classList.add('is-interactive'));
+            }
+            const pd = elapsed - T_SINGULARITY;
+            swOuter.style.opacity = swInner.style.opacity = flash.style.opacity = '0';
+            singularity.style.opacity = clamp01(1 - pd / 0.32).toFixed(3);
+            singularity.style.transform = `scale(${(1.22 - 0.16 * easeOutCubic(clamp01(pd / 0.32))).toFixed(3)})`;
+            const cf = easeOutCubic(clamp01(pd / 0.85));
+            coreGlow.style.opacity = (0.75 * (1 - cf) + 0.32 * cf).toFixed(3);
+            coreGlow.style.transform = `scale(${(1.15 - 0.25 * cf).toFixed(3)})`;
+            slots.forEach((_, i) => {
+              const d = i * stagger, u = easeOutQuint(clamp01((pd - d) / 0.56)), ap = clamp01((pd - d * 0.5) / 0.18);
+              const x = (i - mid) * stepX * scale * u;
+              const y = (-18 * scale) * (1 - u) + (mid - i) * stepY * scale * u;
+              const rot = (i === count - 1 ? 0 : ((i % 3) - 1) * 0.55) * u;
+              cards[i].style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${rot.toFixed(2)}deg) scale(${(1.22 - 0.16 * u).toFixed(3)})`;
+              cards[i].style.opacity = ap.toFixed(3);
+              cards[i].style.zIndex = String(i + 2);
+            });
+          }
+          rafId = requestAnimationFrame(tick);
+        }
+        rafId = requestAnimationFrame(tick);
+      }
+
+      shuffleBtn.addEventListener('click', start);
+      resetBtn.addEventListener('click', reset);
+      decBtn.addEventListener('click', () => rebuildDeck(cardCount - 1));
+      incBtn.addEventListener('click', () => rebuildDeck(cardCount + 1));
+      window.addEventListener('resize', measure);
+
+      rebuildDeck(cardCount);
+    })();
+  </script>
+</body>
+</html>
