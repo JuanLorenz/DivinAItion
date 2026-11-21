@@ -238,7 +238,7 @@
                 if (abs(aSide) < 0.5) {
                     float sx = u;
                     float hemWave = 0.0055 * sin(u * 75.3982) + 0.002 * sin(u * 150.796);
-                    float sy = v * (0.092 + hemWave);
+                    float sy = v * (0.05 + hemWave);
 
                     if (uIsShadow > 0.5) {
                         sy += 0.015;
@@ -249,7 +249,7 @@
                     vLocalP = 0.0;
                     vScreenY = sy;
                     vFeatherU = 0.0;
-                    vFeatherV = (uIsShadow > 0.5 ? 18.0 : 1.5) / max(uResolution.y * 0.092, 1.0);
+                    vFeatherV = (uIsShadow > 0.5 ? 18.0 : 1.5) / max(uResolution.y * 0.05, 1.0);
 
                     gl_Position = vec4(sx * 2.0 - 1.0, 1.0 - sy * 2.0, 0.0, 1.0);
                     return;
