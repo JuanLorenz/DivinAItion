@@ -54,38 +54,77 @@ from pathlib import Path
 import streamlit as st
 import streamlit.components.v1 as components
 
-def is_reverse():
-    return random.randint(0, 1)
-
 def one_card():
     card_id = random.randint(0, 77)
-    one_card = (
+    is_reverse = bool(random.randint(0, 1))
+    meaning_col = "reversed_meaning" if is_reverse else "upright_meaning"
+    
+    response = (
         supabase.table("tarot_cards")
-        .select("*")
+        .select(f"card_name, {meaning_col}")
         .eq("id", card_id)
         .execute()
     )
-    return one_card.data
+
+    if response.data:
+        card = response.data
+        return {
+            "card_name": card["card_name"],
+            "is_reverse": is_reverse,
+            "meaning": card[meaning_col],
+        }
+    return None
 
 def three_card():
-    ids = random.sample(range(0, 78), 3)
-    cards = (
+    card_ids = random.sample(range(0, 78), 3)
+
+    response = (
         supabase.table("tarot_cards")
-        .select("*")
-        .in_("id", ids)
+        .select("id, card_name, upright_meaning, reversed_meaning")
+        .in_("id", card_ids)
         .execute()
     )
-    return cards.data
+
+    rows_by_id = {row["id"]: row for row in response.data}
+    drawn_cards = []
+
+    for cid in card_ids:
+        row = rows_by_id.get(cid)
+        if row:
+            is_reverse = bool(random.randint(0, 1))
+            drawn_cards.append({
+                "card_name": row["card_name"],
+                "is_reverse": is_reverse,
+                "meaning": row["reversed_meaning"] if is_reverse else row["upright_meaning"],
+            })
+
+    return drawn_cards
+
 
 def celtic_cross():
-    ids = random.sample(range(0, 78), 10)
-    cards = (
+    card_ids = random.sample(range(0, 78), 10)
+
+    response = (
         supabase.table("tarot_cards")
-        .select("*")
-        .in_("id", ids)
+        .select("id, card_name, upright_meaning, reversed_meaning")
+        .in_("id", card_ids)
         .execute()
     )
-    return cards.data
+
+    rows_by_id = {row["id"]: row for row in response.data}
+    drawn_cards = []
+
+    for cid in card_ids:
+        row = rows_by_id.get(cid)
+        if row:
+            is_reverse = bool(random.randint(0, 1))
+            drawn_cards.append({
+                "card_name": row["card_name"],
+                "is_reverse": is_reverse,
+                "meaning": row["reversed_meaning"] if is_reverse else row["upright_meaning"],
+            })
+
+    return drawn_cards
 
 load_dotenv()
 
@@ -135,3 +174,5 @@ supabase: Client = create_client(url, key)
 
 # html = (Path(__file__).parent / "testing" / "index.html").read_text(encoding="utf-8")
 # components.html(html, height=900, scrolling=False)
+
+st.text(celtic_cross())
