@@ -22,7 +22,8 @@ import random
 #     base_url=base_url,
 # )
 #
-# system_prompt = os.getenv("SYSTEM_PROMPT")
+# prompt_path = Path(__file__).parent / "system_prompt.txt"
+# system_prompt = prompt_path.read_text(encoding="utf-8").strip()
 #
 #
 # st.title("What Stirs Within Your Soul?")
