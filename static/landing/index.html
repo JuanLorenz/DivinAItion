@@ -261,107 +261,81 @@
     </main>
 
     <script>
-        const zodiacDisplay = document.getElementById("zodiacDisplay");
-        const zodiacText = document.getElementById("zodiacText");
-        
-        const readingOptions = document.querySelectorAll(".reading-option");
-        const readingMeaning = document.getElementById("readingMeaning");
-        const readingForm = document.getElementById("readingForm");
-        const submitMessage = document.getElementById("submitMessage");
-        const currentTimeEl = document.getElementById("currentTime");
-        
-        const READING_DESCRIPTIONS = {
-          "one-card": "One-Card Pull – Draws one random card for a quick reflection.",
-          "three-card": "Three-Card Spread – Draws three cards representing Past, Present, and Future.",
-          "celtic-cross": "Celtic Cross Spread – Draws ten cards for a more detailed reading."
-        };
-        
-        // 1. Calculate Astrology Sign from Birthdate
-        function getAstrologySign(month, day) {
-          if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return "♑ Capricorn";
-          if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return "♒ Aquarius";
-          if ((month === 2 && day >= 19) || (month === 3 && day <= 20)) return "♓ Pisces";
-          if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return "♈ Aries";
-          if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return "♉ Taurus";
-          if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return "♊ Gemini";
-          if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return "♋ Cancer";
-          if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return "♌ Leo";
-          if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return "♍ Virgo";
-          if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return "♎ Libra";
-          if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return "♏ Scorpio";
-          return "♐ Sagittarius";
+      const birthdateInput = document.getElementById("birthdate");
+      const readingOptions = document.querySelectorAll(".reading-option");
+      const readingMeaning = document.getElementById("readingMeaning");
+      const readingForm = document.getElementById("readingForm");
+      const submitMessage = document.getElementById("submitMessage");
+      const currentTimeEl = document.getElementById("currentTime");
+
+      const READING_DESCRIPTIONS = {
+        "one-card": "One-Card Pull – Draws one random card for a quick reflection.",
+        "three-card": "Three-Card Spread – Draws three cards representing Past, Present, and Future.",
+        "celtic-cross": "Celtic Cross Spread – Draws ten cards for a more detailed reading."
+      };
+
+      function sendToStreamlit(type, data = {}) {
+        window.parent.postMessage({ isStreamlitMessage: true, type, ...data }, "*");
+      }
+
+      sendToStreamlit("streamlit:componentReady", { apiVersion: 1 });
+      sendToStreamlit("streamlit:setFrameHeight", {
+        height: Math.max(document.documentElement.scrollHeight, 800),
+      });
+
+      function showSelectedMeaning() {
+        const checked = document.querySelector('input[name="reading"]:checked');
+        if (!checked) {
+          readingMeaning.textContent = "Hover over or click a reading option to see what it means.";
+          return;
         }
-        
-        function updateSign() {
-          if (!birthdateInput.value) {
-            zodiacDisplay.classList.add("hidden");
-            return null;
-          }
-        
-          const [, monthStr, dayStr] = birthdateInput.value.split("-");
-          const sign = getAstrologySign(parseInt(monthStr, 10), parseInt(dayStr, 10));
-        
-          zodiacText.textContent = sign;
-          zodiacDisplay.classList.remove("hidden");
-          return sign;
-        }
-        
-        birthdateInput.addEventListener("input", updateSign);
-        
-        // 2. Show what the reading means on hover or click
-        function showSelectedMeaning() {
-          const checked = document.querySelector('input[name="reading"]:checked');
-          if (!checked) {
-            readingMeaning.textContent = "Hover over or click a reading option to see what it means.";
-            return;
-          }
-          const key = checked.closest(".reading-option").dataset.reading;
+        const key = checked.closest(".reading-option").dataset.reading;
+        readingMeaning.textContent = READING_DESCRIPTIONS[key];
+      }
+
+      readingOptions.forEach((option) => {
+        const key = option.dataset.reading;
+        const radio = option.querySelector("input");
+
+        option.addEventListener("mouseenter", () => {
           readingMeaning.textContent = READING_DESCRIPTIONS[key];
-        }
-        
-        readingOptions.forEach((option) => {
-          const key = option.dataset.reading;
-          const radio = option.querySelector("input");
-        
-          // Hovering previews the meaning
-          option.addEventListener("mouseenter", () => {
-            readingMeaning.textContent = READING_DESCRIPTIONS[key];
-          });
-        
-          // Leaving reverts to whichever option is currently clicked/selected
-          option.addEventListener("mouseleave", showSelectedMeaning);
-        
-          // Clicking selects the option and keeps its meaning displayed
-          radio.addEventListener("change", () => {
-            readingMeaning.textContent = READING_DESCRIPTIONS[key];
-          });
         });
-        
-        // 3. Submit button handler
-        readingForm.addEventListener("submit", (e) => {
-          e.preventDefault();
-        
-          const sign = updateSign();
-          const selected = document.querySelector('input[name="reading"]:checked');
-          if (!sign || !selected) return;
-        
-          submitMessage.innerHTML = `
-            <strong>Submitted!</strong><br />
-            Birth Date: ${birthdateInput.value} (${sign})<br />
-            Selected Reading: ${selected.value}
-          `;
-          submitMessage.classList.remove("hidden");
-        
-          // Add your navigation or next-step logic here
+        option.addEventListener("mouseleave", showSelectedMeaning);
+        radio.addEventListener("change", () => {
+          readingMeaning.textContent = READING_DESCRIPTIONS[key];
         });
-        
-        // 4. Current Time
-        function showTime() {
-          currentTimeEl.textContent = new Date().toLocaleString();
-        }
-        showTime();
-        setInterval(showTime, 1000);
-        const birthdateInput = document.getElementById("birthdate");
+      });
+
+      readingForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const birthdate = birthdateInput.value;
+        const selected = document.querySelector('input[name="reading"]:checked');
+        if (!birthdate || !selected) return;
+
+        const spreadKey = selected.closest(".reading-option").dataset.reading;
+
+        submitMessage.innerHTML = `
+          <strong>Consulting the cards...</strong><br />
+          Birth Date: ${birthdate}<br />
+          Selected Reading: ${selected.value}
+        `;
+        submitMessage.classList.remove("hidden");
+
+        sendToStreamlit("streamlit:setComponentValue", {
+          value: {
+            birthdate: birthdate, // "YYYY-MM-DD"
+            spread: spreadKey,
+          },
+          dataType: "json",
+        });
+      });
+
+      function showTime() {
+        currentTimeEl.textContent = new Date().toLocaleString();
+      }
+      showTime();
+      setInterval(showTime, 1000);
     </script>
   </body>
 </html>

@@ -4,6 +4,7 @@ import os
 import random
 from bisect import bisect
 from pathlib import Path
+from datetime import date
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -13,6 +14,9 @@ from supabase import Client, create_client
 
 st.set_page_config(page_title="DivinAItion", layout="wide")
 
+def get_zodiac_from_birthdate(birthdate_str: str) -> str:
+    _, month_str, day_str = birthdate_str.split("-")
+    return calculate_zodiac(int(month_str), int(day_str))
 
 def calculate_zodiac(month: int, day: int) -> str:
     cutoffs = [120, 219, 321, 420, 521, 621, 723, 823, 923, 1023, 1122, 1222]
@@ -162,7 +166,7 @@ def celtic_cross():
     return drawn_cards
 
 
-def get_llm_interpretation(cards: list[dict], spread_name: str) -> str:
+def get_llm_interpretation(cards: list[dict], spread_name: str, zodiac_sign: str) -> str:
     card_lines = []
     for idx, c in enumerate(cards, start=1):
         orientation = "Reversed" if c["is_reverse"] else "Upright"
@@ -171,6 +175,7 @@ def get_llm_interpretation(cards: list[dict], spread_name: str) -> str:
         )
 
     user_prompt = (
+        f"Zodiac Sign: {zodiac_sign}\n"
         f"Spread: {spread_name}\n"
         "Cards drawn:\n"
         + "\n".join(card_lines)
@@ -210,25 +215,12 @@ SPREAD_CONFIG = {
     "celtic_cross": ("Celtic Cross Spread", "celtic_card.html", celtic_cross),
 }
 
-# Switch spreads via URL: ?spread=one_card, ?spread=three_card, or ?spread=celtic_cross
-SPREAD_MODE = st.query_params.get("spread", "celtic_cross")
-if SPREAD_MODE not in SPREAD_CONFIG:
-    SPREAD_MODE = "one_card"
+landing_dir = find_asset("static/landing", "landing")
+if not landing_dir:
+    raise FileNotFoundError(f"Could not find static/landing/index.html under {BASE_DIR}")
+landing_component = components.declare_component("divinaition_landing", path=str(landing_dir))
 
-spread_label, html_filename, draw_fn = SPREAD_CONFIG[SPREAD_MODE]
-session_key = f"tarot_payload_{SPREAD_MODE}"
-
-if session_key not in st.session_state:
-    result = draw_fn()
-    cards_list = result if isinstance(result, list) else ([result] if result else [])
-    llm_text = get_llm_interpretation(cards_list, spread_label) if cards_list else ""
-    st.session_state[session_key] = {
-        "cards": cards_list,
-        "llm_response": llm_text,
-        "card_back_url": to_data_uri("static/images/miscellaneous/TarotCard_Back.png"),
-    }
-
-# Force Streamlit container & iframe to occupy 100% of the screen
+# Keep your full-screen iframe CSS for BOTH the landing component and spread templates
 st.markdown(
     """
     <style>
@@ -249,8 +241,8 @@ st.markdown(
         margin: 0 !important;
         max-width: 100% !important;
       }
-      iframe[data-testid="stIFrame"],
-      .element-container iframe {
+      [data-testid="stMain"] iframe,
+      iframe[data-testid="stIFrame"] {
         position: fixed !important;
         inset: 0 !important;
         width: 100vw !important;
@@ -265,5 +257,42 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-html = build_tarot_html(html_filename, st.session_state[session_key])
-components.html(html, height=900, scrolling=False)
+# Step 1: Show landing form until user submits
+if "reading_request" not in st.session_state:
+    form_data = landing_component(key="landing_form")
+    if form_data:
+        zodiac_sign = get_zodiac_from_birthdate(form_data["birthdate"])
+        spread_mode = form_data["spread"].replace("-", "_")
+
+        st.session_state["reading_request"] = {
+            "birthdate": form_data["birthdate"],
+            "zodiac_sign": zodiac_sign,
+            "spread": spread_mode if spread_mode in SPREAD_CONFIG else "one_card",
+        }
+        st.session_state.pop("tarot_payload", None)
+        st.rerun()
+
+# Step 2: Once submitted, draw cards, call LLM with zodiac_sign, and render spread
+else:
+    req = st.session_state["reading_request"]
+    spread_mode = req["spread"]
+    zodiac_sign = req["zodiac_sign"]
+    spread_label, html_filename, draw_fn = SPREAD_CONFIG[spread_mode]
+
+    if "tarot_payload" not in st.session_state:
+        result = draw_fn()
+        cards_list = result if isinstance(result, list) else ([result] if result else [])
+        llm_text = (
+            get_llm_interpretation(cards_list, spread_label, zodiac_sign)
+            if cards_list
+            else ""
+        )
+        st.session_state["tarot_payload"] = {
+            "cards": cards_list,
+            "llm_response": llm_text,
+            "zodiac_sign": zodiac_sign,
+            "card_back_url": to_data_uri("static/images/miscellaneous/TarotCard_Back.png"),
+        }
+
+    html = build_tarot_html(html_filename, st.session_state["tarot_payload"])
+    components.html(html, height=900, scrolling=False)
