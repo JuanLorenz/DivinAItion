@@ -10,227 +10,25 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; background: #020524; color: #f1f5f9; font-family: "Plus Jakarta Sans", system-ui, sans-serif; }
-    /* Nocturne Starfield Background — Pure CSS (Responsive & Seamless) */
-    :root {
-      --star-speed: 1;
-      --star-trail-opacity: 1;
-      --star-twinkle-intensity: 1;
-    }
+    :root { --star-speed: 1; --star-trail-opacity: 1; --star-twinkle-intensity: 1; }
 
-    .starfield-bg {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      overflow: hidden;
-      pointer-events: none;
-      background:
-        radial-gradient(ellipse 85% 45% at 50% 0%, rgba(16, 34, 118, 0.32) 0%, transparent 72%),
-        radial-gradient(ellipse 90% 40% at 50% 100%, rgba(56, 18, 102, 0.38) 0%, transparent 75%),
-        linear-gradient(
-          180deg,
-          #020836 0%,
-          #030833 34%,
-          #04041f 62%,
-          #140632 84%,
-          #210948 100%
-        );
-    }
-
-    .starfield-layer {
-      position: absolute;
-      inset: 0;
-    }
-
-    /* 1. Top Falling Stars */
-    .falling-star {
-      position: absolute;
-      top: 0;
-      left: var(--x, 50%);
-      width: var(--trail-w, 1.5px);
-      height: var(--tail, 36vh);
-      transform: translate3d(0, -110%, 0);
-      opacity: 0;
-      will-change: transform, opacity;
-      animation: star-fall calc(var(--dur, 9.5s) / var(--star-speed)) linear infinite;
-      animation-delay: calc(var(--delay, 0s) / var(--star-speed));
-    }
-
-    .falling-star__trail {
-      position: absolute;
-      inset: 0;
-      border-radius: 999px;
-      opacity: var(--star-trail-opacity);
-      background: linear-gradient(
-        to bottom,
-        rgba(215, 224, 255, 0) 0%,
-        rgba(215, 224, 255, 0.08) 38%,
-        rgba(232, 236, 250, 0.34) 76%,
-        var(--trail-tip, rgba(255, 252, 244, 0.78)) 100%
-      );
-    }
-
-    .falling-star__head {
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      width: var(--head, 6px);
-      height: var(--head, 6px);
-      transform: translate(-50%, 50%);
-      border-radius: 50%;
-      background: radial-gradient(
-        circle,
-        #ffffff 0%,
-        var(--tint, #eef2ff) 48%,
-        transparent 76%
-      );
-      box-shadow:
-        0 0 calc(var(--head, 6px) * 1.5) calc(var(--head, 6px) * 0.35) var(--glow, rgba(226, 232, 255, 0.72)),
-        0 0 calc(var(--head, 6px) * 3.6) calc(var(--head, 6px) * 0.9) var(--halo, rgba(180, 198, 255, 0.28));
-    }
-
-    .falling-star__head::before,
-    .falling-star__head::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: calc(var(--head, 6px) * 2.1);
-      height: 1.5px;
-      border-radius: 999px;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, transparent 72%);
-      transform: translate(-50%, -50%);
-      opacity: 0.75;
-    }
-
-    .falling-star__head::after {
-      transform: translate(-50%, -50%) rotate(90deg);
-    }
-
-    .falling-star--silver {
-      --tint: #eef2ff;
-      --trail-tip: rgba(235, 240, 255, 0.74);
-      --glow: rgba(226, 233, 255, 0.72);
-      --halo: rgba(176, 196, 255, 0.28);
-    }
-
-    .falling-star--ivory {
-      --tint: #fff9ec;
-      --trail-tip: rgba(255, 248, 232, 0.72);
-      --glow: rgba(255, 244, 218, 0.68);
-      --halo: rgba(242, 224, 185, 0.25);
-    }
-
-    .falling-star--champagne {
-      --tint: #f8e9cc;
-      --trail-tip: rgba(247, 230, 198, 0.72);
-      --glow: rgba(245, 222, 178, 0.7);
-      --halo: rgba(232, 198, 138, 0.26);
-    }
-
-    @keyframes star-fall {
-      0% {
-        transform: translate3d(0, calc(-100% - 2vh), 0);
-        opacity: 0;
-      }
-      10% {
-        opacity: var(--peak, 0.88);
-      }
-      42% {
-        opacity: var(--peak, 0.88);
-      }
-      74% {
-        opacity: calc(var(--peak, 0.88) * 0.42);
-      }
-      100% {
-        transform: translate3d(0, calc(var(--fall, 58vh) - 100%), 0);
-        opacity: 0;
-      }
-    }
-
-    /* 2. Mid-Sky Faint Micro-Stars */
-    .micro-star {
-      position: absolute;
-      left: var(--x);
-      top: var(--y);
-      width: var(--size, 2px);
-      height: var(--size, 2px);
-      border-radius: 50%;
-      background: rgba(232, 234, 248, 0.85);
-      opacity: var(--base-op, 0.25);
-      will-change: opacity, transform;
-      animation: micro-shimmer var(--dur, 6s) ease-in-out infinite;
-      animation-delay: var(--delay, 0s);
-    }
-
-    @keyframes micro-shimmer {
-      0%, 100% {
-        opacity: calc(var(--base-op, 0.25) * 0.5);
-        transform: scale(0.85);
-      }
-      50% {
-        opacity: calc(var(--base-op, 0.25) * 1.25);
-        transform: scale(1.1);
-      }
-    }
-
-    /* 3. Bottom Subtle Twinkling 4-Point Astroid Stars */
-    .twinkle-star {
-      position: absolute;
-      left: var(--x);
-      bottom: var(--bottom);
-      width: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px));
-      height: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px));
-      background: var(--color, #65547c);
-      clip-path: polygon(
-        50% 0%, 55% 32%, 60% 40%, 68% 45%,
-        100% 50%, 68% 55%, 60% 60%, 55% 68%,
-        50% 100%, 45% 68%, 40% 60%, 32% 55%,
-        0% 50%, 32% 45%, 40% 40%, 45% 32%
-      );
-      opacity: var(--base-op, 0.72);
-      will-change: opacity, transform;
-      animation: star-twinkle var(--dur, 6s) ease-in-out infinite;
-      animation-delay: var(--delay, 0s);
-    }
-
-    @keyframes star-twinkle {
-      0%, 100% {
-        opacity: max(0.08, calc(var(--base-op, 0.72) * (1 - 0.55 * var(--star-twinkle-intensity))));
-        transform: scale(0.86);
-      }
-      50% {
-        opacity: min(1, calc(var(--base-op, 0.72) * (1 + 0.28 * var(--star-twinkle-intensity))));
-        transform: scale(calc(1 + 0.12 * var(--star-twinkle-intensity)));
-      }
-    }
-
-    /* Responsive balance on small viewports */
-    @media (max-width: 640px) {
-      .star--desktop-only {
-        display: none;
-      }
-      .falling-star__head {
-        width: calc(var(--head, 6px) * 0.88);
-        height: calc(var(--head, 6px) * 0.88);
-      }
-      .twinkle-star {
-        width: calc(var(--size, 14px) * 0.72);
-        height: calc(var(--size, 14px) * 0.72);
-      }
-    }
-
-    /* Accessibility: honor reduced motion preference */
-    @media (prefers-reduced-motion: reduce) {
-      .falling-star {
-        animation: none;
-        transform: translate3d(0, calc(var(--fall, 50vh) * 0.72 - 100%), 0);
-        opacity: calc(var(--peak, 0.85) * 0.8);
-      }
-      .twinkle-star,
-      .micro-star {
-        animation: none;
-      }
-    }
+    .starfield-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: radial-gradient(ellipse 85% 45% at 50% 0%, rgba(16, 34, 118, 0.32) 0%, transparent 72%), radial-gradient(ellipse 90% 40% at 50% 100%, rgba(56, 18, 102, 0.38) 0%, transparent 75%), linear-gradient(180deg, #020836 0%, #030833 34%, #04041f 62%, #140632 84%, #210948 100%); }
+    .starfield-layer { position: absolute; inset: 0; }
+    .falling-star { position: absolute; top: 0; left: var(--x, 50%); width: var(--trail-w, 1.5px); height: var(--tail, 36vh); transform: translate3d(0, -110%, 0); opacity: 0; will-change: transform, opacity; animation: star-fall calc(var(--dur, 9.5s) / var(--star-speed)) linear infinite; animation-delay: calc(var(--delay, 0s) / var(--star-speed)); }
+    .falling-star__trail { position: absolute; inset: 0; border-radius: 999px; opacity: var(--star-trail-opacity); background: linear-gradient(to bottom, rgba(215, 224, 255, 0) 0%, rgba(215, 224, 255, 0.08) 38%, rgba(232, 236, 250, 0.34) 76%, var(--trail-tip, rgba(255, 252, 244, 0.78)) 100%); }
+    .falling-star__head { position: absolute; bottom: 0; left: 50%; width: var(--head, 6px); height: var(--head, 6px); transform: translate(-50%, 50%); border-radius: 50%; background: radial-gradient(circle, #ffffff 0%, var(--tint, #eef2ff) 48%, transparent 76%); box-shadow: 0 0 calc(var(--head, 6px) * 1.5) calc(var(--head, 6px) * 0.35) var(--glow, rgba(226, 232, 255, 0.72)), 0 0 calc(var(--head, 6px) * 3.6) calc(var(--head, 6px) * 0.9) var(--halo, rgba(180, 198, 255, 0.28)); }
+    .falling-star__head::before, .falling-star__head::after { content: ""; position: absolute; top: 50%; left: 50%; width: calc(var(--head, 6px) * 2.1); height: 1.5px; border-radius: 999px; background: radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, transparent 72%); transform: translate(-50%, -50%); opacity: 0.75; }
+    .falling-star__head::after { transform: translate(-50%, -50%) rotate(90deg); }
+    .falling-star--silver { --tint: #eef2ff; --trail-tip: rgba(235, 240, 255, 0.74); --glow: rgba(226, 233, 255, 0.72); --halo: rgba(176, 196, 255, 0.28); }
+    .falling-star--ivory { --tint: #fff9ec; --trail-tip: rgba(255, 248, 232, 0.72); --glow: rgba(255, 244, 218, 0.68); --halo: rgba(242, 224, 185, 0.25); }
+    .falling-star--champagne { --tint: #f8e9cc; --trail-tip: rgba(247, 230, 198, 0.72); --glow: rgba(245, 222, 178, 0.7); --halo: rgba(232, 198, 138, 0.26); }
+    @keyframes star-fall { 0% { transform: translate3d(0, calc(-100% - 2vh), 0); opacity: 0; } 10% { opacity: var(--peak, 0.88); } 42% { opacity: var(--peak, 0.88); } 74% { opacity: calc(var(--peak, 0.88) * 0.42); } 100% { transform: translate3d(0, calc(var(--fall, 58vh) - 100%), 0); opacity: 0; } }
+    .micro-star { position: absolute; left: var(--x); top: var(--y); width: var(--size, 2px); height: var(--size, 2px); border-radius: 50%; background: rgba(232, 234, 248, 0.85); opacity: var(--base-op, 0.25); will-change: opacity, transform; animation: micro-shimmer var(--dur, 6s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
+    @keyframes micro-shimmer { 0%, 100% { opacity: calc(var(--base-op, 0.25) * 0.5); transform: scale(0.85); } 50% { opacity: calc(var(--base-op, 0.25) * 1.25); transform: scale(1.1); } }
+    .twinkle-star { position: absolute; left: var(--x); bottom: var(--bottom); width: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px)); height: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px)); background: var(--color, #65547c); clip-path: polygon(50% 0%, 55% 32%, 60% 40%, 68% 45%, 100% 50%, 68% 55%, 60% 60%, 55% 68%, 50% 100%, 45% 68%, 40% 60%, 32% 55%, 0% 50%, 32% 45%, 40% 40%, 45% 32%); opacity: var(--base-op, 0.72); will-change: opacity, transform; animation: star-twinkle var(--dur, 6s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
+    @keyframes star-twinkle { 0%, 100% { opacity: max(0.08, calc(var(--base-op, 0.72) * (1 - 0.55 * var(--star-twinkle-intensity)))); transform: scale(0.86); } 50% { opacity: min(1, calc(var(--base-op, 0.72) * (1 + 0.28 * var(--star-twinkle-intensity)))); transform: scale(calc(1 + 0.12 * var(--star-twinkle-intensity))); } }
+    @media (max-width: 640px) { .star--desktop-only { display: none; } .falling-star__head { width: calc(var(--head, 6px) * 0.88); height: calc(var(--head, 6px) * 0.88); } .twinkle-star { width: calc(var(--size, 14px) * 0.72); height: calc(var(--size, 14px) * 0.72); } }
+    @media (prefers-reduced-motion: reduce) { .falling-star { animation: none; transform: translate3d(0, calc(var(--fall, 50vh) * 0.72 - 100%), 0); opacity: calc(var(--peak, 0.85) * 0.8); } .twinkle-star, .micro-star { animation: none; } }
 
     .stage-backdrop { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
     .curtain { position: absolute; top: 0; bottom: 0; width: 18vw; max-width: 230px; min-width: 68px; }
@@ -244,61 +42,24 @@
     .tarot-stage { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 24px 16px 112px; }
     .tarot-cards-origin { position: relative; width: 0; height: 0; z-index: 20; display: flex; align-items: center; justify-content: center; }
 
-    .tarot-card {
-      position: absolute;
-      border: 0;
-      padding: 0;
-      background: transparent;
-      border-radius: 9px;
-      will-change: transform, opacity;
-      user-select: none;
-      perspective: 1100px;
-      pointer-events: none;
-    }
+    .tarot-card { position: absolute; border: 0; padding: 0; background: transparent; border-radius: 9px; will-change: transform, opacity; user-select: none; perspective: 1100px; pointer-events: none; }
     .tarot-card.is-interactive { cursor: pointer; pointer-events: auto; }
     .tarot-card.is-interactive:hover { filter: brightness(1.1); }
-    .tarot-card.tarot-glide {
-      transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1),
-                  opacity 520ms ease,
-                  filter 200ms ease,
-                  box-shadow 260ms ease;
-    }
-    .tarot-card-inner {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      transform-style: preserve-3d;
-      transition: transform 720ms cubic-bezier(0.22, 1, 0.36, 1);
-      border-radius: 9px;
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.82);
-    }
+    .tarot-card.tarot-glide { transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms ease, filter 200ms ease, box-shadow 260ms ease; }
+    .tarot-card-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; transition: transform 720ms cubic-bezier(0.22, 1, 0.36, 1); border-radius: 9px; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.82); }
     .tarot-card.is-flipped .tarot-card-inner { transform: rotateY(180deg); }
-    .tarot-face {
-      position: absolute;
-      inset: 0;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      border-radius: 9px;
-      overflow: hidden;
-    }
-    .tarot-face--front { transform: rotateY(180deg); }
-    .tarot-face svg { display: block; width: 100%; height: 100%; }
+    .tarot-face { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 9px; overflow: hidden; }
+    .tarot-face--back { transform: rotateY(0deg) translateZ(1px); }
+    .tarot-face--front { transform: rotateY(180deg) translateZ(1px); }
+    .tarot-face svg, .tarot-face-img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+    .tarot-face-img.is-reversed { transform: rotate(180deg); }
 
-    .tarot-card--singularity {
-      pointer-events: none;
-      opacity: 0;
-      z-index: 30;
-      box-shadow: 0 0 48px rgba(240, 192, 110, 0.45), 0 0 96px rgba(139, 92, 246, 0.35);
-    }
-    .tarot-card--singularity svg { display: block; width: 100%; height: 100%; }
+    .tarot-card--singularity { pointer-events: none; opacity: 0; z-index: 30; box-shadow: 0 0 48px rgba(240, 192, 110, 0.45), 0 0 96px rgba(139, 92, 246, 0.35); }
+    .tarot-card--singularity svg, .tarot-card--singularity img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 9px; }
 
-    @keyframes subtleGlow {
-      0%, 100% { box-shadow: 0 0 18px rgba(251, 191, 36, 0.45), 0 0 38px rgba(167, 139, 250, 0.25); }
-      50% { box-shadow: 0 0 30px rgba(253, 224, 104, 0.78), 0 0 58px rgba(167, 139, 250, 0.45); }
-    }
+    @keyframes subtleGlow { 0%, 100% { box-shadow: 0 0 18px rgba(251, 191, 36, 0.45), 0 0 38px rgba(167, 139, 250, 0.25); } 50% { box-shadow: 0 0 30px rgba(253, 224, 104, 0.78), 0 0 58px rgba(167, 139, 250, 0.45); } }
     .is-next-glow .tarot-card-inner { animation: subtleGlow 2.2s ease-in-out infinite; outline: 2px solid rgba(252, 211, 77, 0.8); }
     .is-active-card .tarot-card-inner { outline: 2px solid #fcd34d; box-shadow: 0 0 28px rgba(251, 191, 36, 0.5); }
-    .is-arc-hover .tarot-card-inner { outline: 2px solid rgba(252, 211, 77, 0.8); box-shadow: 0 0 26px rgba(251, 191, 36, 0.65); }
 
     .vfx-altar, .vfx-ring, .vfx-core, .vfx-shockwave, .vfx-shockwave-inner { position: absolute; pointer-events: none; z-index: 5; }
     .vfx-altar > div { width: 100%; height: 100%; border-radius: 999px; background: radial-gradient(ellipse at center, rgba(167, 139, 250, 0.22) 0%, rgba(109, 40, 217, 0.12) 42%, transparent 72%); filter: blur(22px); }
@@ -312,100 +73,21 @@
     .vfx-shockwave-inner { opacity: 0; border-radius: 999px; border: 1px solid rgba(221, 214, 254, 0.72); }
     .vfx-flash { position: fixed; inset: 0; z-index: 25; pointer-events: none; opacity: 0; background: radial-gradient(circle at center, rgba(255, 244, 214, 0.75) 0%, rgba(167, 139, 250, 0.25) 32%, transparent 68%); }
 
-    /* Reading Layout & Frosted Explanation Box */
-    .reading-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 15;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px 112px;
-      pointer-events: none;
-    }
-    .reading-grid {
-      display: grid;
-      width: 100%;
-      max-width: 1024px;
-      align-items: center;
-      gap: 20px;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 768px) {
-      .reading-grid { grid-template-columns: minmax(250px, 340px) 1fr; gap: 44px; }
-    }
-    .left-anchor {
-      margin: 0 auto;
-      width: 100%;
-      max-width: 260px;
-      height: 175px;
-    }
-    @media (min-width: 768px) {
-      .left-anchor { max-width: 340px; height: 310px; }
-    }
-    .explanation-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      opacity: 0;
-      transform: translateY(16px);
-      pointer-events: none;
-      transition: opacity 700ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    @media (min-width: 768px) {
-      .explanation-col { align-items: flex-start; }
-    }
-    .explanation-col.is-visible {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
-    .script-title {
-      font-family: "Cormorant Garamond", Georgia, serif;
-      font-style: italic;
-      font-weight: 600;
-      font-size: clamp(2rem, 4.5vw, 3.1rem);
-      letter-spacing: 0.03em;
-      color: #ecfa8c;
-      text-shadow: 0 0 18px rgba(232, 248, 132, 0.55), 0 0 38px rgba(190, 225, 92, 0.28);
-      text-align: center;
-    }
+    .reading-layer { position: absolute; inset: 0; z-index: 15; display: flex; align-items: center; justify-content: center; padding: 24px 16px 112px; pointer-events: none; }
+    .explanation-col { display: flex; flex-direction: column; align-items: center; opacity: 0; transform: translateY(16px); pointer-events: none; transition: opacity 700ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1); }
+    @media (min-width: 768px) { .explanation-col { align-items: flex-start; } }
+    .explanation-col.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .script-title { font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 600; font-size: clamp(2rem, 4.5vw, 3.1rem); letter-spacing: 0.03em; color: #ecfa8c; text-shadow: 0 0 18px rgba(232, 248, 132, 0.55), 0 0 38px rgba(190, 225, 92, 0.28); text-align: center; }
     @media (min-width: 768px) { .script-title { text-align: left; } }
 
-    .explain-box {
-      margin-top: 14px;
-      width: 100%;
-      max-height: 42dvh;
-      overflow-y: auto;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: rgba(108, 107, 144, 0.46);
-      backdrop-filter: blur(12px);
-      padding: 20px 22px;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45);
-      text-align: left;
-    }
-    @media (min-width: 768px) {
-      .explain-box { max-height: none; overflow: visible; padding: 26px 28px; }
-    }
-    .explain-header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-      padding-bottom: 12px;
-    }
-    .explain-card-name {
-      font-family: "Cormorant Garamond", Georgia, serif;
-      font-size: clamp(1.45rem, 2.6vw, 1.95rem);
-      font-weight: 600;
-      color: #fef3c7;
-    }
+    .explain-box { margin-top: 14px; width: 100%; max-height: 42dvh; overflow-y: auto; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(108, 107, 144, 0.46); backdrop-filter: blur(12px); padding: 20px 22px; box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45); text-align: left; }
+    @media (min-width: 768px) { .explain-box { max-height: 62dvh; overflow-y: auto; padding: 26px 28px; } }
+    .explain-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); padding-bottom: 12px; }
+    .explain-card-name { font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(1.45rem, 2.6vw, 1.95rem); font-weight: 600; color: #fef3c7; }
     .explain-archetype { font-size: 12px; font-weight: 500; color: rgba(224, 231, 255, 0.86); }
-    .explain-keywords { margin-top: 10px; font-size: 12px; font-weight: 500; color: rgba(253, 230, 138, 0.92); }
-    .explain-body { margin-top: 14px; font-size: 15px; line-height: 1.65; color: rgba(241, 245, 249, 0.95); }
+    .explain-archetype.is-reversed { color: #fca5a5; }
+    .explain-body { margin-top: 14px; font-size: 15px; line-height: 1.68; color: rgba(241, 245, 249, 0.95); }
+    .explain-body p + p { margin-top: 10px; }
     .explain-hint { margin-top: 12px; font-size: 12px; font-weight: 500; color: #fde68a; }
     .explain-actions { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; flex-wrap: wrap; gap: 10px; }
 
@@ -424,118 +106,32 @@
     .tarot-btn--ghost:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
     .tarot-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .celtic-prompt {
-      position: absolute;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-8px);
-      z-index: 25;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 420ms ease, transform 420ms ease;
-    }
-    .celtic-prompt.is-visible {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-    .celtic-prompt p {
-      white-space: nowrap;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(7, 10, 38, 0.82);
-      padding: 6px 16px;
-      font-size: 12px;
-      color: #e2e8f0;
-      backdrop-filter: blur(10px);
-    }
+    .celtic-prompt { position: absolute; top: 16px; left: 50%; transform: translateX(-50%) translateY(-8px); z-index: 25; pointer-events: none; opacity: 0; transition: opacity 420ms ease, transform 420ms ease; }
+    .celtic-prompt.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .celtic-prompt p { white-space: nowrap; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(7, 10, 38, 0.82); padding: 6px 16px; font-size: 12px; color: #e2e8f0; backdrop-filter: blur(10px); }
     .celtic-prompt strong { color: #fde68a; }
 
-    .celtic-grid {
-      display: grid;
-      width: 100%;
-      max-width: 1152px;
-      align-items: center;
-      gap: 16px;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 768px) {
-      .celtic-grid { grid-template-columns: minmax(300px, 460px) 1fr; gap: 32px; }
-    }
-    .celtic-left-anchor {
-      margin: 0 auto;
-      width: 100%;
-      max-width: 340px;
-      height: 215px;
-    }
-    @media (min-width: 768px) {
-      .celtic-left-anchor { max-width: 460px; height: 510px; }
-    }
+    .celtic-grid { display: grid; width: 100%; max-width: 1152px; align-items: center; gap: 16px; grid-template-columns: 1fr; }
+    @media (min-width: 768px) { .celtic-grid { grid-template-columns: minmax(300px, 460px) 1fr; gap: 32px; } }
+    .celtic-left-anchor { margin: 0 auto; width: 100%; max-width: 340px; height: 215px; }
+    @media (min-width: 768px) { .celtic-left-anchor { max-width: 460px; height: 510px; } }
 
     .pos-num-tabs { display: flex; flex-wrap: wrap; gap: 4px; }
     .tarot-btn--num { min-height: 32px; min-width: 32px; padding: 4px 8px; font-size: 12px; border-radius: 6px; }
     .tarot-btn--next { background: rgba(252, 211, 77, 0.12); color: rgba(253, 230, 138, 0.9); border: 1px solid rgba(252, 211, 77, 0.45); }
 
-    .summary-layer {
-      position: absolute;
-      inset: 0;
-      z-index: 30;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px 16px 112px;
-      pointer-events: none;
-    }
-    .summary-wrap {
-      width: 100%;
-      max-width: 576px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      opacity: 0;
-      transform: translateY(16px);
-      pointer-events: none;
-      transition: opacity 700ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    .summary-wrap.is-visible {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
-    .summary-box {
-      margin-top: 12px;
-      width: 100%;
-      max-height: 52dvh;
-      overflow-y: auto;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      background: rgba(108, 107, 144, 0.56);
-      backdrop-filter: blur(12px);
-      padding: 20px 22px;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.48);
-      text-align: left;
-    }
-    .summary-10-grid {
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
-      display: grid;
-      gap: 8px;
-      grid-template-columns: repeat(2, 1fr);
-    }
+    .summary-layer { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 16px 16px 112px; pointer-events: none; }
+    .summary-wrap { width: 100%; max-width: 576px; display: flex; flex-direction: column; align-items: center; opacity: 0; transform: translateY(16px); pointer-events: none; transition: opacity 700ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1); }
+    .summary-wrap.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .summary-box { margin-top: 12px; width: 100%; max-height: 52dvh; overflow-y: auto; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.18); background: rgba(108, 107, 144, 0.56); backdrop-filter: blur(12px); padding: 20px 22px; box-shadow: 0 24px 50px rgba(0, 0, 0, 0.48); text-align: left; }
+    .summary-10-grid { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.12); display: grid; gap: 8px; grid-template-columns: repeat(2, 1fr); }
     @media (min-width: 640px) { .summary-10-grid { grid-template-columns: repeat(5, 1fr); } }
-    .summary-10-btn {
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 8px;
-      padding: 8px 10px;
-      text-align: left;
-      color: #ffffff;
-      cursor: pointer;
-      transition: background-color 150ms ease;
-    }
+    .summary-10-btn { border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.06); border-radius: 8px; padding: 8px 10px; text-align: left; color: #ffffff; cursor: pointer; transition: background-color 150ms ease; }
     .summary-10-btn:hover { background: rgba(255, 255, 255, 0.16); }
     .summary-10-pos { font-size: 10px; font-weight: 600; color: rgba(253, 230, 138, 0.9); }
     .summary-10-name { margin-top: 2px; font-family: "Cormorant Garamond", Georgia, serif; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .summary-10-orient { font-size: 10px; color: rgba(203, 213, 225, 0.85); }
+    .summary-10-orient.is-reversed { color: #fca5a5; }
   </style>
 </head>
 <body>
@@ -627,16 +223,7 @@
   <div class="stage-backdrop" aria-hidden="true">
     <div class="curtain curtain--left">
       <svg viewBox="0 0 220 900" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="curtainLeft" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#04081d" />
-            <stop offset="22%" stop-color="#132259" />
-            <stop offset="44%" stop-color="#070e2e" />
-            <stop offset="68%" stop-color="#192e70" />
-            <stop offset="88%" stop-color="#091136" />
-            <stop offset="100%" stop-color="#1b3275" />
-          </linearGradient>
-        </defs>
+        <defs><linearGradient id="curtainLeft" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#04081d" /><stop offset="22%" stop-color="#132259" /><stop offset="44%" stop-color="#070e2e" /><stop offset="68%" stop-color="#192e70" /><stop offset="88%" stop-color="#091136" /><stop offset="100%" stop-color="#1b3275" /></linearGradient></defs>
         <path d="M0 0 L220 0 C175 180, 145 310, 128 380 C155 520, 138 720, 132 900 L0 900 Z" fill="url(#curtainLeft)" opacity="0.94" />
         <path d="M52 0 C44 200, 48 340, 32 900" stroke="#030617" stroke-width="14" fill="none" opacity="0.55" />
         <path d="M112 0 C96 190, 92 330, 84 900" stroke="#040920" stroke-width="16" fill="none" opacity="0.55" />
@@ -646,16 +233,7 @@
     </div>
     <div class="curtain curtain--right">
       <svg viewBox="0 0 220 900" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="curtainRight" x1="1" y1="0" x2="0" y2="0">
-            <stop offset="0%" stop-color="#04081d" />
-            <stop offset="22%" stop-color="#132259" />
-            <stop offset="44%" stop-color="#070e2e" />
-            <stop offset="68%" stop-color="#192e70" />
-            <stop offset="88%" stop-color="#091136" />
-            <stop offset="100%" stop-color="#1b3275" />
-          </linearGradient>
-        </defs>
+        <defs><linearGradient id="curtainRight" x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stop-color="#04081d" /><stop offset="22%" stop-color="#132259" /><stop offset="44%" stop-color="#070e2e" /><stop offset="68%" stop-color="#192e70" /><stop offset="88%" stop-color="#091136" /><stop offset="100%" stop-color="#1b3275" /></linearGradient></defs>
         <path d="M220 0 L0 0 C45 180, 75 310, 92 380 C65 520, 82 720, 88 900 L220 900 Z" fill="url(#curtainRight)" opacity="0.94" />
         <path d="M168 0 C176 200, 172 340, 188 900" stroke="#030617" stroke-width="14" fill="none" opacity="0.55" />
         <path d="M108 0 C124 190, 128 330, 136 900" stroke="#040920" stroke-width="16" fill="none" opacity="0.55" />
@@ -667,16 +245,8 @@
       <div class="velvet-table">
         <svg viewBox="0 0 820 220" preserveAspectRatio="none">
           <defs>
-            <radialGradient id="tableTop" cx="50%" cy="35%" r="55%">
-              <stop offset="0%" stop-color="#f397be" />
-              <stop offset="48%" stop-color="#b0347b" />
-              <stop offset="100%" stop-color="#4f0d42" />
-            </radialGradient>
-            <linearGradient id="tableDrape" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#942068" />
-              <stop offset="45%" stop-color="#560a44" />
-              <stop offset="100%" stop-color="#260224" />
-            </linearGradient>
+            <radialGradient id="tableTop" cx="50%" cy="35%" r="55%"><stop offset="0%" stop-color="#f397be" /><stop offset="48%" stop-color="#b0347b" /><stop offset="100%" stop-color="#4f0d42" /></radialGradient>
+            <linearGradient id="tableDrape" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#942068" /><stop offset="45%" stop-color="#560a44" /><stop offset="100%" stop-color="#260224" /></linearGradient>
           </defs>
           <path d="M92 52 C80 120, 74 175, 68 220 L752 220 C746 175, 740 120, 728 52 Z" fill="url(#tableDrape)" />
           <path d="M160 66 C152 125, 148 175, 140 220" stroke="#290328" stroke-width="16" fill="none" opacity="0.65" />
@@ -705,7 +275,6 @@
         <p id="celticPromptText">Click the glowing <strong>I. Present</strong> card at the heart of the cross</p>
       </div>
 
-      <!-- Placed-Left Reading Grid -->
       <div class="reading-layer">
         <div class="celtic-grid">
           <div class="celtic-left-anchor" id="leftAnchor" aria-hidden="true"></div>
@@ -726,7 +295,6 @@
         </div>
       </div>
 
-      <!-- Centered Summary Layer (flanked by 5-left / 5-right zoomed cascades) -->
       <div class="summary-layer">
         <div class="summary-wrap" id="summaryWrap">
           <h1 class="script-title" style="text-align:center;">Celtic Cross Spread</h1>
@@ -735,7 +303,7 @@
               <h2 class="explain-card-name">Complete Reading Summary</h2>
               <button type="button" class="tarot-btn tarot-btn--primary" id="backToCrossBtn">Back to Celtic Cross</button>
             </div>
-            <p class="explain-body" id="summaryBody"></p>
+            <div class="explain-body" id="summaryBody"></div>
             <div class="summary-10-grid" id="summaryCardsGrid"></div>
             <div class="explain-actions">
               <button type="button" class="tarot-btn tarot-btn--secondary" id="sumReshuffleBtn">Reshuffle Deck</button>
@@ -751,7 +319,7 @@
     </main>
 
     <footer class="tarot-controls">
-      <div class="tarot-status" id="statusReadout"><strong>Formation</strong> · 12 cards aligned</div>
+      <div class="tarot-status" id="statusReadout"><strong>Formation</strong> · 78 cards aligned</div>
       <div class="tarot-bar">
         <button type="button" class="tarot-btn tarot-btn--primary" id="shuffleBtn">Shuffle Cards</button>
         <button type="button" class="tarot-btn tarot-btn--ghost" id="resetBtn" disabled>Reset</button>
@@ -761,142 +329,185 @@
 
   <script>
     (function () {
-      // Adjust CARD_COUNT (minimum 10 for Celtic Cross, e.g. 12, 22, 78)
       const CARD_COUNT = 78;
-      const CELTIC_CROSS_POSITIONS = [{"numeral":"I","label":"Present","subtitle":"Heart of the Matter"},{"numeral":"II","label":"Challenge","subtitle":"Crossing Influence"},{"numeral":"III","label":"Foundation","subtitle":"Subconscious Roots"},{"numeral":"IV","label":"Recent Past","subtitle":"Passing Influence"},{"numeral":"V","label":"Crowning","subtitle":"Conscious Goal"},{"numeral":"VI","label":"Near Future","subtitle":"Approaching Path"},{"numeral":"VII","label":"Self","subtitle":"Inner Attitude"},{"numeral":"VIII","label":"Environment","subtitle":"External Forces"},{"numeral":"IX","label":"Hopes & Fears","subtitle":"Hidden Expectations"},{"numeral":"X","label":"Outcome","subtitle":"Final Culmination"}];
+      const CELTIC_CROSS_POSITIONS = [
+        { numeral: 'I', label: 'Present', subtitle: 'Heart of the Matter' },
+        { numeral: 'II', label: 'Challenge', subtitle: 'Crossing Influence' },
+        { numeral: 'III', label: 'Foundation', subtitle: 'Subconscious Roots' },
+        { numeral: 'IV', label: 'Recent Past', subtitle: 'Passing Influence' },
+        { numeral: 'V', label: 'Crowning', subtitle: 'Conscious Goal' },
+        { numeral: 'VI', label: 'Near Future', subtitle: 'Approaching Path' },
+        { numeral: 'VII', label: 'Self', subtitle: 'Inner Attitude' },
+        { numeral: 'VIII', label: 'Environment', subtitle: 'External Forces' },
+        { numeral: 'IX', label: 'Hopes & Fears', subtitle: 'Hidden Expectations' },
+        { numeral: 'X', label: 'Outcome', subtitle: 'Final Culmination' }
+      ];
 
-      const MAJOR_ARCANA = [{"id":"death","numeral":"XIII","name":"DEATH","archetype":"Transformation & Renewal","keywords":["Closure","Metamorphosis","Clean Slate"],"oneCardMeaning":"A decisive chapter is reaching its natural completion. Release what has outlived its purpose so fresh momentum can enter unobstructed. Transformation arrives not as loss, but as clearing space for what comes next.","pastMeaning":"A major ending or quiet letting-go in your recent past cleared away outdated attachments and reshaped your priorities.","presentMeaning":"You are standing directly inside a threshold of transition—shedding old habits while your new direction takes form.","futureMeaning":"An inevitable clearing awaits ahead, sweeping away stagnation and opening a cleaner, lighter path forward.","guidanceMeaning":"Do not cling to a form that has already finished teaching you; step boldly through the doorway.","motif":"death","palette":{"sky":"#cfc8be","accent":"#1d1b20","detail":"#d49d46"}},{"id":"chariot","numeral":"VII","name":"THE CHARIOT","archetype":"Willpower & Victory","keywords":["Drive","Direction","Self-Mastery"],"oneCardMeaning":"Focused determination turns opposing forces into forward speed. Hold the reins firmly, align your intent with action, and advance without second-guessing your momentum.","pastMeaning":"Earlier discipline and sheer resolve carried you past obstacles that might have stalled a less committed effort.","presentMeaning":"Momentum is firmly in your hands right now—steer competing priorities toward a single clear objective.","futureMeaning":"Victory through decisive movement is approaching; steady confidence will bring you across the finish line.","guidanceMeaning":"Harness contrast instead of fighting it, and commit to one deliberate course.","motif":"chariot","palette":{"sky":"#f5e15b","accent":"#3d7bb8","detail":"#c93c3c"}},{"id":"lovers","numeral":"VI","name":"THE LOVERS","archetype":"Alignment & Choice","keywords":["Harmony","Devotion","Values"],"oneCardMeaning":"True alignment asks for an honest choice made from your deepest values rather than convenience. When heart and conviction agree, partnerships and creative commitments flourish.","pastMeaning":"A meaningful bond or pivotal personal choice shaped the emotional foundation you are standing on today.","presentMeaning":"A decision before you asks for authenticity—choose what resonates genuinely with who you are becoming.","futureMeaning":"Deep harmony and mutual recognition lie ahead once you commit wholeheartedly to your true path.","guidanceMeaning":"Let sincerity guide your next commitment rather than fear of missing out.","motif":"lovers","palette":{"sky":"#f5dc52","accent":"#c94c38","detail":"#4a8a5e"}},{"id":"fool","numeral":"0","name":"THE FOOL","archetype":"Beginnings & Trust","keywords":["Leap","Wonder","Open Horizon"],"oneCardMeaning":"Step toward the unfamiliar with unburdened curiosity. You do not need every mile mapped before taking the first stride—fresh potential meets those willing to begin.","pastMeaning":"An impulsive leap or fresh start set this entire sequence into motion before all outcomes were visible.","presentMeaning":"Openness is your strongest asset today; approach what is unfolding without rigid expectations.","futureMeaning":"An unexpected new cycle will invite you to explore uncharted territory with lightness and courage.","guidanceMeaning":"Travel light and allow beginners’ wonder to reveal possibilities you overlooked.","motif":"fool","palette":{"sky":"#f4df5d","accent":"#3a7cb0","detail":"#d4513d"}},{"id":"magician","numeral":"I","name":"THE MAGICIAN","archetype":"Skill & Manifestation","keywords":["Craft","Initiative","Resourcefulness"],"oneCardMeaning":"Everything required to turn concept into reality is already on your table. Focus your attention, combine your tools deliberately, and translate intention into tangible work.","pastMeaning":"Your resourcefulness and willingness to experiment laid the practical groundwork for this moment.","presentMeaning":"You hold active creative agency right now—turn scattered ideas into one concrete action.","futureMeaning":"Mastery and tangible results emerge as you channel vision through disciplined craft.","guidanceMeaning":"Stop waiting for permission or extra tools; begin with what is already within reach.","motif":"magician","palette":{"sky":"#f3d755","accent":"#c43e3e","detail":"#d99b38"}},{"id":"priestess","numeral":"II","name":"THE HIGH PRIESTESS","archetype":"Intuition & Stillness","keywords":["Insight","Mystery","Inner Knowing"],"oneCardMeaning":"The clearest answer is not shouting from the surface—it is waiting in quiet observation. Pause before acting and trust subtle pattern recognition over noisy urgency.","pastMeaning":"Unspoken intuition or quiet reflection guided your instincts even when outward facts seemed incomplete.","presentMeaning":"More is happening beneath the surface than meets the eye; listen closely before speaking or committing.","futureMeaning":"Hidden clarity will surface naturally when the timing ripens—patience reveals what force cannot.","guidanceMeaning":"Protect your quiet space and honor what you already sense to be true.","motif":"priestess","palette":{"sky":"#dcdbe6","accent":"#2f5f9e","detail":"#c9a34b"}},{"id":"empress","numeral":"III","name":"THE EMPRESS","archetype":"Abundance & Growth","keywords":["Nurturing","Creativity","Vitality"],"oneCardMeaning":"Tend patiently to what you want to see thrive. Creative and relational seeds planted with warmth and consistency are entering a fertile season of visible bloom.","pastMeaning":"Generous care and creative patience nourished the roots of your current endeavors.","presentMeaning":"Abundance grows through sensory care, comfort, and steady cultivation rather than harsh pressure.","futureMeaning":"A rich harvest of creative fulfillment and grounded well-being is ripening ahead.","guidanceMeaning":"Give yourself and your projects room to breathe, grow, and feel cared for.","motif":"empress","palette":{"sky":"#f5dc52","accent":"#4b8a57","detail":"#c94c4c"}},{"id":"hermit","numeral":"IX","name":"THE HERMIT","archetype":"Wisdom & Solitude","keywords":["Reflection","Lantern","Inner Compass"],"oneCardMeaning":"Step back briefly from external noise so your own lantern can illuminate the next step. Solitude right now is not isolation—it is recalibration toward genuine wisdom.","pastMeaning":"A period of quiet introspection helped you separate your authentic voice from outside expectations.","presentMeaning":"Take deliberate space to think clearly; one honest step at a time is enough.","futureMeaning":"Earned clarity will make you a steady beacon for yourself and others navigating uncertain ground.","guidanceMeaning":"Look inward for verification before seeking approval from the crowd.","motif":"hermit","palette":{"sky":"#9ba3b8","accent":"#3e475c","detail":"#f2cb57"}},{"id":"wheel","numeral":"X","name":"WHEEL OF FORTUNE","archetype":"Cycles & Turning Points","keywords":["Timing","Shift","Destiny"],"oneCardMeaning":"The wheel is turning in real time, bringing a decisive shift in circumstance. Stay adaptable at the center of motion so you ride the turn gracefully rather than resisting change.","pastMeaning":"An unexpected twist of timing shifted your trajectory onto a very different track.","presentMeaning":"Events are moving quickly—notice repeating patterns and catch the rising tide.","futureMeaning":"A fortunate pivot approaches that rewards readiness and openness to serendipity.","guidanceMeaning":"Anchor yourself in steady principles while external conditions rotate.","motif":"wheel","palette":{"sky":"#a7c6e8","accent":"#c98836","detail":"#3a669c"}},{"id":"justice","numeral":"XI","name":"JUSTICE","archetype":"Truth & Equilibrium","keywords":["Clarity","Fairness","Accountability"],"oneCardMeaning":"Facts, cause, and consequence align with surgical clarity. Weigh every angle objectively, speak truthfully, and make decisions you will gladly stand behind long term.","pastMeaning":"A fair reckoning or honest realization restored balance where ambiguity used to linger.","presentMeaning":"Objective judgment is called for now—set emotion-driven distortion aside and look cleanly at the scales.","futureMeaning":"Equitable outcomes and clear resolution will follow actions rooted in integrity.","guidanceMeaning":"Choose fairness with yourself as well as others.","motif":"justice","palette":{"sky":"#f2d95c","accent":"#b83939","detail":"#3b6ea1"}},{"id":"star","numeral":"XVII","name":"THE STAR","archetype":"Hope & Renewal","keywords":["Clarity","Healing","Guiding Light"],"oneCardMeaning":"Calm restoration follows turbulence. Look up toward your quiet North Star—faith in your direction is renewed, and gentle healing is restoring confidence.","pastMeaning":"A moment of quiet hope kept your vision alive through demanding stretches.","presentMeaning":"You are entering a clear, restorative space where inspiration flows without force.","futureMeaning":"Peaceful alignment and luminous creative renewal wait just ahead on the horizon.","guidanceMeaning":"Pour your energy back into what genuinely inspires you.","motif":"star","palette":{"sky":"#9ac0e6","accent":"#365e94","detail":"#f7df6d"}},{"id":"moon","numeral":"XVIII","name":"THE MOON","archetype":"Dreams & Subconscious","keywords":["Mystery","Intuition","Night Path"],"oneCardMeaning":"Not everything is plainly lit right now—shadows stretch shapes larger than they are. Walk carefully through ambiguity, notice dreams and feelings, and wait for dawn before judging.","pastMeaning":"Unclear signals or deep emotional currents stirred doubts beneath your everyday routine.","presentMeaning":"Distinguish real intuition from anxious projection as you navigate misty territory.","futureMeaning":"Walking steadily through uncertainty will bring deeper self-knowledge on the far side.","guidanceMeaning":"Stay on the narrow path and let morning light confirm what night only hinted.","motif":"moon","palette":{"sky":"#798bbd","accent":"#27355c","detail":"#f2d06b"}},{"id":"sun","numeral":"XIX","name":"THE SUN","archetype":"Vitality & Clarity","keywords":["Joy","Truth","Warmth"],"oneCardMeaning":"Unmistakable warmth, clarity, and vitality break through every lingering cloud. Share your work openly, celebrate real progress, and let straightforward optimism lead.","pastMeaning":"A bright breakthrough or joyful success proved how capable you are when fully present.","presentMeaning":"Transparency and warmth illuminate your situation—there is nothing left to hide.","futureMeaning":"Radiant fulfillment, clear recognition, and energized momentum await ahead.","guidanceMeaning":"Step into visibility without shrinking your light.","motif":"sun","palette":{"sky":"#f7e463","accent":"#d9692b","detail":"#3a7bb8"}},{"id":"world","numeral":"XXI","name":"THE WORLD","archetype":"Completion & Integration","keywords":["Wholeness","Milestone","Mastery"],"oneCardMeaning":"All scattered pieces converge into a unified whole. Honor how far you have come—a major cycle concludes in fulfillment, opening the threshold to an elevated next spiral.","pastMeaning":"Completing a formative milestone gave you the perspective to see the larger design.","presentMeaning":"Disparate lessons are clicking together into integrated confidence and poise.","futureMeaning":"Full-circle accomplishment and readiness for a broader horizon are coming into view.","guidanceMeaning":"Celebrate completion fully before rushing to start the next climb.","motif":"world","palette":{"sky":"#b8d7f0","accent":"#3e8058","detail":"#d9a441"}}];
+      // Static PNG folder correlated to Supabase primary key: 0.png .. 77.png
+      // Streamlit (enableStaticServing = true): '/app/static/images/card/'
+      // Standard Flask/FastAPI static folder:   '/static/images/card/'
+      const CARD_IMAGE_BASE_PATH = '/app/static/images/card/';
+      const CARD_BACK_IMAGE_URL = null;
 
-      function drawRandomCards(count) {
-        const pool = MAJOR_ARCANA.slice();
-        for (let i = pool.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          const tmp = pool[i];
-          pool[i] = pool[j];
-          pool[j] = tmp;
+      // Python injects either:
+      // 1) { "cards": celtic_cross(), "llm_response": "Para 1\n\nPara 2\n\n...Para 10" }
+      // 2) celtic_cross() list directly where each card includes "llm_interpretation" (or "interpretation" / "meaning")
+      const RAW_INJECTED_DATA = /*__TAROT_DATA__*/ null;
+      let extraSummaryParagraphs = [];
+
+      function splitLlmParagraphs(raw, expectedCount) {
+        if (!raw) return [];
+        if (Array.isArray(raw)) {
+          return raw.map((p) => String(p || '').trim()).filter(Boolean);
         }
-        return pool.slice(0, count);
+        const text = String(raw).replace(/\r\n/g, '\n').trim();
+        if (!text) return [];
+        const byBlank = text.split(/\n\s*\n+/).map((p) => p.trim()).filter(Boolean);
+        if (byBlank.length >= (expectedCount || 1)) return byBlank;
+        const byLine = text.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+        return byLine.length > byBlank.length ? byLine : byBlank;
+      }
+
+      function formatInlineText(str) {
+        return escapeHtml(str)
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em>$1</em>');
+      }
+
+      function renderParagraphsHtml(text) {
+        const paras = Array.isArray(text) ? text : splitLlmParagraphs(text, 1);
+        if (!paras.length) return '';
+        return paras.map((p) => '<p>' + formatInlineText(p) + '</p>').join('');
+      }
+
+      function normalizeCard(raw, llmParagraph) {
+        const isRev = Boolean(raw && raw.is_reverse);
+        const dbMeaning = raw && (raw.meaning || (isRev ? (raw.reversed_meaning || raw.reversed_additional) : (raw.upright_meaning || raw.upright_additional))) || '';
+        const llmText = (raw && (raw.llm_interpretation || raw.interpretation || raw.llm_explanation || raw.explanation)) || llmParagraph || dbMeaning;
+        return {
+          id: raw && raw.id != null ? raw.id : 0,
+          card_name: (raw && raw.card_name) || ('Card #' + (raw && raw.id != null ? raw.id : 0)),
+          is_reverse: isRev,
+          arcana: (raw && raw.arcana) || '',
+          suit: (raw && raw.suit) || '',
+          meaning: llmText,
+          image_url: raw && raw.image_url,
+        };
+      }
+
+      function getDrawnTen() {
+        extraSummaryParagraphs = [];
+        if (RAW_INJECTED_DATA && typeof RAW_INJECTED_DATA === 'object') {
+          const rawCards = Array.isArray(RAW_INJECTED_DATA)
+            ? RAW_INJECTED_DATA
+            : (Array.isArray(RAW_INJECTED_DATA.cards) ? RAW_INJECTED_DATA.cards : null);
+          const llmRaw = !Array.isArray(RAW_INJECTED_DATA)
+            ? (RAW_INJECTED_DATA.llm_response || RAW_INJECTED_DATA.llm_interpretation || RAW_INJECTED_DATA.interpretation || RAW_INJECTED_DATA.explanation || RAW_INJECTED_DATA.paragraphs)
+            : null;
+          const llmParas = splitLlmParagraphs(llmRaw, 10);
+          if (llmParas.length > 10) {
+            extraSummaryParagraphs = llmParas.slice(10);
+          }
+          if (rawCards && rawCards.length >= 10) {
+            return rawCards.slice(0, 10).map((c, idx) => normalizeCard(c, llmParas[idx] || ''));
+          }
+        }
+        const used = new Set();
+        const fallback = [];
+        while (fallback.length < 10) {
+          const id = Math.floor(Math.random() * 78);
+          if (!used.has(id)) {
+            used.add(id);
+            fallback.push({
+              id: id,
+              card_name: 'Card #' + id,
+              is_reverse: Math.random() < 0.5,
+              meaning: 'Connect your Supabase celtic_cross() and LLM interpretation output to display the reading for card ID ' + id + '.',
+            });
+          }
+        }
+        return fallback;
+      }
+
+      function escapeHtml(str) {
+        return String(str == null ? '' : str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function getCardImageCandidates(card) {
+        if (card && card.image_url) return [card.image_url];
+        const file = card.id + '.png';
+        return [
+          CARD_IMAGE_BASE_PATH + file,
+          '/static/images/card/' + file,
+          'static/images/card/' + file,
+          '../static/images/card/' + file,
+        ];
+      }
+
+      function renderCardBackHtml(uid) {
+        if (CARD_BACK_IMAGE_URL) {
+          return '<img class="tarot-face-img" src="' + CARD_BACK_IMAGE_URL + '" alt="Tarot card back" draggable="false" />';
+        }
+        return createCardBackSvg(uid);
+      }
+
+      function createFallbackFaceSvg(card) {
+        return '<svg viewBox="0 0 200 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<rect width="200" height="320" rx="10" fill="#f7f4ec" />' +
+          '<rect x="12" y="12" width="176" height="258" fill="#1e1b4b" stroke="#18181b" stroke-width="2.4" />' +
+          '<circle cx="100" cy="140" r="42" fill="none" stroke="#fde047" stroke-width="2" />' +
+          '<text x="100" y="146" text-anchor="middle" fill="#fef3c7" font-size="22" font-weight="700" font-family="Georgia, serif">#' + escapeHtml(card.id) + '</text>' +
+          '<rect x="12" y="274" width="176" height="34" fill="#f7f4ec" stroke="#18181b" stroke-width="2.4" />' +
+          '<text x="100" y="297" text-anchor="middle" fill="#18181b" font-size="13" font-weight="700" font-family="Georgia, serif">' + escapeHtml(card.card_name) + '</text>' +
+        '</svg>';
+      }
+
+      function setCardFrontContent(frontEl, card) {
+        const candidates = getCardImageCandidates(card);
+        let idx = 0;
+        const revClass = card.is_reverse ? ' is-reversed' : '';
+        frontEl.innerHTML =
+          '<img class="tarot-face-img' + revClass + '" src="' + escapeHtml(candidates[0]) + '" alt="' + escapeHtml(card.card_name) + '" draggable="false" />';
+        const img = frontEl.querySelector('img');
+        if (img) {
+          img.addEventListener('error', function () {
+            idx += 1;
+            if (idx < candidates.length) {
+              img.src = candidates[idx];
+            } else {
+              frontEl.innerHTML = createFallbackFaceSvg(card);
+            }
+          });
+        }
       }
 
       function createCardBackSvg(uid) {
-        return '<svg viewBox="0 0 200 320" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+        return '<svg viewBox="0 0 200 320" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
           '<defs>' +
-            '<linearGradient id="bg-' + uid + '" x1="0" y1="0" x2="200" y2="320" gradientUnits="userSpaceOnUse">' +
-              '<stop offset="0%" stop-color="#0a070b" /><stop offset="50%" stop-color="#040306" /><stop offset="100%" stop-color="#09060b" />' +
-            '</linearGradient>' +
-            '<linearGradient id="gd-' + uid + '" x1="20" y1="10" x2="180" y2="310" gradientUnits="userSpaceOnUse">' +
-              '<stop offset="0%" stop-color="#f2c47d" /><stop offset="35%" stop-color="#d48c3e" /><stop offset="68%" stop-color="#f4cb88" /><stop offset="100%" stop-color="#b8722c" />' +
-            '</linearGradient>' +
+            '<linearGradient id="bg-' + uid + '" x1="0" y1="0" x2="200" y2="320" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#0a070b" /><stop offset="50%" stop-color="#040306" /><stop offset="100%" stop-color="#09060b" /></linearGradient>' +
+            '<linearGradient id="gd-' + uid + '" x1="20" y1="10" x2="180" y2="310" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#f2c47d" /><stop offset="35%" stop-color="#d48c3e" /><stop offset="68%" stop-color="#f4cb88" /><stop offset="100%" stop-color="#b8722c" /></linearGradient>' +
           '</defs>' +
           '<rect width="200" height="320" rx="10" fill="url(#bg-' + uid + ')" />' +
           '<rect x="5.5" y="5.5" width="189" height="309" rx="7.5" stroke="url(#gd-' + uid + ')" stroke-width="2.2" />' +
           '<rect x="10.5" y="10.5" width="179" height="299" rx="5" stroke="url(#gd-' + uid + ')" stroke-width="1.1" opacity="0.82" />' +
           '<g stroke="url(#gd-' + uid + ')" stroke-linecap="round" stroke-linejoin="round">' +
-            '<g>' +
-              '<path d="M16 56 C16 28,32 17,56 17 C42 22,34 31,35 44 C36 53,45 55,49 48 C52 43,47 37,42 40" stroke-width="1.5" />' +
-              '<path d="M184 56 C184 28,168 17,144 17 C158 22,166 31,165 44 C164 53,155 55,151 48 C148 43,153 37,158 40" stroke-width="1.5" />' +
-              '<path d="M100 18 C88 32,86 50,100 66 C114 50,112 32,100 18 Z" fill="#070509" stroke-width="1.6" />' +
-              '<path d="M100 58 C82 40,62 34,50 48 C65 49,77 59,86 78" stroke-width="1.6" />' +
-              '<path d="M100 58 C118 40,138 34,150 48 C135 49,123 59,114 78" stroke-width="1.6" />' +
-              '<path d="M100 74 C76 58,54 62,46 78 C64 74,78 82,88 100" stroke-width="1.5" />' +
-              '<path d="M100 74 C124 58,146 62,154 78 C136 74,122 82,112 100" stroke-width="1.5" />' +
-              '<path d="M100 22 L100 124" stroke-width="1.4" opacity="0.9" />' +
-            '</g>' +
-            '<g transform="translate(0, 320) scale(1, -1)">' +
-              '<path d="M16 56 C16 28,32 17,56 17 C42 22,34 31,35 44 C36 53,45 55,49 48 C52 43,47 37,42 40" stroke-width="1.5" />' +
-              '<path d="M184 56 C184 28,168 17,144 17 C158 22,166 31,165 44 C164 53,155 55,151 48 C148 43,153 37,158 40" stroke-width="1.5" />' +
-              '<path d="M100 18 C88 32,86 50,100 66 C114 50,112 32,100 18 Z" fill="#070509" stroke-width="1.6" />' +
-              '<path d="M100 58 C82 40,62 34,50 48 C65 49,77 59,86 78" stroke-width="1.6" />' +
-              '<path d="M100 58 C118 40,138 34,150 48 C135 49,123 59,114 78" stroke-width="1.6" />' +
-              '<path d="M100 74 C76 58,54 62,46 78 C64 74,78 82,88 100" stroke-width="1.5" />' +
-              '<path d="M100 74 C124 58,146 62,154 78 C136 74,122 82,112 100" stroke-width="1.5" />' +
-              '<path d="M100 22 L100 124" stroke-width="1.4" opacity="0.9" />' +
-            '</g>' +
-            '<ellipse cx="100" cy="160" rx="54" ry="31" fill="#060408" stroke-width="1.7" />' +
-            '<ellipse cx="100" cy="160" rx="34" ry="18.5" stroke-width="1.6" />' +
-            '<ellipse cx="100" cy="160" rx="22" ry="12.5" fill="#030204" stroke-width="1.9" />' +
-            '<path d="M46 160 L66 160 M134 160 L154 160 M100 129 L100 142 M100 178 L100 191" stroke-width="1.5" />' +
+            '<g><path d="M16 56 C16 28,32 17,56 17 C42 22,34 31,35 44 C36 53,45 55,49 48 C52 43,47 37,42 40" stroke-width="1.5" /><path d="M184 56 C184 28,168 17,144 17 C158 22,166 31,165 44 C164 53,155 55,151 48 C148 43,153 37,158 40" stroke-width="1.5" /><path d="M100 18 C88 32,86 50,100 66 C114 50,112 32,100 18 Z" fill="#070509" stroke-width="1.6" /><path d="M100 58 C82 40,62 34,50 48 C65 49,77 59,86 78" stroke-width="1.6" /><path d="M100 58 C118 40,138 34,150 48 C135 49,123 59,114 78" stroke-width="1.6" /><path d="M100 74 C76 58,54 62,46 78 C64 74,78 82,88 100" stroke-width="1.5" /><path d="M100 74 C124 58,146 62,154 78 C136 74,122 82,112 100" stroke-width="1.5" /><path d="M100 22 L100 124" stroke-width="1.4" opacity="0.9" /></g>' +
+            '<g transform="translate(0, 320) scale(1, -1)"><path d="M16 56 C16 28,32 17,56 17 C42 22,34 31,35 44 C36 53,45 55,49 48 C52 43,47 37,42 40" stroke-width="1.5" /><path d="M184 56 C184 28,168 17,144 17 C158 22,166 31,165 44 C164 53,155 55,151 48 C148 43,153 37,158 40" stroke-width="1.5" /><path d="M100 18 C88 32,86 50,100 66 C114 50,112 32,100 18 Z" fill="#070509" stroke-width="1.6" /><path d="M100 58 C82 40,62 34,50 48 C65 49,77 59,86 78" stroke-width="1.6" /><path d="M100 58 C118 40,138 34,150 48 C135 49,123 59,114 78" stroke-width="1.6" /><path d="M100 74 C76 58,54 62,46 78 C64 74,78 82,88 100" stroke-width="1.5" /><path d="M100 74 C124 58,146 62,154 78 C136 74,122 82,112 100" stroke-width="1.5" /><path d="M100 22 L100 124" stroke-width="1.4" opacity="0.9" /></g>' +
+            '<ellipse cx="100" cy="160" rx="54" ry="31" fill="#060408" stroke-width="1.7" /><ellipse cx="100" cy="160" rx="34" ry="18.5" stroke-width="1.6" /><ellipse cx="100" cy="160" rx="22" ry="12.5" fill="#030204" stroke-width="1.9" /><path d="M46 160 L66 160 M134 160 L154 160 M100 129 L100 142 M100 178 L100 191" stroke-width="1.5" />' +
           '</g>' +
         '</svg>';
       }
 
-      function createCardFaceSvg(card) {
-        let art = '';
-        if (card.id === 'death') {
-          art =
-            '<rect x="12" y="12" width="176" height="258" fill="#d4cfc4" />' +
-            '<path d="M12 224 Q60 212 105 224 T188 220 L188 270 L12 270 Z" fill="#89a87a" stroke="#18181b" stroke-width="1.4" />' +
-            '<path d="M148 165 A24 24 0 0 1 188 165" fill="#facc15" stroke="#18181b" stroke-width="1.6" />' +
-            '<rect x="86" y="18" width="84" height="62" fill="#18181b" />' +
-            '<text x="93" y="30" fill="#e5e7eb" font-size="10" font-family="serif">XIII</text>' +
-            '<circle cx="128" cy="52" r="18" fill="#f8fafc" stroke="#18181b" stroke-width="1.4" />' +
-            '<circle cx="128" cy="52" r="9" fill="none" stroke="#18181b" stroke-width="1.3" />' +
-            '<line x1="86" y1="18" x2="86" y2="155" stroke="#18181b" stroke-width="2.4" />' +
-            '<path d="M46 172 C56 142, 92 134, 126 144 C144 150, 152 172, 144 205 L128 205 L128 184 L68 184 L62 214 L46 214 Z" fill="#f8fafc" stroke="#18181b" stroke-width="1.8" />' +
-            '<path d="M120 144 C136 126, 158 128, 166 150 C154 156, 140 156, 130 162 Z" fill="#f8fafc" stroke="#18181b" stroke-width="1.8" />' +
-            '<path d="M58 148 L72 95 L92 100 L86 150 Z" fill="#1f2937" stroke="#111827" stroke-width="1.8" />' +
-            '<circle cx="76" cy="80" r="12" fill="#e5e7eb" stroke="#18181b" stroke-width="1.8" />';
-        } else if (card.id === 'chariot') {
-          art =
-            '<rect x="12" y="12" width="176" height="258" fill="#f5df4d" />' +
-            '<rect x="34" y="36" width="132" height="148" fill="#38bdf8" stroke="#18181b" stroke-width="2" />' +
-            '<path d="M34 36 H166 V64 Q132 54 100 66 Q68 54 34 64 Z" fill="#1e3a8a" stroke="#18181b" stroke-width="1.8" />' +
-            '<circle cx="100" cy="78" r="13" fill="#fde047" stroke="#18181b" stroke-width="1.6" />' +
-            '<path d="M74 140 L84 94 H116 L126 140 Z" fill="#cbd5e1" stroke="#18181b" stroke-width="1.8" />' +
-            '<rect x="52" y="140" width="96" height="58" fill="#eab308" stroke="#18181b" stroke-width="2" />' +
-            '<ellipse cx="62" cy="230" rx="28" ry="20" fill="#18181b" stroke="#09090b" stroke-width="1.6" />' +
-            '<ellipse cx="138" cy="230" rx="28" ry="20" fill="#f8fafc" stroke="#18181b" stroke-width="1.6" />';
-        } else if (card.id === 'lovers') {
-          art =
-            '<rect x="12" y="12" width="176" height="258" fill="#e0f2fe" />' +
-            '<circle cx="100" cy="40" r="24" fill="#fde047" stroke="#18181b" stroke-width="1.6" />' +
-            '<path d="M68 188 L100 132 L132 188 Z" fill="#db2777" stroke="#18181b" stroke-width="1.8" />' +
-            '<path d="M12 188 H188 V270 H12 Z" fill="#4ade80" stroke="#18181b" stroke-width="1.5" />' +
-            '<circle cx="52" cy="144" r="10" fill="#fed7aa" stroke="#18181b" stroke-width="1.6" />' +
-            '<path d="M44 156 H60 L64 218 H40 Z" fill="#fdba74" stroke="#18181b" stroke-width="1.6" />' +
-            '<circle cx="148" cy="144" r="10" fill="#fed7aa" stroke="#18181b" stroke-width="1.6" />' +
-            '<path d="M140 156 H156 L160 218 H136 Z" fill="#fdba74" stroke="#18181b" stroke-width="1.6" />';
-        } else {
-          const isWarm = card.numeral === 'XIX' || card.numeral === 'I' || card.numeral === 'III' || card.numeral === '0';
-          const skyColor = isWarm ? '#fef08a' : '#1e1b4b';
-          const circleColor = isWarm ? '#fb923c' : '#fde047';
-          const textColor = isWarm ? '#7c2d12' : '#e0e7ff';
-          art =
-            '<rect x="12" y="12" width="176" height="258" fill="' + skyColor + '" />' +
-            '<circle cx="100" cy="118" r="46" fill="none" stroke="' + circleColor + '" stroke-width="2" opacity="0.85" />' +
-            '<circle cx="100" cy="118" r="28" fill="' + circleColor + '" opacity="0.92" />' +
-            '<path d="M100 54 L106 108 L160 118 L106 128 L100 182 L94 128 L40 118 L94 108 Z" fill="' + (isWarm ? '#fffbeb' : '#fef9c3') + '" stroke="#18181b" stroke-width="1.4" />' +
-            '<path d="M12 222 Q62 204 108 220 T188 214 L188 270 L12 270 Z" fill="' + (isWarm ? '#4ade80' : '#312e81') + '" stroke="#18181b" stroke-width="1.5" />' +
-            '<text x="100" y="38" text-anchor="middle" fill="' + textColor + '" font-size="14" font-weight="700" font-family="Georgia, serif">' + card.numeral + '</text>';
-        }
-
-        return '<svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg">' +
-          '<rect width="200" height="320" rx="10" fill="#f7f4ec" />' +
-          '<rect x="12" y="12" width="176" height="258" fill="#e8e2d5" stroke="#18181b" stroke-width="2.4" />' +
-          art +
-          '<rect x="12" y="274" width="176" height="34" fill="#f7f4ec" stroke="#18181b" stroke-width="2.4" />' +
-          '<text x="100" y="297" text-anchor="middle" fill="#18181b" font-size="16" font-weight="700" letter-spacing="1.6" font-family="Georgia, serif">' + card.name + '.</text>' +
-        '</svg>';
-      }
-
-
-      const REFERENCE_12 = [
-        { dx: 0, dy: -82, z: 1 }, { dx: -82, dy: -58, z: 4 }, { dx: 82, dy: -58, z: 4 },
-        { dx: -136, dy: -36, z: 3 }, { dx: 136, dy: -36, z: 3 }, { dx: -174, dy: -12, z: 2 },
-        { dx: 174, dy: -12, z: 2 }, { dx: -134, dy: 24, z: 5 }, { dx: 134, dy: 24, z: 5 },
-        { dx: -72, dy: 58, z: 6 }, { dx: 72, dy: 58, z: 6 }, { dx: 0, dy: 86, z: 7 },
-      ];
-
       function buildCardSlots(count) {
-        if (count === 12) return REFERENCE_12;
         const arr = [];
         for (let i = 0; i < count; i++) {
           const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
-          arr.push({
-            dx: Math.round(Math.cos(angle) * 174),
-            dy: Math.round(Math.sin(angle) * 84),
-            z: Math.round(((Math.sin(angle) + 1) / 2) * count) + 1,
-          });
+          arr.push({ dx: Math.round(Math.cos(angle) * 174), dy: Math.round(Math.sin(angle) * 84), z: Math.round(((Math.sin(angle) + 1) / 2) * count) + 1 });
         }
         return arr;
       }
@@ -905,13 +516,7 @@
         const mid = (count - 1) / 2;
         const stepX = Math.min(1.15, 13 / count);
         const stepY = Math.min(1.8, 20 / count);
-        return {
-          x: (i - mid) * stepX * scale,
-          y: (mid - i) * stepY * scale,
-          rot: i === count - 1 ? 0 : ((i % 3) - 1) * 0.55,
-          scale: 1.06,
-          z: i + 2,
-        };
+        return { x: (i - mid) * stepX * scale, y: (mid - i) * stepY * scale, rot: i === count - 1 ? 0 : ((i % 3) - 1) * 0.55, scale: 1.06, z: i + 2 };
       }
 
       const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -921,26 +526,21 @@
       const easeInQuart = (t) => { const x = clamp01(t); return x * x * x * x; };
       const easeOutQuint = (t) => 1 - Math.pow(1 - clamp01(t), 5);
 
-
-      function getCelticMeaning(card, idx) {
-        switch (idx) {
-          case 0: return card.presentMeaning;
-          case 1: return 'Crossing your path, ' + card.name + ' brings the tension of ' + card.archetype.toLowerCase() + '. ' + card.guidanceMeaning;
-          case 2: return 'Beneath the surface, ' + card.name + ' anchors this reading in ' + card.keywords.join(', ').toLowerCase() + '. ' + card.pastMeaning;
-          case 3: return card.pastMeaning;
-          case 4: return 'At the crown of your awareness, ' + card.name + ' highlights ' + card.archetype.toLowerCase() + '. ' + card.oneCardMeaning;
-          case 5: return card.futureMeaning;
-          case 6: return 'Your own posture is shaped by ' + card.name + ' (' + card.keywords[0].toLowerCase() + ' & ' + card.keywords[1].toLowerCase() + '). ' + card.guidanceMeaning;
-          case 7: return 'Surrounding circumstances mirror ' + card.name + ': ' + card.presentMeaning;
-          case 8: return 'In your hopes and quiet cautions, ' + card.name + ' reflects ' + card.archetype.toLowerCase() + '. ' + card.guidanceMeaning;
-          default: return 'Culminating the spread, ' + card.name + ' points toward ' + card.keywords.join(', ').toLowerCase() + '. ' + card.futureMeaning;
-        }
+      function fmtCard(c) {
+        return '<strong>' + escapeHtml(c.card_name) + '</strong>' + (c.is_reverse ? ' (Reversed)' : '');
       }
 
       function buildCelticSummary(cards) {
+        if (extraSummaryParagraphs.length) {
+          return renderParagraphsHtml(extraSummaryParagraphs);
+        }
         var c0 = cards[0], c1 = cards[1], c2 = cards[2], c3 = cards[3], c4 = cards[4];
         var c5 = cards[5], c6 = cards[6], c7 = cards[7], c8 = cards[8], c9 = cards[9];
-        return 'At the center of your Celtic Cross sits <strong>' + c0.name + '</strong>, directly crossed by <strong>' + c1.name + '</strong>. Rooted in <strong>' + c2.name + '</strong> and emerging from <strong>' + c3.name + '</strong>, your conscious aim turns toward <strong>' + c4.name + '</strong> as <strong>' + c5.name + '</strong> approaches on the near horizon. With <strong>' + c6.name + '</strong> shaping your stance amidst <strong>' + c7.name + '</strong>, honoring your hopes and cautions in <strong>' + c8.name + '</strong> carries the cycle to its culmination in <strong>' + c9.name + '</strong> (' + c9.archetype.toLowerCase() + ').';
+        return '<p>At the center of your Celtic Cross sits ' + fmtCard(c0) + ', directly crossed by ' + fmtCard(c1) +
+          '. Rooted in ' + fmtCard(c2) + ' and emerging from ' + fmtCard(c3) +
+          ', your conscious aim turns toward ' + fmtCard(c4) + ' as ' + fmtCard(c5) +
+          ' approaches on the near horizon. With ' + fmtCard(c6) + ' shaping your stance amidst ' + fmtCard(c7) +
+          ', honoring your hopes and cautions in ' + fmtCard(c8) + ' carries the cycle to its culmination in ' + fmtCard(c9) + '.</p>';
       }
 
       const SLOTS = buildCardSlots(CARD_COUNT);
@@ -977,7 +577,7 @@
       const shuffleBtn = document.getElementById('shuffleBtn');
       const resetBtn = document.getElementById('resetBtn');
 
-      singularityCard.innerHTML = createCardBackSvg('sing');
+      singularityCard.innerHTML = renderCardBackHtml('sing');
 
       const cardEls = SLOTS.map((_, i) => {
         const btn = document.createElement('button');
@@ -985,7 +585,7 @@
         btn.className = 'tarot-card is-interactive';
         btn.innerHTML =
           '<div class="tarot-card-inner">' +
-            '<div class="tarot-face">' + createCardBackSvg(i) + '</div>' +
+            '<div class="tarot-face tarot-face--back">' + renderCardBackHtml(i) + '</div>' +
             '<div class="tarot-face tarot-face--front" data-front="' + i + '"></div>' +
           '</div>';
         btn.addEventListener('click', () => handleCardClick(i));
@@ -1014,26 +614,20 @@
         return b;
       });
 
-      let layoutScale = 1, cardW = 92, cardH = 147, circleRadius = 220, stageW = 1024, stageH = 720;
+      let layoutScale = 1, cardW = 92, cardH = 153, circleRadius = 220, stageW = 1024, stageH = 720;
       let isMobile = false;
       let leftRect = { x: -240, y: 0, width: 380, height: 480 };
-      let phase = 'idle'; // idle | shuffling | circle | converging | singularity | deck | centered-cross | placed-left | summary
+      let phase = 'idle';
       let rafId = 0;
       let timers = [];
       let crossSettled = false;
 
-      let drawnTen = drawRandomCards(10);
+      let drawnTen = getDrawnTen();
       let revealedCount = 0;
       let activeSlot = 0;
 
-      function clearTimers() {
-        timers.forEach((id) => clearTimeout(id));
-        timers = [];
-      }
-
-      function setStatus(title, sub) {
-        statusReadout.innerHTML = '<strong>' + title + '</strong> · ' + sub;
-      }
+      function clearTimers() { timers.forEach((id) => clearTimeout(id)); timers = []; }
+      function setStatus(title, sub) { statusReadout.innerHTML = '<strong>' + title + '</strong> · ' + sub; }
 
       function getCelticPose(slotIdx, sc, ox, oy) {
         const cw = cardW * sc;
@@ -1060,7 +654,7 @@
         stageH = rect.height || 720;
         layoutScale = Math.max(0.54, Math.min(stageW / 540, stageH / 470, 1.2));
         cardW = Math.round(92 * layoutScale);
-        cardH = Math.round(cardW * 1.6);
+        cardH = Math.round(cardW * (1810 / 1086));
         isMobile = stageW < 768;
         circleRadius = Math.max(96, Math.min(stageW * 0.30, stageH * 0.29, 232));
 
@@ -1183,10 +777,14 @@
           summaryCardsGrid.innerHTML = '';
           drawnTen.forEach((c, idx) => {
             const pos = CELTIC_CROSS_POSITIONS[idx];
+            const orient = c.is_reverse ? 'Reversed' : 'Upright';
             const b = document.createElement('button');
             b.type = 'button';
             b.className = 'summary-10-btn';
-            b.innerHTML = '<div class="summary-10-pos">' + pos.numeral + '. ' + pos.label + '</div><div class="summary-10-name">' + c.name + '</div>';
+            b.innerHTML =
+              '<div class="summary-10-pos">' + pos.numeral + '. ' + pos.label + '</div>' +
+              '<div class="summary-10-name">' + escapeHtml(c.card_name) + '</div>' +
+              '<div class="summary-10-orient' + (c.is_reverse ? ' is-reversed' : '') + '">' + orient + '</div>';
             b.addEventListener('click', () => {
               activeSlot = idx;
               phase = 'placed-left';
@@ -1202,6 +800,7 @@
 
         const card = drawnTen[activeSlot];
         const pos = CELTIC_CROSS_POSITIONS[activeSlot];
+        const orient = card.is_reverse ? 'Reversed' : 'Upright';
         const nextPos = CELTIC_CROSS_POSITIONS[Math.min(revealedCount, 9)];
         const hint = revealedCount < 10
           ? '<p class="explain-hint">Next (' + (revealedCount + 1) + ' / 10): Click the glowing ' + nextPos.numeral + '. ' + nextPos.label + ' card on the Celtic Cross.</p>'
@@ -1210,11 +809,10 @@
         explainContent.innerHTML =
           '<div style="margin-top:16px;">' +
             '<div class="explain-header" style="border-bottom:0; padding-bottom:0;">' +
-              '<h2 class="explain-card-name">' + card.numeral + ' · ' + card.name + '</h2>' +
-              '<span class="explain-archetype">' + pos.numeral + '. ' + pos.label + ' — ' + pos.subtitle + '</span>' +
+              '<h2 class="explain-card-name">' + escapeHtml(card.card_name) + '</h2>' +
+              '<span class="explain-archetype' + (card.is_reverse ? ' is-reversed' : '') + '">' + pos.numeral + '. ' + pos.label + ' — ' + pos.subtitle + ' · ' + orient + '</span>' +
             '</div>' +
-            '<div class="explain-keywords">' + card.keywords.join(' · ') + '</div>' +
-            '<p class="explain-body">' + getCelticMeaning(card, activeSlot) + '</p>' +
+            '<div class="explain-body">' + renderParagraphsHtml(card.meaning) + '</div>' +
             hint +
           '</div>';
       }
@@ -1226,10 +824,10 @@
         crossSettled = false;
         revealedCount = 0;
         activeSlot = 0;
-        drawnTen = drawRandomCards(10);
+        drawnTen = getDrawnTen();
 
         for (let i = 0; i < 10; i++) {
-          cardEls[i].querySelector('[data-front]').innerHTML = createCardFaceSvg(drawnTen[i]);
+          setCardFrontContent(cardEls[i].querySelector('[data-front]'), drawnTen[i]);
         }
 
         altarGlow.style.opacity = '0';
