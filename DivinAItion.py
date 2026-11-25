@@ -169,10 +169,10 @@ def get_llm_interpretation(cards: list[dict], spread_name: str) -> str:
 
 
 def load_html_file(filename: str) -> str:
-    for candidate in (BASE_DIR / filename, BASE_DIR / "testing" / filename):
+    for candidate in (BASE_DIR / filename, BASE_DIR / "static" / "templates" / filename):
         if candidate.exists():
             return candidate.read_text(encoding="utf-8")
-    raise FileNotFoundError(f"Could not find {filename} in {BASE_DIR} or {BASE_DIR / 'testing'}")
+    raise FileNotFoundError(f"Could not find {filename} in {BASE_DIR} or {BASE_DIR / 'static' / 'templates'}")
 
 
 # Choose spread: "one_card", "three_card", or "celtic_cross"
