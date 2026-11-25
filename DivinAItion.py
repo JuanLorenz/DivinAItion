@@ -54,7 +54,6 @@ funny life wisdom. Maintain a friendly, witty, slightly sarcastic, and mystical 
 If there is only 1 card, answer in 1 paragraph (3 sentences).
 If there is more than 1 card, separate the explanation of each card by paragraph in exact card order, with one paragraph per card."""
 
-
 def attach_card_image(card: dict) -> dict:
     """Embed static/images/card/<id>.png as a base64 data URI so it always loads inside Streamlit's iframe."""
     for root in (BASE_DIR, BASE_DIR.parent):
@@ -170,10 +169,10 @@ def get_llm_interpretation(cards: list[dict], spread_name: str) -> str:
 
 
 def load_html_file(filename: str) -> str:
-    for candidate in (BASE_DIR / filename, BASE_DIR / "testing" / filename):
+    for candidate in (BASE_DIR / filename, BASE_DIR / "static" / "templates" / filename):
         if candidate.exists():
             return candidate.read_text(encoding="utf-8")
-    raise FileNotFoundError(f"Could not find {filename} in {BASE_DIR} or {BASE_DIR / 'testing'}")
+    raise FileNotFoundError(f"Could not find {filename} in {BASE_DIR} or {BASE_DIR / 'static' / 'templates'}")
 
 
 SPREAD_CONFIG = {
