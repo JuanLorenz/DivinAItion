@@ -213,6 +213,7 @@
       const CARD_BACK_REL_PATH = 'images/miscellaneous/TarotCard_Back.png';
       const RAW_INJECTED_DATA = /*__TAROT_DATA__*/ null;
       let injectedCardBackUrl = '';
+      let cardBackRenderGen = 0;
 
       function injectStylesheetText(cssText) {
         if (
@@ -336,6 +337,7 @@
       }
 
       function populateMiniCardBacks() {
+        const gen = ++cardBackRenderGen;
         const candidates = getCardBackCandidates();
         document.querySelectorAll('[data-mini-back]').forEach((el) => {
           const uid = el.getAttribute('data-mini-back');
@@ -344,6 +346,7 @@
           const img = el.querySelector('img');
           if (img) {
             img.addEventListener('error', () => {
+              if (gen !== cardBackRenderGen || !img.isConnected) return;
               idx += 1;
               if (idx < candidates.length) {
                 img.src = candidates[idx];
