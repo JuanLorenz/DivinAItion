@@ -14,9 +14,11 @@ from supabase import Client, create_client
 
 st.set_page_config(page_title="DivinAItion", layout="wide")
 
+
 def get_zodiac_from_birthdate(birthdate_str: str) -> str:
     _, month_str, day_str = birthdate_str.split("-")
     return calculate_zodiac(int(month_str), int(day_str))
+
 
 def calculate_zodiac(month: int, day: int) -> str:
     cutoffs = [120, 219, 321, 420, 521, 621, 723, 823, 923, 1023, 1122, 1222]
@@ -220,7 +222,7 @@ if not landing_dir:
     raise FileNotFoundError(f"Could not find static/landing/index.html under {BASE_DIR}")
 landing_component = components.declare_component("divinaition_landing", path=str(landing_dir))
 
-# Keep your full-screen iframe CSS for BOTH the landing component and spread templates
+# Keep full-screen iframe CSS for BOTH the landing component and spread templates
 st.markdown(
     """
     <style>
@@ -259,7 +261,12 @@ st.markdown(
 
 # Step 1: Show landing form until user submits
 if "reading_request" not in st.session_state:
-    form_data = landing_component(key="landing_form")
+    form_data = landing_component(
+        css_text=load_text_asset("static/css/style.css"),
+        bg_html=load_text_asset("static/templates/background_animation.html", "background_animation.html"),
+        card_back_url=to_data_uri("static/images/miscellaneous/TarotCard_Back.png"),
+        key="landing_form",
+    )
     if form_data:
         zodiac_sign = get_zodiac_from_birthdate(form_data["birthdate"])
         spread_mode = form_data["spread"].replace("-", "_")
@@ -280,19 +287,20 @@ else:
     spread_label, html_filename, draw_fn = SPREAD_CONFIG[spread_mode]
 
     if "tarot_payload" not in st.session_state:
-        result = draw_fn()
-        cards_list = result if isinstance(result, list) else ([result] if result else [])
-        llm_text = (
-            get_llm_interpretation(cards_list, spread_label, zodiac_sign)
-            if cards_list
-            else ""
-        )
-        st.session_state["tarot_payload"] = {
-            "cards": cards_list,
-            "llm_response": llm_text,
-            "zodiac_sign": zodiac_sign,
-            "card_back_url": to_data_uri("static/images/miscellaneous/TarotCard_Back.png"),
-        }
+        with st.spinner("Drawing your cards and preparing your reading..."):
+            result = draw_fn()
+            cards_list = result if isinstance(result, list) else ([result] if result else [])
+            llm_text = (
+                get_llm_interpretation(cards_list, spread_label, zodiac_sign)
+                if cards_list
+                else ""
+            )
+            st.session_state["tarot_payload"] = {
+                "cards": cards_list,
+                "llm_response": llm_text,
+                "zodiac_sign": zodiac_sign,
+                "card_back_url": to_data_uri("static/images/miscellaneous/TarotCard_Back.png"),
+            }
 
     html = build_tarot_html(html_filename, st.session_state["tarot_payload"])
     components.html(html, height=900, scrolling=False)

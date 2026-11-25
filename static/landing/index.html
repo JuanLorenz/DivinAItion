@@ -1,592 +1,1037 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DivinAItion</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
-    <style>
-      :root {
-        --bg: #080b16;
-        --card-bg: rgba(20, 25, 45, 0.9);
-        --border: rgba(226, 185, 111, 0.28);
-        --gold: #e2b96f;
-        --gold-soft: rgba(226, 185, 111, 0.14);
-        --text: #f3f4f6;
-        --muted: #9ca3af;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DivinAItion</title>
+  <meta name="description" content="Celestial tarot reading and zodiac constellation experience." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="./style.css" />
+  <style>.hidden { display: none !important; }</style>
+</head>
+<body class="index-page">
+  <div id="starfieldMount"><!--__BACKGROUND_ANIMATION__--></div>
 
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+  <main class="index-shell">
+    <!-- SCREEN 1: Birthdate Entry -->
+    <section id="screenBirthdate" class="index-screen" aria-labelledby="welcomeTitle">
+      <div class="birth-panel">
+        <h1 id="welcomeTitle" class="index-hero-title">DivinAItion</h1>
+        <p class="index-lead">Select your date of birth</p>
 
-      body {
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 1.5rem;
-        font-family: "Inter", sans-serif;
-        color: var(--text);
-        background: radial-gradient(circle at top, #1b2240 0%, var(--bg) 75%);
-        overflow-x: hidden;
-      }
+        <form id="birthdateForm" class="birthdate-form" novalidate>
+          <div class="date-triad">
+            <div class="date-field date-field--month">
+              <label for="birthMonth" class="date-field-label">Month</label>
+              <div class="date-control-wrap">
+                <select id="birthMonth" class="date-select" aria-label="Birth Month" required>
+                  <option value="" disabled selected>Month</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <span class="date-chevron" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </div>
+            </div>
 
-      /* Screen Transitions */
-      .screen {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        animation: screenFadeIn 0.45s ease;
-      }
+            <div class="date-field">
+              <label for="birthDay" class="date-field-label">Day</label>
+              <div class="date-control-wrap">
+                <select id="birthDay" class="date-select" aria-label="Birth Day" required>
+                  <option value="" disabled selected>Day</option>
+                </select>
+                <span class="date-chevron" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </div>
+            </div>
 
-      .hidden {
-        display: none !important;
-      }
-
-      /* SCREEN 1: Birthdate Card */
-      .card {
-        width: 100%;
-        max-width: 440px;
-        padding: 2.25rem;
-        border-radius: 20px;
-        background: var(--card-bg);
-        border: 1px solid var(--border);
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(12px);
-      }
-
-      .title {
-        font-family: "Cinzel", serif;
-        font-size: 1.75rem;
-        text-align: center;
-        color: var(--gold);
-        margin-bottom: 0.45rem;
-      }
-
-      .subtitle {
-        text-align: center;
-        font-size: 0.93rem;
-        color: var(--muted);
-        margin-bottom: 1.8rem;
-        line-height: 1.45;
-      }
-
-      .birthdate-form {
-        display: flex;
-        flex-direction: column;
-        gap: 1.25rem;
-      }
-
-      .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      .label {
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--gold);
-      }
-
-      input[type="date"] {
-        width: 100%;
-        padding: 0.85rem 1rem;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        background: #0c1020;
-        color: var(--text);
-        font-family: inherit;
-        font-size: 0.95rem;
-        color-scheme: dark;
-        outline: none;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-      }
-
-      input[type="date"]:focus {
-        border-color: var(--gold);
-        box-shadow: 0 0 0 3px var(--gold-soft);
-      }
-
-      .btn-primary {
-        padding: 0.9rem 1.4rem;
-        border: none;
-        border-radius: 12px;
-        background: linear-gradient(135deg, #f1d28c, #d19b43);
-        color: #15120b;
-        font-family: "Cinzel", serif;
-        font-size: 1rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        cursor: pointer;
-        transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-      }
-
-      .btn-primary:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(226, 185, 111, 0.3);
-      }
-
-      .btn-primary:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-      }
-
-      .current-time {
-        margin-top: 1.4rem;
-        text-align: center;
-        font-size: 0.76rem;
-        color: var(--muted);
-      }
-
-      /* SCREEN 2: Floating Reading Cards */
-      .readings-wrapper {
-        width: 100%;
-        max-width: 900px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .top-bar {
-        width: 100%;
-        display: flex;
-        justify-content: flex-start;
-        margin-bottom: 1rem;
-      }
-
-      .back-btn {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        color: var(--muted);
-        padding: 0.45rem 0.9rem;
-        border-radius: 999px;
-        font-size: 0.82rem;
-        cursor: pointer;
-        transition: color 0.2s, border-color 0.2s;
-      }
-
-      .back-btn:hover {
-        color: var(--gold);
-        border-color: var(--gold);
-      }
-
-      .floating-grid {
-        width: 100%;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1.5rem;
-        margin: 0.75rem 0 1.8rem;
-      }
-
-      .floating-card {
-        position: relative;
-        cursor: pointer;
-        border-radius: 18px;
-        padding: 2rem 1.35rem;
-        min-height: 240px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        background: linear-gradient(160deg, rgba(28, 35, 64, 0.95), rgba(14, 18, 34, 0.95));
-        border: 1px solid var(--border);
-        box-shadow: 0 22px 45px rgba(0, 0, 0, 0.6), inset 0 0 24px rgba(226, 185, 111, 0.04);
-        animation: floatCard 4.5s ease-in-out infinite;
-        transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-        user-select: none;
-      }
-
-      /* Staggered floating rhythm */
-      .floating-card:nth-child(1) {
-        animation-delay: 0s;
-      }
-      .floating-card:nth-child(2) {
-        animation-delay: 0.7s;
-      }
-      .floating-card:nth-child(3) {
-        animation-delay: 1.4s;
-      }
-
-      .floating-card:hover {
-        animation-play-state: paused;
-        transform: translateY(-14px) scale(1.03);
-        border-color: rgba(226, 185, 111, 0.75);
-        box-shadow: 0 28px 55px rgba(0, 0, 0, 0.7), 0 0 26px rgba(226, 185, 111, 0.22);
-      }
-
-      .floating-card.selected {
-        animation-play-state: paused;
-        transform: translateY(-10px);
-        border: 2px solid var(--gold);
-        background: linear-gradient(160deg, rgba(42, 48, 82, 0.95), rgba(20, 24, 43, 0.98));
-        box-shadow: 0 26px 50px rgba(0, 0, 0, 0.7), 0 0 32px rgba(226, 185, 111, 0.32);
-      }
-
-      /* Decorative mini card graphics inside each floating card */
-      .card-emblem {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 54px;
-        margin-bottom: 1.1rem;
-        color: var(--gold);
-      }
-
-      .mini-tarot {
-        display: inline-block;
-        width: 24px;
-        height: 38px;
-        border: 1.5px solid var(--gold);
-        border-radius: 4px;
-        background: rgba(226, 185, 111, 0.12);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-      }
-
-      .mini-tarot-stack {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .mini-tarot-stack .mini-tarot:nth-child(1) {
-        transform: rotate(-12deg) translateX(6px);
-      }
-      .mini-tarot-stack .mini-tarot:nth-child(2) {
-        z-index: 2;
-        background: rgba(226, 185, 111, 0.22);
-      }
-      .mini-tarot-stack .mini-tarot:nth-child(3) {
-        transform: rotate(12deg) translateX(-6px);
-      }
-
-      .celtic-emblem {
-        font-size: 2rem;
-        line-height: 1;
-        text-shadow: 0 0 15px rgba(226, 185, 111, 0.5);
-      }
-
-      .card-name {
-        font-family: "Cinzel", serif;
-        font-size: 1.15rem;
-        font-weight: 700;
-        color: #fff6df;
-        margin-bottom: 0.4rem;
-      }
-
-      .card-tag {
-        font-size: 0.78rem;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--gold);
-      }
-
-      /* Meaning Display Panel */
-      .meaning-panel {
-        width: 100%;
-        max-width: 650px;
-        padding: 1rem 1.25rem;
-        border-radius: 12px;
-        background: rgba(20, 25, 45, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-left: 3px solid var(--gold);
-        text-align: center;
-        font-size: 0.94rem;
-        line-height: 1.5;
-        color: #e5e7eb;
-        margin-bottom: 1.5rem;
-        min-height: 3.6rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .submit-reading-btn {
-        min-width: 220px;
-      }
-
-      .confirmation-box {
-        margin-top: 1.4rem;
-        width: 100%;
-        max-width: 500px;
-        padding: 1rem 1.2rem;
-        border-radius: 12px;
-        background: var(--gold-soft);
-        border: 1px solid rgba(226, 185, 111, 0.45);
-        text-align: center;
-        font-size: 0.92rem;
-        line-height: 1.55;
-        animation: screenFadeIn 0.3s ease;
-      }
-
-      @keyframes floatCard {
-        0%,
-        100% {
-          transform: translateY(0px);
-        }
-        50% {
-          transform: translateY(-10px);
-        }
-      }
-
-      @keyframes screenFadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @media (max-width: 768px) {
-        .floating-grid {
-          grid-template-columns: 1fr;
-          max-width: 340px;
-        }
-
-        .floating-card {
-          min-height: 185px;
-          padding: 1.5rem 1.2rem;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <!-- SCREEN 1: Birthdate Input -->
-    <section id="screenBirthdate" class="screen">
-      <div class="card">
-        <h1 class="title">Welcome to DivinAItion!</h1>
-        <p class="subtitle">Enter your birth date to continue to your reading options.</p>
-
-        <form id="birthdateForm" class="birthdate-form">
-          <div class="form-group">
-            <label for="birthdate" class="label">Birth Date</label>
-            <input type="date" id="birthdate" name="birthdate" required />
+            <div class="date-field">
+              <label for="birthYear" class="date-field-label">Year</label>
+              <div class="date-control-wrap">
+                <input
+                  id="birthYear"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  maxlength="4"
+                  placeholder="YYYY"
+                  class="date-input"
+                  aria-label="Birth Year"
+                  autocomplete="bday-year"
+                  required
+                />
+                <span class="date-chevron" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <select id="birthYearSelect" class="year-picker-overlay" aria-label="Choose Birth Year" tabindex="-1"></select>
+              </div>
+            </div>
           </div>
 
-          <button type="submit" class="btn-primary">Continue ✦</button>
-        </form>
+          <div id="zodiacWhisper" class="zodiac-whisper" aria-live="polite"></div>
+          <p id="dateError" class="date-error" role="alert"></p>
 
-        <p id="currentTime" class="current-time"></p>
+          <button type="submit" id="continueBtn" class="tarot-btn tarot-btn--primary index-submit-btn">
+            Reveal Constellation
+          </button>
+        </form>
       </div>
     </section>
 
-    <!-- SCREEN 2: Floating Card Reading Options -->
-    <section id="screenReadings" class="screen hidden">
-      <div class="readings-wrapper">
-        <div class="top-bar">
-          <button type="button" id="backBtn" class="back-btn">← Change Birth Date</button>
+    <!-- SCREEN 1.5: Dynamic Zodiac Constellation Formation -->
+    <section id="constellationStage" class="constellation-stage hidden" aria-live="polite" aria-label="Zodiac Constellation Formation">
+      <div class="constellation-canvas-wrap">
+        <canvas id="zodiacCanvas"></canvas>
+      </div>
+      <div id="constellationCaption" class="constellation-caption">
+        <div id="constellationGlyph" class="constellation-glyph" aria-hidden="true"></div>
+        <h2 id="constellationName" class="constellation-name"></h2>
+        <p id="constellationMeta" class="constellation-meta"></p>
+        <p id="constellationTraits" class="constellation-traits"></p>
+      </div>
+      <button type="button" id="skipConstellationBtn" class="constellation-skip">Continue to Spreads</button>
+    </section>
+
+    <!-- SCREEN 2: Spread Selection -->
+    <section id="screenReadings" class="index-screen hidden" aria-labelledby="spreadHeading">
+      <div class="readings-shell">
+        <div class="readings-topbar">
+          <button type="button" id="backBtn" class="readings-back-btn">
+            <span aria-hidden="true">&larr;</span> Change Birth Date
+          </button>
+          <div id="readingsIdentity" class="readings-identity"></div>
         </div>
 
-        <h1 class="title">Choose Your Card Reading</h1>
-        <p class="subtitle">Hover over or click a floating card to see what that reading means.</p>
+        <header class="readings-header">
+          <h1 id="spreadHeading" class="script-title">Choose Your Reading</h1>
+          <p class="index-lead">Select the spread that matches the question you carry tonight.</p>
+        </header>
 
-        <div class="floating-grid" role="radiogroup" aria-label="Card Reading Options">
-          <!-- Card 1 -->
-          <div
-            class="floating-card"
-            tabindex="0"
+        <div class="spread-grid" role="radiogroup" aria-label="Card Reading Options">
+          <!-- One Card -->
+          <button
+            type="button"
+            class="spread-card"
             role="radio"
             aria-checked="false"
             data-value="One-Card Pull"
-            data-meaning="One-Card Pull – Draws one random card for a quick reflection."
+            data-spread="one_card"
+            data-meaning="One-Card Pull draws a single focal card for direct clarity on today's question."
           >
-            <div class="card-emblem">
-              <span class="mini-tarot"></span>
+            <div class="spread-preview">
+              <div class="mini-card" data-mini-back="one"></div>
             </div>
-            <h2 class="card-name">One-Card Pull</h2>
-            <span class="card-tag">1 Card</span>
-          </div>
+            <h2 class="spread-title">One-Card Pull</h2>
+            <p class="spread-meta">1 Card &middot; Focused Insight</p>
+            <p class="spread-desc">A single card drawn for immediate clarity and reflection.</p>
+          </button>
 
-          <!-- Card 2 -->
-          <div
-            class="floating-card"
-            tabindex="0"
+          <!-- Three Card -->
+          <button
+            type="button"
+            class="spread-card"
             role="radio"
             aria-checked="false"
             data-value="Three-Card Spread"
-            data-meaning="Three-Card Spread – Draws three cards representing Past, Present, and Future."
+            data-spread="three_card"
+            data-meaning="Three-Card Spread maps how your Past, Present, and Future energies unfold."
           >
-            <div class="card-emblem">
-              <div class="mini-tarot-stack">
-                <span class="mini-tarot"></span>
-                <span class="mini-tarot"></span>
-                <span class="mini-tarot"></span>
+            <div class="spread-preview">
+              <div class="mini-fan">
+                <div class="mini-card" data-mini-back="t1"></div>
+                <div class="mini-card" data-mini-back="t2"></div>
+                <div class="mini-card" data-mini-back="t3"></div>
               </div>
             </div>
-            <h2 class="card-name">Three-Card Spread</h2>
-            <span class="card-tag">3 Cards</span>
-          </div>
+            <h2 class="spread-title">Three-Card Spread</h2>
+            <p class="spread-meta">3 Cards &middot; Past, Present &amp; Future</p>
+            <p class="spread-desc">Three cards tracing where you have been and what approaches next.</p>
+          </button>
 
-          <!-- Card 3 -->
-          <div
-            class="floating-card"
-            tabindex="0"
+          <!-- Celtic Cross -->
+          <button
+            type="button"
+            class="spread-card"
             role="radio"
             aria-checked="false"
             data-value="Celtic Cross Spread"
-            data-meaning="Celtic Cross Spread – Draws ten cards for a more detailed reading."
+            data-spread="celtic_cross"
+            data-meaning="Celtic Cross Spread lays out ten cards covering challenges, subconscious roots, and outcome."
           >
-            <div class="card-emblem">
-              <span class="celtic-emblem">✦</span>
+            <div class="spread-preview">
+              <div class="mini-celtic">
+                <div class="mini-card mc-0" data-mini-back="c0"></div>
+                <div class="mini-card mc-1" data-mini-back="c1"></div>
+                <div class="mini-card mc-2" data-mini-back="c2"></div>
+                <div class="mini-card mc-3" data-mini-back="c3"></div>
+                <div class="mini-card mc-4" data-mini-back="c4"></div>
+                <div class="mini-card mc-5" data-mini-back="c5"></div>
+                <div class="mini-card mc-6" data-mini-back="c6"></div>
+                <div class="mini-card mc-7" data-mini-back="c7"></div>
+                <div class="mini-card mc-8" data-mini-back="c8"></div>
+                <div class="mini-card mc-9" data-mini-back="c9"></div>
+              </div>
             </div>
-            <h2 class="card-name">Celtic Cross Spread</h2>
-            <span class="card-tag">10 Cards</span>
+            <h2 class="spread-title">Celtic Cross Spread</h2>
+            <p class="spread-meta">10 Cards &middot; Full Crossroads</p>
+            <p class="spread-desc">A complete ten-card reading exploring hidden forces and outcome.</p>
+          </button>
+        </div>
+
+        <div class="readings-footer">
+          <div id="readingMeaning" class="reading-note">
+            Select a spread above to view its reading structure.
           </div>
+
+          <button type="button" id="submitReadingBtn" class="tarot-btn tarot-btn--primary readings-cta" disabled>
+            Begin Reading
+          </button>
+
+          <p id="confirmationBox" class="reading-confirm hidden" aria-live="polite"></p>
         </div>
-
-        <!-- Hover / Click Meaning Display -->
-        <div id="readingMeaning" class="meaning-panel">
-          Hover over or click a floating card above to see its meaning.
-        </div>
-
-        <button type="button" id="submitReadingBtn" class="btn-primary submit-reading-btn" disabled>
-          Submit
-        </button>
-
-        <div id="confirmationBox" class="confirmation-box hidden"></div>
       </div>
     </section>
+  </main>
 
-    <script>
-      const screenBirthdate = document.getElementById("screenBirthdate");
-      const screenReadings = document.getElementById("screenReadings");
-      const birthdateForm = document.getElementById("birthdateForm");
-      const birthdateInput = document.getElementById("birthdate");
-      const backBtn = document.getElementById("backBtn");
+  <script>
+    (function () {
+      const CARD_BACK_REL_PATH = 'images/miscellaneous/TarotCard_Back.png';
+      const RAW_INJECTED_DATA = /*__TAROT_DATA__*/ null;
+      let injectedCardBackUrl = '';
 
-      const floatingCards = document.querySelectorAll(".floating-card");
-      const readingMeaning = document.getElementById("readingMeaning");
-      const submitReadingBtn = document.getElementById("submitReadingBtn");
-      const confirmationBox = document.getElementById("confirmationBox");
-      const currentTimeEl = document.getElementById("currentTime");
+      function injectStylesheetText(cssText) {
+        if (
+          !cssText ||
+          /<!doctype|<html/i.test(cssText) ||
+          /^\s*import\s|__vite__css/.test(cssText) ||
+          !cssText.includes('.index-shell')
+        ) {
+          return false;
+        }
+        let styleEl = document.getElementById('divinaition-fallback-style');
+        if (!styleEl) {
+          styleEl = document.createElement('style');
+          styleEl.id = 'divinaition-fallback-style';
+          document.head.appendChild(styleEl);
+        }
+        if (styleEl.textContent !== cssText) {
+          styleEl.textContent = cssText;
+        }
+        return true;
+      }
 
-      const DEFAULT_MEANING = "Hover over or click a floating card above to see its meaning.";
-      const SPREAD_KEY_MAP = {
-        "One-Card Pull": "one_card",
-        "Three-Card Spread": "three_card",
-        "Celtic Cross Spread": "celtic_cross",
+      function hasLoadedStylesheet() {
+        const probe = document.querySelector('.birth-panel');
+        if (!probe || !window.getComputedStyle) return false;
+        const styles = window.getComputedStyle(probe);
+        return styles.borderRadius === '20px';
+      }
+
+      function ensureStylesheetLoaded() {
+        if (hasLoadedStylesheet()) return;
+        const paths = [
+          './style.css?direct',
+          './style.css',
+          'style.css',
+          '../css/style.css',
+          '/app/static/css/style.css',
+          '/static/css/style.css',
+          'static/css/style.css',
+        ];
+        (function tryNext(idx) {
+          if (idx >= paths.length || hasLoadedStylesheet()) return;
+          fetch(paths[idx])
+            .then((res) => (res.ok ? res.text() : Promise.reject(new Error('HTTP ' + res.status))))
+            .then((cssText) => {
+              if (!injectStylesheetText(cssText)) {
+                return Promise.reject(new Error('Not stylesheet content'));
+              }
+            })
+            .catch(() => tryNext(idx + 1));
+        })(0);
+      }
+
+      function mountBackgroundHtml(html) {
+        const mount = document.getElementById('starfieldMount');
+        if (!mount || !html || !html.includes('starfield-bg')) return false;
+        if (!mount.querySelector('.starfield-bg')) {
+          mount.innerHTML = html;
+        }
+        return true;
+      }
+
+      function loadBackgroundAnimation() {
+        const mount = document.getElementById('starfieldMount');
+        if (!mount || mount.querySelector('.starfield-bg')) return;
+        const paths = [
+          'background_animation.html',
+          '/app/static/templates/background_animation.html',
+          '/static/templates/background_animation.html',
+          'static/templates/background_animation.html',
+        ];
+        (function tryNext(idx) {
+          if (idx >= paths.length || mount.querySelector('.starfield-bg')) return;
+          fetch(paths[idx])
+            .then((res) => (res.ok ? res.text() : Promise.reject(new Error('HTTP ' + res.status))))
+            .then((html) => {
+              if (!mountBackgroundHtml(html)) return Promise.reject(new Error('Invalid background fragment'));
+            })
+            .catch(() => tryNext(idx + 1));
+        })(0);
+      }
+
+      function escapeHtml(str) {
+        return String(str == null ? '' : str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function getCardBackCandidates() {
+        if (injectedCardBackUrl) {
+          return [injectedCardBackUrl];
+        }
+        if (RAW_INJECTED_DATA && typeof RAW_INJECTED_DATA === 'object' && !Array.isArray(RAW_INJECTED_DATA) && RAW_INJECTED_DATA.card_back_url) {
+          return [RAW_INJECTED_DATA.card_back_url];
+        }
+        return [
+          '../' + CARD_BACK_REL_PATH,
+          '/app/static/' + CARD_BACK_REL_PATH,
+          '/static/' + CARD_BACK_REL_PATH,
+          'static/' + CARD_BACK_REL_PATH,
+        ];
+      }
+
+      function createCardBackSvg(uid) {
+        return '<svg viewBox="0 0 200 320" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+          '<defs>' +
+            '<linearGradient id="bg-' + uid + '" x1="0" y1="0" x2="200" y2="320" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#0a070b" /><stop offset="50%" stop-color="#040306" /><stop offset="100%" stop-color="#09060b" /></linearGradient>' +
+            '<linearGradient id="gd-' + uid + '" x1="20" y1="10" x2="180" y2="310" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#f2c47d" /><stop offset="35%" stop-color="#d48c3e" /><stop offset="68%" stop-color="#f4cb88" /><stop offset="100%" stop-color="#b8722c" /></linearGradient>' +
+          '</defs>' +
+          '<rect width="200" height="320" rx="10" fill="url(#bg-' + uid + ')" />' +
+          '<rect x="7" y="7" width="186" height="306" rx="7" stroke="url(#gd-' + uid + ')" stroke-width="2.5" />' +
+          '<rect x="14" y="14" width="172" height="292" rx="4" stroke="url(#gd-' + uid + ')" stroke-width="1.1" opacity="0.8" />' +
+          '<ellipse cx="100" cy="160" rx="46" ry="26" stroke="url(#gd-' + uid + ')" stroke-width="1.8" />' +
+          '<circle cx="100" cy="160" r="14" stroke="url(#gd-' + uid + ')" stroke-width="1.8" />' +
+        '</svg>';
+      }
+
+      function populateMiniCardBacks() {
+        const candidates = getCardBackCandidates();
+        document.querySelectorAll('[data-mini-back]').forEach((el) => {
+          const uid = el.getAttribute('data-mini-back');
+          let idx = 0;
+          el.innerHTML = '<img src="' + escapeHtml(candidates[0]) + '" alt="" draggable="false" />';
+          const img = el.querySelector('img');
+          if (img) {
+            img.addEventListener('error', () => {
+              idx += 1;
+              if (idx < candidates.length) {
+                img.src = candidates[idx];
+              } else {
+                el.innerHTML = createCardBackSvg(uid);
+              }
+            });
+          }
+        });
+      }
+
+      // Exact match to DivinAItion.py calculate_zodiac(month, day) using bisect_right
+      const ZODIAC_CUTOFFS = [120, 219, 321, 420, 521, 621, 723, 823, 923, 1023, 1122, 1222];
+      const ZODIAC_SEQUENCE = [
+        'Capricorn', 'Aquarius', 'Pisces', 'Aries', 'Taurus', 'Gemini',
+        'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn'
+      ];
+
+      function calculateZodiac(month, day) {
+        const dateNum = month * 100 + day;
+        let idx = 0;
+        while (idx < ZODIAC_CUTOFFS.length && dateNum >= ZODIAC_CUTOFFS[idx]) {
+          idx += 1;
+        }
+        return ZODIAC_SEQUENCE[idx];
+      }
+
+      const ZODIAC_CONSTELLATIONS = {
+        Aries: {
+          svg: '<path d="M12 20V11M12 11C12 7 9.5 4.5 6.5 4.5C4.5 4.5 3.5 6 4 7.5M12 11C12 7 14.5 4.5 17.5 4.5C19.5 4.5 20.5 6 20 7.5" />',
+          dates: 'Mar 21 – Apr 19',
+          element: 'Fire',
+          traits: 'Bold · Direct · Trailblazing',
+          stars: [
+            [-0.64, -0.14, 0.85], [-0.26, -0.24, 1.4], [0.12, -0.02, 1.15],
+            [0.34, 0.16, 0.95], [0.40, 0.34, 0.8], [-0.46, 0.18, 0.75]
+          ],
+          edges: [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5]]
+        },
+        Taurus: {
+          svg: '<circle cx="12" cy="15" r="5" /><path d="M5.5 4.5C6.5 8 9 10 12 10C15 10 17.5 8 18.5 4.5" />',
+          dates: 'Apr 20 – May 20',
+          element: 'Earth',
+          traits: 'Grounded · Steadfast · Sensory',
+          stars: [
+            [-0.58, -0.44, 0.8], [-0.48, -0.34, 0.85], [-0.20, 0.10, 0.95],
+            [-0.08, -0.06, 0.95], [0.06, 0.12, 1.5], [0.02, 0.24, 0.9],
+            [-0.44, 0.44, 1.05], [0.58, -0.50, 1.3], [0.62, -0.04, 1.1]
+          ],
+          edges: [[0, 1], [1, 3], [3, 7], [3, 2], [2, 5], [5, 4], [4, 8], [2, 6]]
+        },
+        Gemini: {
+          svg: '<path d="M5.5 5C8 6.5 16 6.5 18.5 5M5.5 19C8 17.5 16 17.5 18.5 19M9.5 6V18M14.5 6V18" />',
+          dates: 'May 21 – Jun 20',
+          element: 'Air',
+          traits: 'Curious · Expressive · Adaptive',
+          stars: [
+            [-0.28, -0.58, 1.35], [0.22, -0.52, 1.45], [-0.34, -0.20, 1.0],
+            [0.16, -0.10, 1.0], [-0.42, 0.22, 0.9], [0.24, 0.24, 1.05],
+            [-0.46, 0.52, 1.0], [0.36, 0.56, 1.2], [-0.62, 0.14, 0.8], [0.52, 0.08, 0.85]
+          ],
+          edges: [[0, 2], [2, 4], [4, 6], [2, 8], [1, 3], [3, 5], [5, 7], [3, 9], [2, 3]]
+        },
+        Cancer: {
+          svg: '<circle cx="7.5" cy="9" r="3" /><path d="M7.5 6C12 5 16 6.5 19 9" /><circle cx="16.5" cy="15" r="3" /><path d="M16.5 18C12 19 8 17.5 5 15" />',
+          dates: 'Jun 21 – Jul 22',
+          element: 'Water',
+          traits: 'Intuitive · Protective · Reflective',
+          stars: [
+            [-0.14, -0.60, 1.15], [-0.02, -0.18, 1.05], [0.04, 0.10, 1.15],
+            [-0.46, 0.48, 1.2], [0.46, 0.44, 1.25], [0.26, -0.34, 0.8]
+          ],
+          edges: [[0, 1], [1, 2], [2, 3], [2, 4], [1, 5]]
+        },
+        Leo: {
+          svg: '<circle cx="7.5" cy="14" r="3" /><path d="M9.8 12.2C10.5 7 14 4.5 16.5 6C19 7.5 17 13 15 16C14 17.8 15.5 19.5 18 19" />',
+          dates: 'Jul 23 – Aug 22',
+          element: 'Fire',
+          traits: 'Radiant · Creative · Magnetic',
+          stars: [
+            [0.24, 0.34, 1.5], [0.24, 0.06, 1.0], [0.16, -0.18, 1.25],
+            [0.32, -0.38, 0.95], [0.50, -0.52, 0.95], [0.58, -0.32, 0.9],
+            [-0.32, -0.16, 1.15], [-0.28, 0.16, 1.0], [-0.66, 0.10, 1.35]
+          ],
+          edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [2, 6], [6, 8], [8, 7], [7, 0], [6, 7]]
+        },
+        Virgo: {
+          svg: '<path d="M4.5 6V17M4.5 9C4.5 6.5 9 6.5 9 9V17M9 9C9 6.5 13.5 6.5 13.5 9V17C13.5 19 15 20 17 18.5M13.5 11.5C16.5 10.5 19 12 18.5 14.5C18 16.8 15 18 12 19.5" />',
+          dates: 'Aug 23 – Sep 22',
+          element: 'Earth',
+          traits: 'Discerning · Intentional · Precise',
+          stars: [
+            [0.26, 0.54, 1.55], [0.04, 0.24, 1.0], [-0.14, 0.04, 1.2],
+            [-0.28, -0.24, 1.0], [-0.56, -0.48, 1.2], [-0.48, 0.14, 0.95],
+            [-0.26, 0.32, 0.9], [0.48, 0.30, 0.95], [0.62, -0.02, 0.9]
+          ],
+          edges: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [5, 6], [6, 1], [0, 7], [7, 8]]
+        },
+        Libra: {
+          svg: '<path d="M4 18.5H20M4 14.5H8.5C8.5 12 10 10 12 10C14 10 15.5 12 15.5 14.5H20" />',
+          dates: 'Sep 23 – Oct 22',
+          element: 'Air',
+          traits: 'Balanced · Diplomatic · Harmonious',
+          stars: [
+            [0.00, -0.46, 1.35], [-0.42, 0.02, 1.25], [0.42, -0.04, 1.2],
+            [-0.34, 0.46, 0.95], [0.34, 0.44, 0.95], [0.48, 0.24, 0.85]
+          ],
+          edges: [[0, 1], [0, 2], [1, 2], [1, 3], [2, 4], [4, 5]]
+        },
+        Scorpio: {
+          svg: '<path d="M4.5 6V17M4.5 9C4.5 6.5 9 6.5 9 9V17M9 9C9 6.5 13.5 6.5 13.5 9V16C13.5 18.5 15.5 19.5 18 17.5L19.5 16M16.8 15.8L19.5 16L19.2 18.7" />',
+          dates: 'Oct 23 – Nov 21',
+          element: 'Water',
+          traits: 'Perceptive · Intense · Transformative',
+          stars: [
+            [-0.46, -0.48, 1.05], [-0.54, -0.26, 1.1], [-0.46, -0.04, 0.95],
+            [-0.16, -0.14, 1.55], [-0.04, 0.04, 0.95], [0.10, 0.26, 1.05],
+            [0.24, 0.48, 1.0], [0.46, 0.52, 0.95], [0.58, 0.32, 1.05],
+            [0.44, 0.14, 1.35], [0.34, 0.22, 0.95]
+          ],
+          edges: [[0, 3], [1, 3], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10]]
+        },
+        Sagittarius: {
+          svg: '<path d="M5 19L19 5M13 5H19V11M7.5 11.5L12.5 16.5" />',
+          dates: 'Nov 22 – Dec 21',
+          element: 'Fire',
+          traits: 'Expansive · Candid · Visionary',
+          stars: [
+            [-0.56, 0.06, 1.1], [-0.18, -0.02, 1.15], [-0.10, -0.36, 1.1],
+            [-0.24, 0.34, 1.3], [0.12, -0.14, 1.0], [0.22, 0.24, 1.2],
+            [0.36, -0.18, 1.35], [0.40, 0.08, 0.95], [0.06, 0.54, 1.0]
+          ],
+          edges: [[0, 1], [0, 3], [1, 2], [1, 3], [2, 4], [4, 5], [3, 5], [4, 6], [6, 7], [7, 5], [3, 8]]
+        },
+        Capricorn: {
+          svg: '<path d="M5 6L9.5 16L13.5 8.5C15 6.5 18 7.5 17.5 10C17 12.2 14.5 13 14.5 15.5C14.5 17.8 16.5 19 18.5 17.5" />',
+          dates: 'Dec 22 – Jan 19',
+          element: 'Earth',
+          traits: 'Resolute · Strategic · Enduring',
+          stars: [
+            [-0.58, -0.28, 1.2], [-0.50, -0.14, 1.0], [-0.34, 0.26, 0.95],
+            [-0.14, 0.42, 1.0], [0.14, 0.36, 1.0], [0.42, -0.16, 1.1],
+            [0.60, -0.24, 1.35], [-0.02, -0.20, 0.95]
+          ],
+          edges: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 0]]
+        },
+        Aquarius: {
+          svg: '<path d="M4 9.5L7.5 6.5L10.5 9.5L13.5 6.5L16.5 9.5L20 6.5M4 16L7.5 13L10.5 16L13.5 13L16.5 16L20 13" />',
+          dates: 'Jan 20 – Feb 18',
+          element: 'Air',
+          traits: 'Original · Independent · Forward-looking',
+          stars: [
+            [-0.54, -0.22, 1.25], [-0.22, -0.42, 1.3], [0.06, -0.24, 1.0],
+            [0.18, -0.34, 1.0], [0.30, -0.22, 0.95], [-0.14, -0.02, 0.95],
+            [0.20, 0.26, 1.15], [0.46, 0.12, 0.95], [0.36, 0.50, 1.0]
+          ],
+          edges: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [5, 6], [6, 7], [6, 8]]
+        },
+        Pisces: {
+          svg: '<path d="M6.5 4.5C9.5 8 9.5 16 6.5 19.5M17.5 4.5C14.5 8 14.5 16 17.5 19.5M5 12H19" />',
+          dates: 'Feb 19 – Mar 20',
+          element: 'Water',
+          traits: 'Empathic · Imaginative · Fluid',
+          stars: [
+            [0.10, 0.42, 1.3], [0.34, 0.04, 1.0], [0.52, -0.24, 1.05],
+            [0.58, -0.48, 0.95], [-0.20, 0.22, 0.95], [-0.44, 0.04, 1.0],
+            [-0.62, -0.06, 0.95], [-0.58, -0.24, 0.95], [-0.40, -0.26, 0.95], [-0.30, -0.10, 0.95]
+          ],
+          edges: [[0, 1], [1, 2], [2, 3], [0, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 5]]
+        }
       };
 
-      let selectedBirthdate = "";
-      let selectedCard = null;
+      function createZodiacGlyphSvg(signName, size) {
+        const info = ZODIAC_CONSTELLATIONS[signName];
+        if (!info) return '';
+        const dim = size || 16;
+        return '<span class="zodiac-icon" aria-hidden="true">' +
+          '<svg width="' + dim + '" height="' + dim + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+          info.svg +
+          '</svg></span>';
+      }
 
-      // Streamlit component bridge
+      const MONTH_NAMES = [
+        '', 'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+
+      const screenBirthdate = document.getElementById('screenBirthdate');
+      const constellationStage = document.getElementById('constellationStage');
+      const constellationCaption = document.getElementById('constellationCaption');
+      const constellationGlyph = document.getElementById('constellationGlyph');
+      const constellationName = document.getElementById('constellationName');
+      const constellationMeta = document.getElementById('constellationMeta');
+      const constellationTraits = document.getElementById('constellationTraits');
+      const skipConstellationBtn = document.getElementById('skipConstellationBtn');
+      const zodiacCanvas = document.getElementById('zodiacCanvas');
+
+      const screenReadings = document.getElementById('screenReadings');
+      const birthdateForm = document.getElementById('birthdateForm');
+      const birthMonthEl = document.getElementById('birthMonth');
+      const birthDayEl = document.getElementById('birthDay');
+      const birthYearEl = document.getElementById('birthYear');
+      const birthYearSelectEl = document.getElementById('birthYearSelect');
+      const zodiacWhisper = document.getElementById('zodiacWhisper');
+      const dateErrorEl = document.getElementById('dateError');
+
+      const backBtn = document.getElementById('backBtn');
+      const readingsIdentity = document.getElementById('readingsIdentity');
+      const spreadCards = document.querySelectorAll('.spread-card');
+      const readingMeaning = document.getElementById('readingMeaning');
+      const submitReadingBtn = document.getElementById('submitReadingBtn');
+      const confirmationBox = document.getElementById('confirmationBox');
+
+      const DEFAULT_MEANING = 'Select a spread above to view its reading structure.';
+      const CURRENT_YEAR = new Date().getFullYear();
+
+      let selectedBirthdate = '';
+      let selectedZodiac = '';
+      let selectedCard = null;
+      let animRaf = 0;
+      let animTimers = [];
+
       function sendToStreamlit(type, data = {}) {
-        window.parent.postMessage({ isStreamlitMessage: true, type, ...data }, "*");
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ isStreamlitMessage: true, type, ...data }, '*');
+        }
       }
 
       function updateFrameHeight() {
-        sendToStreamlit("streamlit:setFrameHeight", {
-          height: Math.max(document.documentElement.scrollHeight, 800),
+        sendToStreamlit('streamlit:setFrameHeight', {
+          height: Math.max(document.documentElement.scrollHeight, 760),
         });
       }
 
-      sendToStreamlit("streamlit:componentReady", { apiVersion: 1 });
+      window.addEventListener('message', (event) => {
+        const msg = event.data;
+        if (!msg || msg.type !== 'streamlit:render' || !msg.args) return;
+        const args = msg.args;
+        if (typeof args.css_text === 'string') {
+          injectStylesheetText(args.css_text);
+        }
+        if (typeof args.bg_html === 'string') {
+          mountBackgroundHtml(args.bg_html);
+        }
+        if (typeof args.card_back_url === 'string' && args.card_back_url && args.card_back_url !== injectedCardBackUrl) {
+          injectedCardBackUrl = args.card_back_url;
+          populateMiniCardBacks();
+        }
+        updateFrameHeight();
+      });
+
+      ensureStylesheetLoaded();
+      loadBackgroundAnimation();
+      populateMiniCardBacks();
+      sendToStreamlit('streamlit:componentReady', { apiVersion: 1 });
       updateFrameHeight();
 
-      // Screen 1 -> Screen 2
-      birthdateForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        if (!birthdateInput.value) return;
+      // Populate Year dropdown overlay (newest down to 1920)
+      (function populateYearOptions() {
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select Year';
+        birthYearSelectEl.appendChild(placeholder);
+        for (let y = CURRENT_YEAR; y >= 1920; y -= 1) {
+          const opt = document.createElement('option');
+          opt.value = String(y);
+          opt.textContent = String(y);
+          birthYearSelectEl.appendChild(opt);
+        }
+      })();
 
-        selectedBirthdate = birthdateInput.value;
-        screenBirthdate.classList.add("hidden");
-        screenReadings.classList.remove("hidden");
-        updateFrameHeight();
+      function daysInMonth(month, year) {
+        if (!month) return 31;
+        const y = year >= 1900 && year <= CURRENT_YEAR ? year : 2000;
+        return new Date(y, month, 0).getDate();
+      }
+
+      function syncDayOptions() {
+        const month = Number(birthMonthEl.value);
+        const year = Number(birthYearEl.value);
+        const maxDays = daysInMonth(month, year);
+        const prevDay = Number(birthDayEl.value);
+
+        birthDayEl.innerHTML = '<option value="" disabled ' + (!prevDay ? 'selected' : '') + '>Day</option>';
+        for (let d = 1; d <= maxDays; d += 1) {
+          const opt = document.createElement('option');
+          opt.value = String(d);
+          opt.textContent = String(d);
+          if (prevDay && d === Math.min(prevDay, maxDays)) {
+            opt.selected = true;
+          }
+          birthDayEl.appendChild(opt);
+        }
+      }
+
+      function updateZodiacWhisper() {
+        dateErrorEl.textContent = '';
+        const m = Number(birthMonthEl.value);
+        const d = Number(birthDayEl.value);
+        if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+          const sign = calculateZodiac(m, d);
+          const info = ZODIAC_CONSTELLATIONS[sign];
+          zodiacWhisper.innerHTML =
+            '<span class="zodiac-whisper-sign">' + createZodiacGlyphSvg(sign, 15) + sign + '</span>' +
+            '<span class="zodiac-whisper-sep" aria-hidden="true">&middot;</span>' +
+            '<span>' + info.dates + '</span>' +
+            '<span class="zodiac-whisper-sep" aria-hidden="true">&middot;</span>' +
+            '<span>' + info.element + '</span>';
+          zodiacWhisper.classList.add('is-visible');
+        } else {
+          zodiacWhisper.classList.remove('is-visible');
+        }
+      }
+
+      syncDayOptions();
+
+      birthMonthEl.addEventListener('change', () => {
+        syncDayOptions();
+        updateZodiacWhisper();
       });
 
-      // Back button (Screen 2 -> Screen 1)
-      backBtn.addEventListener("click", () => {
-        confirmationBox.classList.add("hidden");
-        screenReadings.classList.add("hidden");
-        screenBirthdate.classList.remove("hidden");
-        updateFrameHeight();
+      birthDayEl.addEventListener('change', updateZodiacWhisper);
+
+      birthYearEl.addEventListener('input', () => {
+        const cleaned = birthYearEl.value.replace(/\D/g, '').slice(0, 4);
+        birthYearEl.value = cleaned;
+        if (cleaned.length === 4) {
+          birthYearSelectEl.value = cleaned;
+          syncDayOptions();
+        }
+        updateZodiacWhisper();
       });
 
-      // Floating card hover + selection
-      function selectCard(card) {
-        floatingCards.forEach((c) => {
-          c.classList.remove("selected");
-          c.setAttribute("aria-checked", "false");
+      birthYearSelectEl.addEventListener('change', () => {
+        if (birthYearSelectEl.value) {
+          birthYearEl.value = birthYearSelectEl.value;
+          syncDayOptions();
+          updateZodiacWhisper();
+        }
+      });
+
+      function validateBirthdate() {
+        const m = Number(birthMonthEl.value);
+        const d = Number(birthDayEl.value);
+        const yStr = birthYearEl.value.trim();
+        const y = Number(yStr);
+
+        if (!m) return { error: 'Please select your birth month.' };
+        if (!d) return { error: 'Please select your birth day.' };
+        if (!/^\d{4}$/.test(yStr) || y < 1900 || y > CURRENT_YEAR) {
+          return { error: 'Please enter a valid 4-digit year between 1900 and ' + CURRENT_YEAR + '.' };
+        }
+        const candidate = new Date(y, m - 1, d);
+        if (candidate.getFullYear() !== y || candidate.getMonth() !== m - 1 || candidate.getDate() !== d) {
+          return { error: 'That calendar date does not exist.' };
+        }
+        if (candidate > new Date()) {
+          return { error: 'Birth date cannot be in the future.' };
+        }
+
+        const mm = String(m).padStart(2, '0');
+        const dd = String(d).padStart(2, '0');
+        return {
+          iso: y + '-' + mm + '-' + dd,
+          month: m,
+          day: d,
+          year: y,
+          zodiac: calculateZodiac(m, d),
+        };
+      }
+
+      function clearAnimationState() {
+        cancelAnimationFrame(animRaf);
+        animTimers.forEach((id) => clearTimeout(id));
+        animTimers = [];
+      }
+
+      function easeOutQuint(t) {
+        const c = Math.max(0, Math.min(1, t));
+        return 1 - Math.pow(1 - c, 5);
+      }
+
+      function easeInOutCubic(t) {
+        const c = Math.max(0, Math.min(1, t));
+        return c < 0.5 ? 4 * c * c * c : 1 - Math.pow(-2 * c + 2, 3) / 2;
+      }
+
+      function transitionToReadings() {
+        clearAnimationState();
+        constellationStage.classList.add('is-fading-out');
+        animTimers.push(setTimeout(() => {
+          constellationStage.classList.add('hidden');
+          constellationStage.classList.remove('is-active', 'is-fading-out');
+          constellationCaption.classList.remove('is-visible');
+
+          screenReadings.classList.remove('hidden');
+          screenReadings.classList.add('is-entering');
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              screenReadings.classList.remove('is-entering');
+              updateFrameHeight();
+            });
+          });
+        }, 560));
+      }
+
+      function playConstellationSequence(signName) {
+        clearAnimationState();
+        const data = ZODIAC_CONSTELLATIONS[signName] || ZODIAC_CONSTELLATIONS.Aries;
+        const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        constellationGlyph.innerHTML = createZodiacGlyphSvg(signName, 28);
+        constellationName.textContent = signName;
+        constellationMeta.textContent = data.dates + ' \u00B7 ' + data.element + ' Element';
+        constellationTraits.textContent = data.traits;
+        constellationCaption.classList.remove('is-visible');
+        constellationStage.classList.remove('hidden', 'is-fading-out');
+        requestAnimationFrame(() => constellationStage.classList.add('is-active'));
+
+        const wrap = zodiacCanvas.parentElement;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const width = wrap.clientWidth || 520;
+        const height = wrap.clientHeight || 360;
+        zodiacCanvas.width = Math.round(width * dpr);
+        zodiacCanvas.height = Math.round(height * dpr);
+        const ctx = zodiacCanvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const cx = width / 2;
+        const cy = height / 2;
+        const radius = Math.min(width, height) * 0.37;
+
+        const targets = data.stars.map(([nx, ny, mag], idx) => {
+          const ang = (idx / data.stars.length) * Math.PI * 2 + 0.7;
+          const dist = radius * (1.35 + (idx % 3) * 0.35);
+          return {
+            x: cx + nx * radius,
+            y: cy + ny * radius,
+            sx: cx + Math.cos(ang) * dist,
+            sy: cy + Math.sin(ang) * dist,
+            mag: mag || 1,
+          };
         });
 
-        card.classList.add("selected");
-        card.setAttribute("aria-checked", "true");
-        selectedCard = card;
+        const ambientMotes = Array.from({ length: 42 }, (_, i) => {
+          const ang = (i / 42) * Math.PI * 2 + (i % 5) * 0.19;
+          const rStart = Math.max(width, height) * 0.56;
+          const anchor = targets[i % targets.length];
+          return {
+            sx: cx + Math.cos(ang) * rStart,
+            sy: cy + Math.sin(ang) * rStart,
+            tx: anchor.x + ((i % 7) - 3) * 4,
+            ty: anchor.y + (((i * 3) % 7) - 3) * 4,
+            size: 1.1 + (i % 3) * 0.5,
+            delay: (i % 9) * 0.045,
+          };
+        });
 
+        function drawFourPointStar(x, y, size, alpha) {
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.fillStyle = 'rgba(255, 250, 232, ' + alpha.toFixed(3) + ')';
+          ctx.beginPath();
+          const arm = size * 3.1;
+          const waist = size * 0.42;
+          ctx.moveTo(0, -arm);
+          ctx.quadraticCurveTo(waist, -waist, arm, 0);
+          ctx.quadraticCurveTo(waist, waist, 0, arm);
+          ctx.quadraticCurveTo(-waist, waist, -arm, 0);
+          ctx.quadraticCurveTo(-waist, -waist, 0, -arm);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+
+        function renderFrame(elapsed) {
+          ctx.clearRect(0, 0, width, height);
+
+          // Subtle celestial halo behind constellation
+          const haloAlpha = easeOutQuint(Math.min(1, elapsed / 1.4)) * 0.24;
+          const halo = ctx.createRadialGradient(cx, cy, 4, cx, cy, radius * 1.25);
+          halo.addColorStop(0, 'rgba(253, 230, 138, ' + (haloAlpha * 0.65).toFixed(3) + ')');
+          halo.addColorStop(0.45, 'rgba(139, 92, 246, ' + (haloAlpha * 0.45).toFixed(3) + ')');
+          halo.addColorStop(1, 'rgba(2, 5, 36, 0)');
+          ctx.fillStyle = halo;
+          ctx.fillRect(0, 0, width, height);
+
+          // Faint astrolabe guide circle
+          const ringP = easeOutQuint(Math.min(1, elapsed / 1.2));
+          ctx.save();
+          ctx.strokeStyle = 'rgba(253, 230, 138, ' + (0.12 * ringP).toFixed(3) + ')';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(cx, cy, radius * (0.88 + 0.14 * ringP), 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+
+          // Converging stardust motes
+          ambientMotes.forEach((m) => {
+            const p = Math.max(0, Math.min(1, (elapsed - m.delay) / 1.05));
+            const u = easeOutQuint(p);
+            const x = m.sx + (m.tx - m.sx) * u;
+            const y = m.sy + (m.ty - m.sy) * u;
+            const fade = p < 0.2 ? p / 0.2 : Math.max(0, 1 - Math.max(0, p - 0.72) / 0.28);
+            if (fade <= 0.01) return;
+            ctx.fillStyle = 'rgba(238, 242, 255, ' + (fade * 0.65).toFixed(3) + ')';
+            ctx.beginPath();
+            ctx.arc(x, y, m.size, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          // Constellation lines weaving sequentially
+          const lineStart = 0.85;
+          const lineSpan = 1.15;
+          data.edges.forEach(([aIdx, bIdx], idx) => {
+            const edgeDelay = lineStart + (idx / Math.max(1, data.edges.length)) * lineSpan * 0.6;
+            const edgeP = easeInOutCubic((elapsed - edgeDelay) / 0.55);
+            if (edgeP <= 0) return;
+
+            const a = targets[aIdx];
+            const b = targets[bIdx];
+            const ex = a.x + (b.x - a.x) * edgeP;
+            const ey = a.y + (b.y - a.y) * edgeP;
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(253, 230, 138, 0.58)';
+            ctx.lineWidth = 1.4;
+            ctx.shadowColor = 'rgba(251, 191, 36, 0.45)';
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(ex, ey);
+            ctx.stroke();
+            ctx.restore();
+          });
+
+          // Primary stars locking into constellation coordinates
+          targets.forEach((s, i) => {
+            const u = easeOutQuint(Math.max(0, Math.min(1, (elapsed - i * 0.04) / 1.05)));
+            const px = s.sx + (s.x - s.sx) * u;
+            const py = s.sy + (s.y - s.sy) * u;
+            const twinkle = 0.88 + 0.12 * Math.sin(elapsed * 3.4 + i);
+            const r = (2.1 + s.mag * 1.35) * twinkle;
+
+            const glow = ctx.createRadialGradient(px, py, 0, px, py, r * 4.2);
+            glow.addColorStop(0, 'rgba(255, 252, 235, 0.96)');
+            glow.addColorStop(0.35, 'rgba(253, 224, 104, 0.45)');
+            glow.addColorStop(1, 'rgba(253, 224, 104, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(px, py, r * 4.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fffef7';
+            ctx.beginPath();
+            ctx.arc(px, py, r * 0.65, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (s.mag >= 1.2 && u > 0.65) {
+              drawFourPointStar(px, py, r * 0.95, (u - 0.65) / 0.35 * 0.9);
+            }
+          });
+        }
+
+        if (reducedMotion) {
+          renderFrame(3.0);
+          constellationCaption.classList.add('is-visible');
+          animTimers.push(setTimeout(transitionToReadings, 1400));
+          return;
+        }
+
+        const startTs = performance.now();
+        function frame(now) {
+          const elapsed = (now - startTs) / 1000;
+          renderFrame(elapsed);
+          if (elapsed < 3.45) {
+            animRaf = requestAnimationFrame(frame);
+          }
+        }
+        animRaf = requestAnimationFrame(frame);
+
+        animTimers.push(setTimeout(() => {
+          constellationCaption.classList.add('is-visible');
+        }, 1250));
+
+        animTimers.push(setTimeout(() => {
+          transitionToReadings();
+        }, 3350));
+      }
+
+      birthdateForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const result = validateBirthdate();
+        if (result.error) {
+          dateErrorEl.textContent = result.error;
+          return;
+        }
+
+        selectedBirthdate = result.iso;
+        selectedZodiac = result.zodiac;
+
+        const niceDate = MONTH_NAMES[result.month] + ' ' + result.day + ', ' + result.year;
+        readingsIdentity.innerHTML =
+          '<span>' + niceDate + '</span>' +
+          '<span class="zodiac-whisper-sep" aria-hidden="true">&middot;</span>' +
+          '<span class="readings-identity-sign">' + createZodiacGlyphSvg(selectedZodiac, 15) + selectedZodiac + '</span>';
+
+        screenBirthdate.classList.add('is-leaving');
+        animTimers.push(setTimeout(() => {
+          screenBirthdate.classList.add('hidden');
+          screenBirthdate.classList.remove('is-leaving');
+          playConstellationSequence(selectedZodiac);
+        }, 380));
+      });
+
+      skipConstellationBtn.addEventListener('click', transitionToReadings);
+
+      backBtn.addEventListener('click', () => {
+        clearAnimationState();
+        confirmationBox.classList.add('hidden');
+        submitReadingBtn.disabled = !selectedCard;
+        submitReadingBtn.textContent = 'Begin Reading';
+
+        screenReadings.classList.add('is-leaving');
+        animTimers.push(setTimeout(() => {
+          screenReadings.classList.add('hidden');
+          screenReadings.classList.remove('is-leaving');
+          screenBirthdate.classList.remove('hidden');
+          screenBirthdate.classList.add('is-entering');
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              screenBirthdate.classList.remove('is-entering');
+              updateFrameHeight();
+            });
+          });
+        }, 300));
+      });
+
+      function selectSpreadCard(card) {
+        spreadCards.forEach((c) => {
+          c.classList.remove('is-selected');
+          c.setAttribute('aria-checked', 'false');
+        });
+        card.classList.add('is-selected');
+        card.setAttribute('aria-checked', 'true');
+        selectedCard = card;
         readingMeaning.textContent = card.dataset.meaning;
         submitReadingBtn.disabled = false;
       }
 
-      floatingCards.forEach((card) => {
-        card.addEventListener("mouseenter", () => {
+      spreadCards.forEach((card) => {
+        card.addEventListener('mouseenter', () => {
           readingMeaning.textContent = card.dataset.meaning;
         });
-
-        card.addEventListener("mouseleave", () => {
-          readingMeaning.textContent = selectedCard
-            ? selectedCard.dataset.meaning
-            : DEFAULT_MEANING;
+        card.addEventListener('mouseleave', () => {
+          readingMeaning.textContent = selectedCard ? selectedCard.dataset.meaning : DEFAULT_MEANING;
         });
-
-        card.addEventListener("click", () => selectCard(card));
-
-        card.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") {
+        card.addEventListener('click', () => selectSpreadCard(card));
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            selectCard(card);
+            selectSpreadCard(card);
           }
         });
       });
 
-      // Submit reading -> send birthdate + spread to DivinAItion.py
-      submitReadingBtn.addEventListener("click", () => {
+      submitReadingBtn.addEventListener('click', () => {
         if (!selectedBirthdate || !selectedCard) return;
 
         const spreadLabel = selectedCard.dataset.value;
-        const spreadKey = SPREAD_KEY_MAP[spreadLabel] || "one_card";
+        const spreadKey = selectedCard.dataset.spread || 'one_card';
 
         submitReadingBtn.disabled = true;
-        submitReadingBtn.textContent = "Drawing Cards...";
+        submitReadingBtn.textContent = 'Drawing Cards...';
 
-        confirmationBox.innerHTML = `
-          <strong>Consulting the cards...</strong><br />
-          Birth Date: ${selectedBirthdate}<br />
-          Selected Reading: ${spreadLabel}
-        `;
-        confirmationBox.classList.remove("hidden");
+        confirmationBox.innerHTML =
+          'Preparing your <strong>' + escapeHtml(spreadLabel) + '</strong> for ' +
+          escapeHtml(selectedZodiac) + ' (' + escapeHtml(selectedBirthdate) + ')...';
+        confirmationBox.classList.remove('hidden');
         updateFrameHeight();
 
-        sendToStreamlit("streamlit:setComponentValue", {
+        sendToStreamlit('streamlit:setComponentValue', {
           value: {
-            birthdate: selectedBirthdate, // "YYYY-MM-DD"
-            spread: spreadKey,            // "one_card" | "three_card" | "celtic_cross"
+            birthdate: selectedBirthdate,
+            spread: spreadKey,
           },
-          dataType: "json",
+          dataType: 'json',
         });
       });
-
-      // Current Time
-      function showTime() {
-        currentTimeEl.textContent = new Date().toLocaleString();
-      }
-      showTime();
-      setInterval(showTime, 1000);
-    </script>
-  </body>
+    })();
+  </script>
+</body>
 </html>
