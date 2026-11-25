@@ -54,7 +54,6 @@ funny life wisdom. Maintain a friendly, witty, slightly sarcastic, and mystical 
 If there is only 1 card, answer in 1 paragraph (3 sentences).
 If there is more than 1 card, separate the explanation of each card by paragraph in exact card order, with one paragraph per card."""
 
-
 def attach_card_image(card: dict) -> dict:
     """Embed static/images/card/<id>.png as a base64 data URI so it always loads inside Streamlit's iframe."""
     for root in (BASE_DIR, BASE_DIR.parent):
