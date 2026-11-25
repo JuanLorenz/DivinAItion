@@ -133,46 +133,46 @@ key: str = os.environ.get("SUPABASE_API_KEY")
 
 supabase: Client = create_client(url, key)
 
-# st.set_page_config(page_title="DivinAItion", layout="wide")
+st.set_page_config(page_title="DivinAItion", layout="wide")
 
-# # Force Streamlit container & iframe to occupy 100% of the screen
-# st.markdown(
-#     """
-#     <style>
-#       [data-testid="stAppViewContainer"],
-#       [data-testid="stMain"],
-#       .stApp {
-#         background: #020524 !important;
-#         overflow: hidden !important;
-#       }
-#       [data-testid="stHeader"],
-#       [data-testid="stToolbar"],
-#       footer {
-#         display: none !important;
-#       }
-#       [data-testid="stMainBlockContainer"],
-#       .block-container {
-#         padding: 0 !important;
-#         margin: 0 !important;
-#         max-width: 100% !important;
-#       }
-#       iframe[data-testid="stIFrame"],
-#       .element-container iframe {
-#         position: fixed !important;
-#         inset: 0 !important;
-#         width: 100vw !important;
-#         height: 100dvh !important;
-#         border: 0 !important;
-#         margin: 0 !important;
-#         padding: 0 !important;
-#         z-index: 1 !important;
-#       }
-#     </style>
-#     """,
-#     unsafe_allow_html=True,
-# )
+# Force Streamlit container & iframe to occupy 100% of the screen
+st.markdown(
+    """
+    <style>
+      [data-testid="stAppViewContainer"],
+      [data-testid="stMain"],
+      .stApp {
+        background: #020524 !important;
+        overflow: hidden !important;
+      }
+      [data-testid="stHeader"],
+      [data-testid="stToolbar"],
+      footer {
+        display: none !important;
+      }
+      [data-testid="stMainBlockContainer"],
+      .block-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+      }
+      iframe[data-testid="stIFrame"],
+      .element-container iframe {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100dvh !important;
+        border: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 1 !important;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-# html = (Path(__file__).parent / "testing" / "index.html").read_text(encoding="utf-8")
-# components.html(html, height=900, scrolling=False)
+html = (Path(__file__).parent / "testing" / "index.html").read_text(encoding="utf-8")
+components.html(html, height=900, scrolling=False)
 
 st.text(celtic_cross())
