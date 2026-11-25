@@ -1,11 +1,6 @@
 import base64
 import json
 import os
-import streamlit.components.v1 as components
-from dotenv import load_dotenv
-from openai import OpenAI
-from pathlib import Path
-from supabase import create_client, Client
 import random
 from pathlib import Path
 
@@ -16,6 +11,27 @@ from openai import OpenAI
 from supabase import Client, create_client
 
 st.set_page_config(page_title="DivinAItion", layout="wide")
+
+def calculate_zodiac(month: int, day: int) -> str:
+    cutoffs = [120, 219, 321, 420, 521, 621, 723, 823, 923, 1023, 1122, 1222]
+    signs = [
+        "Capricorn",
+        "Aquarius",
+        "Pisces",
+        "Aries",
+        "Taurus",
+        "Gemini",
+        "Cancer",
+        "Leo",
+        "Virgo",
+        "Libra",
+        "Scorpio",
+        "Sagittarius",
+        "Capricorn",
+    ]
+
+    date_num = month * 100 + day
+    return signs[bisect(cutoffs, date_num)]
 
 load_dotenv()
 
@@ -100,28 +116,15 @@ def three_card():
     return drawn_cards
 
 
-def load_css(file_path):
-    if os.path.exists(file_path):
-        with open(file_path) as f:
-            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+def celtic_cross():
+    card_ids = random.sample(range(0, 78), 10)
 
-def calculate_zodiac():
-        cutoffs = [120, 219, 321, 420, 521, 621, 723, 823, 923, 1023, 1122, 1222]
-        signs = [
-            "Capricorn",
-            "Aquarius",
-            "Pisces",
-            "Aries",
-            "Taurus",
-            "Gemini",
-            "Cancer",
-            "Leo",
-            "Virgo",
-            "Libra",
-            "Scorpio",
-            "Sagittarius",
-            "Capricorn",
-        ]
+    response = (
+        supabase.table("tarot_cards")
+        .select("id, card_name, upright_meaning, reversed_meaning")
+        .in_("id", card_ids)
+        .execute()
+    )
 
     rows_by_id = {row["id"]: row for row in response.data}
     drawn_cards = []
