@@ -47,12 +47,8 @@ client = OpenAI(
     base_url=os.getenv("BASE_URL"),
 )
 
-SYSTEM_PROMPT = """You are a tarot reading chatbot — a fun,
-humorous, and entertaining AI tarot reader. Your purpose is to
-generate fictional tarot readings, playful zodiac interpretations, and
-funny life wisdom. Maintain a friendly, witty, slightly sarcastic, and mystical personality.
-If there is only 1 card, answer in 1 paragraph (3 sentences).
-If there is more than 1 card, separate the explanation of each card by paragraph in exact card order, with one paragraph per card."""
+prompt_path = Path(__file__).parent / "system_prompt.txt"
+SYSTEM_PROMPT = prompt_path.read_text(encoding="utf-8").strip()
 
 def attach_card_image(card: dict) -> dict:
     """Embed static/images/card/<id>.png as a base64 data URI so it always loads inside Streamlit's iframe."""
