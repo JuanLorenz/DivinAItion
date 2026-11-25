@@ -3,7 +3,7 @@ import json
 import os
 import random
 from pathlib import Path
-
+from bisect import bisect
 import streamlit as st
 import streamlit.components.v1 as components
 from dotenv import load_dotenv
@@ -11,6 +11,27 @@ from openai import OpenAI
 from supabase import Client, create_client
 
 st.set_page_config(page_title="DivinAItion", layout="wide")
+
+def calculate_zodiac(month: int, day: int) -> str:
+    cutoffs = [120, 219, 321, 420, 521, 621, 723, 823, 923, 1023, 1122, 1222]
+    signs = [
+        "Capricorn",
+        "Aquarius",
+        "Pisces",
+        "Aries",
+        "Taurus",
+        "Gemini",
+        "Cancer",
+        "Leo",
+        "Virgo",
+        "Libra",
+        "Scorpio",
+        "Sagittarius",
+        "Capricorn",
+    ]
+
+    date_num = month * 100 + day
+    return signs[bisect(cutoffs, date_num)]
 
 load_dotenv()
 
