@@ -508,7 +508,7 @@
             const isActive = isFlipped && activeSlot === i;
             tx = pose.x; ty = pose.y; rot = pose.rot;
             sc = placedScale * (isActive ? 1.09 : isNext ? 1.06 : 1);
-            z = isActive ? 45 : isNext ? 40 : pose.z;
+            z = isNext ? 48 : isActive ? 44 : pose.z;
             if (isNext) el.classList.add('is-next-glow');
             if (isActive) el.classList.add('is-active-card');
             el.classList.toggle('is-interactive', isNext || isFlipped);
@@ -865,6 +865,8 @@
       if (window.ResizeObserver) new ResizeObserver(measure).observe(stage);
       measure();
     })();
+
+    //
   </script>
 </body>
 </html>
