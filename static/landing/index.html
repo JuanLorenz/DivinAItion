@@ -463,94 +463,130 @@
     </section>
 
     <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const screenBirthdate = document.getElementById("screenBirthdate");
-        const screenReadings = document.getElementById("screenReadings");
-        const birthdateForm = document.getElementById("birthdateForm");
-        const birthdateInput = document.getElementById("birthdate");
-        const backBtn = document.getElementById("backBtn");
+      const screenBirthdate = document.getElementById("screenBirthdate");
+      const screenReadings = document.getElementById("screenReadings");
+      const birthdateForm = document.getElementById("birthdateForm");
+      const birthdateInput = document.getElementById("birthdate");
+      const backBtn = document.getElementById("backBtn");
 
-        const floatingCards = document.querySelectorAll(".floating-card");
-        const readingMeaning = document.getElementById("readingMeaning");
-        const submitReadingBtn = document.getElementById("submitReadingBtn");
-        const confirmationBox = document.getElementById("confirmationBox");
-        const currentTimeEl = document.getElementById("currentTime");
+      const floatingCards = document.querySelectorAll(".floating-card");
+      const readingMeaning = document.getElementById("readingMeaning");
+      const submitReadingBtn = document.getElementById("submitReadingBtn");
+      const confirmationBox = document.getElementById("confirmationBox");
+      const currentTimeEl = document.getElementById("currentTime");
 
-        const DEFAULT_MEANING =
-          "Hover over or click a floating card above to see its meaning.";
-        let selectedCard = null;
+      const DEFAULT_MEANING = "Hover over or click a floating card above to see its meaning.";
+      const SPREAD_KEY_MAP = {
+        "One-Card Pull": "one_card",
+        "Three-Card Spread": "three_card",
+        "Celtic Cross Spread": "celtic_cross",
+      };
 
-        // Screen 1 -> Screen 2 transition on birthdate submit
-        birthdateForm.addEventListener("submit", (e) => {
-          e.preventDefault();
-          if (!birthdateInput.value) return;
+      let selectedBirthdate = "";
+      let selectedCard = null;
 
-          screenBirthdate.classList.add("hidden");
-          screenReadings.classList.remove("hidden");
+      // Streamlit component bridge
+      function sendToStreamlit(type, data = {}) {
+        window.parent.postMessage({ isStreamlitMessage: true, type, ...data }, "*");
+      }
+
+      function updateFrameHeight() {
+        sendToStreamlit("streamlit:setFrameHeight", {
+          height: Math.max(document.documentElement.scrollHeight, 800),
         });
+      }
 
-        // Back button to edit birthdate
-        backBtn.addEventListener("click", () => {
-          screenReadings.classList.add("hidden");
-          screenBirthdate.classList.remove("hidden");
-          confirmationBox.classList.add("hidden");
-        });
+      sendToStreamlit("streamlit:componentReady", { apiVersion: 1 });
+      updateFrameHeight();
 
-        // Hover & click behavior on the floating cards
-        floatingCards.forEach((card) => {
-          card.addEventListener("mouseenter", () => {
-            readingMeaning.textContent = card.dataset.meaning;
-          });
+      // Screen 1 -> Screen 2
+      birthdateForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (!birthdateInput.value) return;
 
-          card.addEventListener("mouseleave", () => {
-            readingMeaning.textContent = selectedCard
-              ? selectedCard.dataset.meaning
-              : DEFAULT_MEANING;
-          });
-
-          const selectThisCard = () => {
-            floatingCards.forEach((c) => {
-              c.classList.remove("selected");
-              c.setAttribute("aria-checked", "false");
-            });
-
-            card.classList.add("selected");
-            card.setAttribute("aria-checked", "true");
-            selectedCard = card;
-
-            readingMeaning.textContent = card.dataset.meaning;
-            submitReadingBtn.disabled = false;
-            confirmationBox.classList.add("hidden");
-          };
-
-          card.addEventListener("click", selectThisCard);
-          card.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              selectThisCard();
-            }
-          });
-        });
-
-        // Submit button on Screen 2
-        submitReadingBtn.addEventListener("click", () => {
-          if (!selectedCard) return;
-
-          confirmationBox.innerHTML = `
-            <strong>Reading Selected!</strong><br />
-            Birth Date: ${birthdateInput.value}<br />
-            Chosen Spread: <strong>${selectedCard.dataset.value}</strong>
-          `;
-          confirmationBox.classList.remove("hidden");
-        });
-
-        // Current Time
-        function showTime() {
-          currentTimeEl.textContent = new Date().toLocaleString();
-        }
-        showTime();
-        setInterval(showTime, 1000);
+        selectedBirthdate = birthdateInput.value;
+        screenBirthdate.classList.add("hidden");
+        screenReadings.classList.remove("hidden");
+        updateFrameHeight();
       });
+
+      // Back button (Screen 2 -> Screen 1)
+      backBtn.addEventListener("click", () => {
+        confirmationBox.classList.add("hidden");
+        screenReadings.classList.add("hidden");
+        screenBirthdate.classList.remove("hidden");
+        updateFrameHeight();
+      });
+
+      // Floating card hover + selection
+      function selectCard(card) {
+        floatingCards.forEach((c) => {
+          c.classList.remove("selected");
+          c.setAttribute("aria-checked", "false");
+        });
+
+        card.classList.add("selected");
+        card.setAttribute("aria-checked", "true");
+        selectedCard = card;
+
+        readingMeaning.textContent = card.dataset.meaning;
+        submitReadingBtn.disabled = false;
+      }
+
+      floatingCards.forEach((card) => {
+        card.addEventListener("mouseenter", () => {
+          readingMeaning.textContent = card.dataset.meaning;
+        });
+
+        card.addEventListener("mouseleave", () => {
+          readingMeaning.textContent = selectedCard
+            ? selectedCard.dataset.meaning
+            : DEFAULT_MEANING;
+        });
+
+        card.addEventListener("click", () => selectCard(card));
+
+        card.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            selectCard(card);
+          }
+        });
+      });
+
+      // Submit reading -> send birthdate + spread to DivinAItion.py
+      submitReadingBtn.addEventListener("click", () => {
+        if (!selectedBirthdate || !selectedCard) return;
+
+        const spreadLabel = selectedCard.dataset.value;
+        const spreadKey = SPREAD_KEY_MAP[spreadLabel] || "one_card";
+
+        submitReadingBtn.disabled = true;
+        submitReadingBtn.textContent = "Drawing Cards...";
+
+        confirmationBox.innerHTML = `
+          <strong>Consulting the cards...</strong><br />
+          Birth Date: ${selectedBirthdate}<br />
+          Selected Reading: ${spreadLabel}
+        `;
+        confirmationBox.classList.remove("hidden");
+        updateFrameHeight();
+
+        sendToStreamlit("streamlit:setComponentValue", {
+          value: {
+            birthdate: selectedBirthdate, // "YYYY-MM-DD"
+            spread: spreadKey,            // "one_card" | "three_card" | "celtic_cross"
+          },
+          dataType: "json",
+        });
+      });
+
+      // Current Time
+      function showTime() {
+        currentTimeEl.textContent = new Date().toLocaleString();
+      }
+      showTime();
+      setInterval(showTime, 1000);
     </script>
   </body>
 </html>
