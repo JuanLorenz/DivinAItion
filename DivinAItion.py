@@ -155,14 +155,16 @@ def load_html_file(filename: str) -> str:
     raise FileNotFoundError(f"Could not find {filename} in {BASE_DIR} or {BASE_DIR / 'testing'}")
 
 
-# Choose spread: "one_card", "three_card", or "celtic_cross"
-SPREAD_MODE = "one_card"
-
 SPREAD_CONFIG = {
     "one_card": ("One Card Pull", "one_card.html", one_card),
     "three_card": ("Three Card Spread", "three_card.html", three_card),
     "celtic_cross": ("Celtic Cross Spread", "celtic_card.html", celtic_cross),
 }
+
+# Switch spreads via URL: ?spread=one_card, ?spread=three_card, or ?spread=celtic_cross
+SPREAD_MODE = st.query_params.get("spread", "celtic_cross")
+if SPREAD_MODE not in SPREAD_CONFIG:
+    SPREAD_MODE = "one_card"
 
 spread_label, html_filename, draw_fn = SPREAD_CONFIG[SPREAD_MODE]
 session_key = f"tarot_payload_{SPREAD_MODE}"
