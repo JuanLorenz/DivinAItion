@@ -7,174 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <style>
-    :root { --star-speed: 1; --star-trail-opacity: 1; --star-twinkle-intensity: 1; }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #020524; color: #f1f5f9; font-family: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-
-    .starfield-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: radial-gradient(ellipse 85% 45% at 50% 0%, rgba(16, 34, 118, 0.32) 0%, transparent 72%), radial-gradient(ellipse 90% 40% at 50% 100%, rgba(56, 18, 102, 0.38) 0%, transparent 75%), linear-gradient(180deg, #020836 0%, #030833 34%, #04041f 62%, #140632 84%, #210948 100%); }
-    .starfield-layer { position: absolute; inset: 0; }
-    .falling-star { position: absolute; top: 0; left: var(--x, 50%); width: var(--trail-w, 1.5px); height: var(--tail, 36vh); transform: translate3d(0, calc(-100% - 2vh), 0); opacity: 0; will-change: transform, opacity; animation: star-fall calc(var(--dur, 9.5s) / var(--star-speed)) linear infinite; animation-delay: calc(var(--delay, 0s) / var(--star-speed)); }
-    .falling-star__trail { position: absolute; inset: 0; border-radius: 999px; opacity: var(--star-trail-opacity); background: linear-gradient(to bottom, rgba(215, 224, 255, 0) 0%, rgba(215, 224, 255, 0.08) 38%, rgba(232, 236, 250, 0.34) 76%, var(--trail-tip, rgba(255, 252, 244, 0.78)) 100%); }
-    .falling-star__head { position: absolute; bottom: 0; left: 50%; width: var(--head, 6px); height: var(--head, 6px); transform: translate(-50%, 50%); border-radius: 50%; background: radial-gradient(circle, #ffffff 0%, var(--tint, #eef2ff) 48%, transparent 76%); box-shadow: 0 0 calc(var(--head, 6px) * 1.5) calc(var(--head, 6px) * 0.35) var(--glow, rgba(226, 232, 255, 0.72)), 0 0 calc(var(--head, 6px) * 3.6) calc(var(--head, 6px) * 0.9) var(--halo, rgba(180, 198, 255, 0.28)); }
-    .falling-star__head::before, .falling-star__head::after { content: ""; position: absolute; top: 50%; left: 50%; width: calc(var(--head, 6px) * 2.1); height: 1.5px; border-radius: 999px; background: radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, transparent 72%); transform: translate(-50%, -50%); opacity: 0.75; }
-    .falling-star__head::after { transform: translate(-50%, -50%) rotate(90deg); }
-    .falling-star--silver { --tint: #eef2ff; --trail-tip: rgba(235, 240, 255, 0.74); --glow: rgba(226, 233, 255, 0.72); --halo: rgba(176, 196, 255, 0.28); }
-    .falling-star--ivory { --tint: #fff9ec; --trail-tip: rgba(255, 248, 232, 0.72); --glow: rgba(255, 244, 218, 0.68); --halo: rgba(242, 224, 185, 0.25); }
-    .falling-star--champagne { --tint: #f8e9cc; --trail-tip: rgba(247, 230, 198, 0.72); --glow: rgba(245, 222, 178, 0.7); --halo: rgba(232, 198, 138, 0.26); }
-    @keyframes star-fall { 0% { transform: translate3d(0, calc(-100% - 2vh), 0); opacity: 0; } 10% { opacity: var(--peak, 0.88); } 42% { opacity: var(--peak, 0.88); } 74% { opacity: calc(var(--peak, 0.88) * 0.42); } 100% { transform: translate3d(0, calc(var(--fall, 58vh) - 100%), 0); opacity: 0; } }
-    .micro-star { position: absolute; left: var(--x); top: var(--y); width: var(--size, 2px); height: var(--size, 2px); border-radius: 50%; background: rgba(232, 234, 248, 0.85); opacity: var(--base-op, 0.25); will-change: opacity, transform; animation: micro-shimmer var(--dur, 6s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
-    @keyframes micro-shimmer { 0%, 100% { opacity: calc(var(--base-op, 0.25) * 0.5); transform: scale(0.85); } 50% { opacity: calc(var(--base-op, 0.25) * 1.25); transform: scale(1.1); } }
-    .twinkle-star { position: absolute; left: var(--x); bottom: var(--bottom); width: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px)); height: clamp(4px, calc(var(--size, 14px) * 0.82), var(--size, 14px)); background: var(--color, #65547c); clip-path: polygon(50% 0%, 55% 32%, 60% 40%, 68% 45%, 100% 50%, 68% 55%, 60% 60%, 55% 68%, 50% 100%, 45% 68%, 40% 60%, 32% 55%, 0% 50%, 32% 45%, 40% 40%, 45% 32%); opacity: var(--base-op, 0.72); will-change: opacity, transform; animation: star-twinkle var(--dur, 6s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
-    @keyframes star-twinkle { 0%, 100% { opacity: max(0.08, calc(var(--base-op, 0.72) * (1 - 0.55 * var(--star-twinkle-intensity)))); transform: scale(0.86); } 50% { opacity: min(1, calc(var(--base-op, 0.72) * (1 + 0.28 * var(--star-twinkle-intensity)))); transform: scale(calc(1 + 0.12 * var(--star-twinkle-intensity))); } }
-    @media (max-width: 640px) { .star--desktop-only { display: none; } .falling-star__head { width: calc(var(--head, 6px) * 0.88); height: calc(var(--head, 6px) * 0.88); } .twinkle-star { width: calc(var(--size, 14px) * 0.72); height: calc(var(--size, 14px) * 0.72); } }
-    @media (prefers-reduced-motion: reduce) { .falling-star { animation: none; transform: translate3d(0, calc(var(--fall, 50vh) * 0.72 - 100%), 0); opacity: calc(var(--peak, 0.85) * 0.8); } .twinkle-star, .micro-star { animation: none; } }
-
-    .tarot-app { position: relative; z-index: 10; display: flex; flex-direction: column; width: 100%; height: 100dvh; }
-    .tarot-stage { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 24px 16px 64px; }
-    .tarot-stage.is-click-to-shuffle { cursor: pointer; }
-    .tarot-cards-origin { position: relative; width: 0; height: 0; z-index: 20; display: flex; align-items: center; justify-content: center; }
-
-    .tarot-card { position: absolute; border: 0; padding: 0; background: transparent; border-radius: 9px; will-change: transform, opacity; user-select: none; perspective: 1100px; pointer-events: none; }
-    .tarot-card.is-interactive { pointer-events: auto; cursor: pointer; }
-    .tarot-card.is-interactive:hover { filter: brightness(1.12); }
-    .tarot-card.tarot-glide { transition: transform 760ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms ease, filter 200ms ease, box-shadow 260ms ease; }
-    .tarot-card-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; -webkit-transform-style: preserve-3d; transition: transform 720ms cubic-bezier(0.22, 1, 0.36, 1); border-radius: 9px; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.82); }
-    .tarot-card.is-flipped .tarot-card-inner { transform: rotateY(180deg); }
-    .tarot-face { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 9px; overflow: hidden; }
-    .tarot-face--back { transform: rotateY(0deg) translateZ(1px); }
-    .tarot-face--front { transform: rotateY(180deg) translateZ(1px); }
-    .tarot-face svg, .tarot-face-img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
-    .tarot-face-img.is-reversed { transform: rotate(180deg); }
-
-    .tarot-card--singularity { pointer-events: none; opacity: 0; z-index: 30; box-shadow: 0 0 48px rgba(240, 192, 110, 0.45), 0 0 96px rgba(139, 92, 246, 0.35); }
-    .tarot-card--singularity svg, .tarot-card--singularity img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 9px; }
-
-    @keyframes subtleGlow { 0%, 100% { box-shadow: 0 0 18px rgba(251, 191, 36, 0.45), 0 0 38px rgba(167, 139, 250, 0.25); } 50% { box-shadow: 0 0 30px rgba(253, 224, 104, 0.78), 0 0 58px rgba(167, 139, 250, 0.45); } }
-    .is-next-glow .tarot-card-inner { animation: subtleGlow 2.2s ease-in-out infinite; outline: 2px solid rgba(252, 211, 77, 0.8); }
-
-    .vfx-altar, .vfx-ring, .vfx-core, .vfx-shockwave, .vfx-shockwave-inner { position: absolute; pointer-events: none; z-index: 5; }
-    .vfx-altar > div { width: 100%; height: 100%; border-radius: 999px; background: radial-gradient(ellipse at center, rgba(167, 139, 250, 0.24) 0%, rgba(109, 40, 217, 0.12) 45%, transparent 72%); filter: blur(22px); }
-    .vfx-ring { opacity: 0; }
-    .vfx-ring .ring-outer { position: absolute; inset: 0; border-radius: 999px; border: 1px solid rgba(252, 211, 77, 0.26); box-shadow: 0 0 50px rgba(245, 196, 118, 0.12); }
-    .vfx-ring .ring-mid { position: absolute; inset: 7%; border-radius: 999px; border: 1px dashed rgba(196, 181, 253, 0.3); }
-    .vfx-ring .ring-inner { position: absolute; inset: 16%; border-radius: 999px; border: 1px solid rgba(253, 230, 138, 0.15); }
-    .vfx-core { opacity: 0; }
-    .vfx-core > div { width: 100%; height: 100%; border-radius: 999px; background: radial-gradient(circle, rgba(255, 245, 214, 0.9) 0%, rgba(232, 175, 92, 0.45) 28%, rgba(124, 58, 237, 0.28) 58%, transparent 76%); filter: blur(24px); }
-    .vfx-shockwave { opacity: 0; border-radius: 999px; border: 2px solid rgba(253, 230, 138, 0.85); box-shadow: 0 0 40px rgba(251, 191, 36, 0.65); }
-    .vfx-shockwave-inner { opacity: 0; border-radius: 999px; border: 1px solid rgba(221, 214, 254, 0.72); }
-    .vfx-flash { position: fixed; inset: 0; z-index: 25; pointer-events: none; opacity: 0; background: radial-gradient(circle at center, rgba(255, 244, 214, 0.75) 0%, rgba(167, 139, 250, 0.25) 32%, transparent 68%); }
-
-    .reading-layer { position: absolute; inset: 0; z-index: 15; display: flex; align-items: center; justify-content: center; padding: 24px 16px 64px; pointer-events: none; }
-    .reading-grid { display: grid; width: 100%; max-width: 1024px; align-items: center; gap: 20px; grid-template-columns: 1fr; }
-    @media (min-width: 768px) { .reading-grid { grid-template-columns: minmax(250px, 340px) 1fr; gap: 44px; } }
-    .left-anchor { margin: 0 auto; width: 100%; max-width: 260px; height: 175px; }
-    @media (min-width: 768px) { .left-anchor { max-width: 340px; height: 310px; } }
-    .explanation-col { display: flex; flex-direction: column; align-items: center; opacity: 0; transform: translateY(16px); pointer-events: none; transition: opacity 700ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1); }
-    @media (min-width: 768px) { .explanation-col { align-items: flex-start; } }
-    .explanation-col.is-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
-    .script-title { font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 600; font-size: clamp(2rem, 4.5vw, 3.1rem); letter-spacing: 0.03em; color: #ecfa8c; text-shadow: 0 0 18px rgba(232, 248, 132, 0.55), 0 0 38px rgba(190, 225, 92, 0.28); text-align: center; }
-    @media (min-width: 768px) { .script-title { text-align: left; } }
-    .explain-box { margin-top: 14px; width: 100%; max-height: 46dvh; overflow-y: auto; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(108, 107, 144, 0.46); backdrop-filter: blur(12px); padding: 20px 22px; box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45); text-align: left; }
-    @media (min-width: 768px) { .explain-box { max-height: 62dvh; overflow-y: auto; padding: 26px 28px; } }
-    .explain-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); padding-bottom: 12px; }
-    .explain-card-name { font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(1.45rem, 2.6vw, 1.95rem); font-weight: 600; color: #fef3c7; }
-    .explain-orientation { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #fde68a; }
-    .explain-orientation.is-reversed { color: #fca5a5; }
-    .explain-body { margin-top: 14px; font-size: 15px; line-height: 1.68; color: rgba(241, 245, 249, 0.95); }
-    .explain-body p + p { margin-top: 10px; }
-
-    .tarot-controls { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 40; pointer-events: none; width: calc(100vw - 32px); display: flex; justify-content: center; }
-    .tarot-status { font-size: 12px; color: rgba(203, 213, 225, 0.92); text-align: center; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(7, 10, 38, 0.65); backdrop-filter: blur(10px); }
-    .tarot-status strong { color: #fde68a; font-weight: 600; }
-  </style>
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
-  <div class="starfield-bg" aria-hidden="true">
-    <div class="starfield-layer">
-      <span class="falling-star falling-star--silver" style="--x:2.5%;--tail:38vh;--fall:52vh;--head:7px;--trail-w:1.5px;--dur:9.2s;--delay:-3.8s;--peak:0.92"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:5.8%;--tail:34vh;--fall:48vh;--head:5.5px;--trail-w:1px;--dur:11.4s;--delay:-6.9s;--peak:0.72"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--champagne" style="--x:8.2%;--tail:44vh;--fall:62vh;--head:6.5px;--trail-w:1.5px;--dur:8.6s;--delay:-5.4s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:13.5%;--tail:46vh;--fall:60vh;--head:6px;--trail-w:1.5px;--dur:10.2s;--delay:-4.6s;--peak:0.86"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:16%;--tail:54vh;--fall:74vh;--head:5.5px;--trail-w:1px;--dur:12.1s;--delay:-8.3s;--peak:0.78"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:19.2%;--tail:28vh;--fall:42vh;--head:5px;--trail-w:1px;--dur:9.8s;--delay:-2.9s;--peak:0.65"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--ivory" style="--x:21%;--tail:32vh;--fall:46vh;--head:5.5px;--trail-w:1.5px;--dur:8.9s;--delay:-5.1s;--peak:0.84"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver star--desktop-only" style="--x:22.6%;--tail:20vh;--fall:36vh;--head:5.5px;--trail-w:1.5px;--dur:7.8s;--delay:-2.1s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:26.2%;--tail:50vh;--fall:70vh;--head:6.5px;--trail-w:1.5px;--dur:10.6s;--delay:-6.7s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--champagne" style="--x:30.1%;--tail:36vh;--fall:50vh;--head:5.5px;--trail-w:1.5px;--dur:9.4s;--delay:-4.2s;--peak:0.82"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver star--desktop-only" style="--x:33.2%;--tail:16vh;--fall:30vh;--head:5px;--trail-w:1px;--dur:7.4s;--delay:-1.6s;--peak:0.72"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--ivory" style="--x:36.8%;--tail:48vh;--fall:64vh;--head:5px;--trail-w:1px;--dur:11.6s;--delay:-7.8s;--peak:0.76"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:38.9%;--tail:38vh;--fall:55vh;--head:6.5px;--trail-w:1.5px;--dur:8.8s;--delay:-4.8s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:44.4%;--tail:14vh;--fall:28vh;--head:6px;--trail-w:1.5px;--dur:7.2s;--delay:-1.1s;--peak:0.92"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:51%;--tail:46vh;--fall:66vh;--head:6.5px;--trail-w:1.5px;--dur:9.9s;--delay:-5.9s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--ivory" style="--x:52.1%;--tail:54vh;--fall:74vh;--head:5.5px;--trail-w:1px;--dur:11.8s;--delay:-7.2s;--peak:0.8"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--champagne star--desktop-only" style="--x:53.5%;--tail:36vh;--fall:50vh;--head:5.5px;--trail-w:1px;--dur:10.4s;--delay:-4.5s;--peak:0.78"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:60.9%;--tail:31vh;--fall:45vh;--head:5.5px;--trail-w:1.5px;--dur:8.7s;--delay:-3.3s;--peak:0.82"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:63.8%;--tail:56vh;--fall:78vh;--head:6.5px;--trail-w:1.5px;--dur:10.8s;--delay:-6.4s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:66.2%;--tail:36vh;--fall:52vh;--head:5px;--trail-w:1px;--dur:11.2s;--delay:-5.8s;--peak:0.68"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:70.6%;--tail:20vh;--fall:34vh;--head:6px;--trail-w:1.5px;--dur:7.9s;--delay:-2.2s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--champagne" style="--x:74.1%;--tail:50vh;--fall:70vh;--head:5.5px;--trail-w:1px;--dur:10.9s;--delay:-7.1s;--peak:0.76"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:80.2%;--tail:33vh;--fall:48vh;--head:6.5px;--trail-w:1.5px;--dur:9.1s;--delay:-3.7s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:82.8%;--tail:44vh;--fall:60vh;--head:5.5px;--trail-w:1px;--dur:10.5s;--delay:-5.5s;--peak:0.82"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:88%;--tail:18vh;--fall:32vh;--head:6px;--trail-w:1.5px;--dur:7.6s;--delay:-1.9s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--silver" style="--x:90.4%;--tail:36vh;--fall:52vh;--head:6.5px;--trail-w:1.5px;--dur:9.3s;--delay:-4.1s;--peak:0.9"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--ivory star--desktop-only" style="--x:94.5%;--tail:26vh;--fall:40vh;--head:5px;--trail-w:1px;--dur:8.4s;--delay:-2.7s;--peak:0.74"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-      <span class="falling-star falling-star--champagne" style="--x:97.6%;--tail:52vh;--fall:72vh;--head:6.5px;--trail-w:1.5px;--dur:10.7s;--delay:-6.5s;--peak:0.88"><span class="falling-star__trail"></span><span class="falling-star__head"></span></span>
-    </div>
-    <div class="starfield-layer">
-      <span class="micro-star" style="--x:1.4%;--y:58.2%;--size:2px;--base-op:0.28;--dur:5.4s;--delay:-1.2s"></span>
-      <span class="micro-star" style="--x:7.2%;--y:61.5%;--size:2px;--base-op:0.24;--dur:6.8s;--delay:-3.4s"></span>
-      <span class="micro-star" style="--x:18.4%;--y:48%;--size:2px;--base-op:0.22;--dur:7.2s;--delay:-2.1s"></span>
-      <span class="micro-star" style="--x:29.8%;--y:42.5%;--size:2px;--base-op:0.25;--dur:5.9s;--delay:-4.5s"></span>
-      <span class="micro-star" style="--x:41.7%;--y:55.8%;--size:2.5px;--base-op:0.3;--dur:6.1s;--delay:-0.9s"></span>
-      <span class="micro-star" style="--x:43.2%;--y:35.6%;--size:2px;--base-op:0.26;--dur:7.5s;--delay:-5.2s"></span>
-      <span class="micro-star" style="--x:46.2%;--y:41%;--size:2.5px;--base-op:0.34;--dur:5.2s;--delay:-2.8s"></span>
-      <span class="micro-star" style="--x:55.6%;--y:26.8%;--size:2px;--base-op:0.22;--dur:6.4s;--delay:-3.9s"></span>
-      <span class="micro-star" style="--x:67.4%;--y:49.3%;--size:2px;--base-op:0.24;--dur:6.9s;--delay:-1.7s"></span>
-      <span class="micro-star" style="--x:77.8%;--y:52.1%;--size:2px;--base-op:0.22;--dur:5.8s;--delay:-4.1s"></span>
-      <span class="micro-star" style="--x:95.3%;--y:64.5%;--size:2.5px;--base-op:0.3;--dur:6.3s;--delay:-2.4s"></span>
-    </div>
-    <div class="starfield-layer">
-      <span class="twinkle-star" style="--x:2.8%;--bottom:6.2%;--size:8px;--color:#58476e;--base-op:0.72;--dur:5.2s;--delay:-1.1s"></span>
-      <span class="twinkle-star" style="--x:5.1%;--bottom:9.8%;--size:18px;--color:#6b567f;--base-op:0.78;--dur:6.4s;--delay:-3.2s"></span>
-      <span class="twinkle-star" style="--x:8.6%;--bottom:5.2%;--size:14px;--color:#5d4c73;--base-op:0.7;--dur:5.8s;--delay:-0.7s"></span>
-      <span class="twinkle-star" style="--x:9.4%;--bottom:2.8%;--size:20px;--color:#6f5a83;--base-op:0.76;--dur:7.1s;--delay:-4.3s"></span>
-      <span class="twinkle-star" style="--x:12.7%;--bottom:22.8%;--size:16px;--color:#6c5a82;--base-op:0.78;--dur:4.9s;--delay:-2.4s"></span>
-      <span class="twinkle-star" style="--x:15.8%;--bottom:29.6%;--size:16px;--color:#68557c;--base-op:0.75;--dur:6.2s;--delay:-1.8s"></span>
-      <span class="twinkle-star" style="--x:16%;--bottom:1.2%;--size:13px;--color:#5b4b70;--base-op:0.72;--dur:5.5s;--delay:-3.9s"></span>
-      <span class="twinkle-star" style="--x:18.2%;--bottom:10.8%;--size:14px;--color:#5f4e74;--base-op:0.74;--dur:6.7s;--delay:-2.1s"></span>
-      <span class="twinkle-star" style="--x:18.9%;--bottom:25.4%;--size:20px;--color:#75628b;--base-op:0.82;--dur:5.1s;--delay:-4.6s"></span>
-      <span class="twinkle-star" style="--x:19.7%;--bottom:22.6%;--size:10px;--color:#58496d;--base-op:0.68;--dur:4.6s;--delay:-0.4s"></span>
-      <span class="twinkle-star" style="--x:21%;--bottom:22.1%;--size:9px;--color:#5c4d72;--base-op:0.7;--dur:5.9s;--delay:-3.1s"></span>
-      <span class="twinkle-star star--desktop-only" style="--x:22.1%;--bottom:25.1%;--size:18px;--color:#725f88;--base-op:0.8;--dur:6.5s;--delay:-1.5s"></span>
-      <span class="twinkle-star" style="--x:24%;--bottom:4.5%;--size:7px;--color:#544469;--base-op:0.65;--dur:4.8s;--delay:-2.8s"></span>
-      <span class="twinkle-star" style="--x:26.6%;--bottom:32.1%;--size:22px;--color:#6f5c84;--base-op:0.78;--dur:7.4s;--delay:-5s"></span>
-      <span class="twinkle-star" style="--x:28.8%;--bottom:16.2%;--size:14px;--color:#5b4b72;--base-op:0.72;--dur:5.6s;--delay:-1.9s"></span>
-      <span class="twinkle-star star--desktop-only" style="--x:29.2%;--bottom:28.2%;--size:10px;--color:#62527a;--base-op:0.74;--dur:4.7s;--delay:-3.5s"></span>
-      <span class="twinkle-star" style="--x:30.2%;--bottom:24.2%;--size:17px;--color:#685780;--base-op:0.76;--dur:6.3s;--delay:-0.9s"></span>
-      <span class="twinkle-star star--desktop-only" style="--x:28.1%;--bottom:10.3%;--size:7px;--color:#524367;--base-op:0.66;--dur:5.3s;--delay:-2.2s"></span>
-      <span class="twinkle-star star--desktop-only" style="--x:32.6%;--bottom:17.8%;--size:16px;--color:#63527b;--base-op:0.74;--dur:6.9s;--delay:-4.1s"></span>
-      <span class="twinkle-star" style="--x:33.5%;--bottom:24.8%;--size:18px;--color:#6a5882;--base-op:0.78;--dur:5.7s;--delay:-2.7s"></span>
-      <span class="twinkle-star" style="--x:34.1%;--bottom:8.8%;--size:13px;--color:#594970;--base-op:0.7;--dur:6.1s;--delay:-1.3s"></span>
-      <span class="twinkle-star" style="--x:35.5%;--bottom:0.6%;--size:9px;--color:#534468;--base-op:0.68;--dur:5s;--delay:-3.8s"></span>
-      <span class="twinkle-star" style="--x:61.6%;--bottom:10.8%;--size:8px;--color:#59486d;--base-op:0.68;--dur:5.4s;--delay:-2s"></span>
-      <span class="twinkle-star" style="--x:63.2%;--bottom:20.6%;--size:17px;--color:#65547c;--base-op:0.76;--dur:6.6s;--delay:-4.4s"></span>
-      <span class="twinkle-star star--desktop-only" style="--x:67.4%;--bottom:21.8%;--size:12px;--color:#5d4c73;--base-op:0.72;--dur:5.1s;--delay:-1.2s"></span>
-      <span class="twinkle-star" style="--x:69.5%;--bottom:1.9%;--size:15px;--color:#66537b;--base-op:0.75;--dur:6.8s;--delay:-3.6s"></span>
-      <span class="twinkle-star" style="--x:72.7%;--bottom:5.6%;--size:16px;--color:#68557d;--base-op:0.76;--dur:5.9s;--delay:-0.8s"></span>
-      <span class="twinkle-star" style="--x:72.8%;--bottom:30.2%;--size:19px;--color:#6c5a84;--base-op:0.8;--dur:7.2s;--delay:-4.9s"></span>
-      <span class="twinkle-star" style="--x:75.8%;--bottom:15.8%;--size:12px;--color:#6d577e;--base-op:0.74;--dur:4.8s;--delay:-2.5s"></span>
-      <span class="twinkle-star star--desktop-only" style="--x:75.9%;--bottom:27.6%;--size:8px;--color:#5e4d74;--base-op:0.7;--dur:5.3s;--delay:-1.6s"></span>
-      <span class="twinkle-star" style="--x:76.3%;--bottom:25.8%;--size:12px;--color:#68547b;--base-op:0.74;--dur:6.4s;--delay:-3.7s"></span>
-      <span class="twinkle-star" style="--x:82.1%;--bottom:23.8%;--size:7px;--color:#57476c;--base-op:0.68;--dur:4.9s;--delay:-0.5s"></span>
-      <span class="twinkle-star" style="--x:86.2%;--bottom:34.4%;--size:8px;--color:#56476d;--base-op:0.7;--dur:6s;--delay:-2.9s"></span>
-      <span class="twinkle-star" style="--x:86.8%;--bottom:1.6%;--size:11px;--color:#5f4d73;--base-op:0.72;--dur:5.7s;--delay:-4.2s"></span>
-      <span class="twinkle-star" style="--x:88.1%;--bottom:19.2%;--size:22px;--color:#6d5b85;--base-op:0.8;--dur:7s;--delay:-1.4s"></span>
-      <span class="twinkle-star" style="--x:91.6%;--bottom:9.2%;--size:9px;--color:#5b4b71;--base-op:0.7;--dur:5.2s;--delay:-3.3s"></span>
-      <span class="twinkle-star" style="--x:95%;--bottom:4%;--size:20px;--color:#705b84;--base-op:0.78;--dur:6.3s;--delay:-2.6s"></span>
-      <span class="twinkle-star star--desktop-only" style="--x:97.6%;--bottom:1.5%;--size:14px;--color:#64527a;--base-op:0.74;--dur:5.6s;--delay:-0.9s"></span>
-    </div>
-  </div>
+  <div id="starfieldMount"><!--__BACKGROUND_ANIMATION__--></div>
 
   <div class="tarot-app">
     <main class="tarot-stage is-click-to-shuffle" id="tarotStage">
@@ -205,26 +41,38 @@
         <div class="tarot-card tarot-card--singularity" id="singularityCard" aria-hidden="true"></div>
       </div>
     </main>
-
-    <footer class="tarot-controls">
-      <div class="tarot-status" id="statusReadout"><strong>Formation</strong> · Click anywhere on the screen to shuffle</div>
-    </footer>
   </div>
 
   <script>
     (function () {
       const CARD_COUNT = 78;
 
-      // Static PNG folder correlated to Supabase primary key: 0.png .. 77.png
-      // Streamlit (enableStaticServing = true): '/app/static/images/card/'
-      // Standard Flask/FastAPI static folder:   '/static/images/card/'
+      // Static PNG folders correlated to Supabase primary key (0.png .. 77.png) & card back
       const CARD_IMAGE_BASE_PATH = '/app/static/images/card/';
-      const CARD_BACK_IMAGE_URL = null;
+      const CARD_BACK_REL_PATH = 'images/miscellaneous/TarotCard_Back.png';
 
       // Python injects either:
-      // 1) { "cards": [one_card()], "llm_response": "..." } (or { "card": one_card(), "llm_interpretation": "..." })
+      // 1) { "cards": [one_card()], "llm_response": "...", "card_back_url": "data:image/png;base64,..." }
       // 2) one_card() directly with "llm_interpretation" (or "interpretation" / "meaning")
       const RAW_INJECTED_DATA = /*__TAROT_DATA__*/ null;
+
+      function loadBackgroundAnimation() {
+        const mount = document.getElementById('starfieldMount');
+        if (!mount || mount.querySelector('.starfield-bg')) return;
+        const paths = [
+          'background_animation.html',
+          '/app/static/templates/background_animation.html',
+          '/static/templates/background_animation.html',
+          'static/templates/background_animation.html',
+        ];
+        (function tryNext(idx) {
+          if (idx >= paths.length) return;
+          fetch(paths[idx])
+            .then((res) => (res.ok ? res.text() : Promise.reject(new Error('HTTP ' + res.status))))
+            .then((html) => { mount.innerHTML = html; })
+            .catch(() => tryNext(idx + 1));
+        })(0);
+      }
 
       function splitLlmParagraphs(raw) {
         if (!raw) return [];
@@ -304,18 +152,41 @@
         if (card && card.image_url) return [card.image_url];
         const file = card.id + '.png';
         return [
+          '../images/card/' + file,
           CARD_IMAGE_BASE_PATH + file,
           '/static/images/card/' + file,
           'static/images/card/' + file,
-          '../static/images/card/' + file,
         ];
       }
 
-      function renderCardBackHtml(uid) {
-        if (CARD_BACK_IMAGE_URL) {
-          return '<img class="tarot-face-img" src="' + CARD_BACK_IMAGE_URL + '" alt="Tarot card back" draggable="false" />';
+      function getCardBackCandidates() {
+        if (RAW_INJECTED_DATA && typeof RAW_INJECTED_DATA === 'object' && !Array.isArray(RAW_INJECTED_DATA) && RAW_INJECTED_DATA.card_back_url) {
+          return [RAW_INJECTED_DATA.card_back_url];
         }
-        return createCardBackSvg(uid);
+        return [
+          '../' + CARD_BACK_REL_PATH,
+          '/app/static/' + CARD_BACK_REL_PATH,
+          '/static/' + CARD_BACK_REL_PATH,
+          'static/' + CARD_BACK_REL_PATH,
+        ];
+      }
+
+      function setCardBackContent(backEl, uid) {
+        const candidates = getCardBackCandidates();
+        let idx = 0;
+        backEl.innerHTML =
+          '<img class="tarot-face-img" src="' + escapeHtml(candidates[0]) + '" alt="Tarot card back" draggable="false" />';
+        const img = backEl.querySelector('img');
+        if (img) {
+          img.addEventListener('error', function () {
+            idx += 1;
+            if (idx < candidates.length) {
+              img.src = candidates[idx];
+            } else {
+              backEl.innerHTML = createCardBackSvg(uid);
+            }
+          });
+        }
       }
 
       function createFallbackFaceSvg(card) {
@@ -408,13 +279,13 @@
       const shockwaveInner = document.getElementById('shockwaveInner');
       const fusionFlash = document.getElementById('fusionFlash');
       const singularityCard = document.getElementById('singularityCard');
-      const statusReadout = document.getElementById('statusReadout');
 
       const cardTitle = document.getElementById('cardTitle');
       const cardOrientation = document.getElementById('cardOrientation');
       const cardMeaning = document.getElementById('cardMeaning');
 
-      singularityCard.innerHTML = renderCardBackHtml('sing');
+      loadBackgroundAnimation();
+      setCardBackContent(singularityCard, 'sing');
 
       const cardEls = SLOTS.map((_, i) => {
         const cardEl = document.createElement('div');
@@ -423,9 +294,10 @@
         cardEl.setAttribute('tabindex', '-1');
         cardEl.innerHTML =
           '<div class="tarot-card-inner">' +
-            '<div class="tarot-face tarot-face--back">' + renderCardBackHtml(i) + '</div>' +
+            '<div class="tarot-face tarot-face--back"></div>' +
             '<div class="tarot-face tarot-face--front" data-front="' + i + '"></div>' +
           '</div>';
+        setCardBackContent(cardEl.querySelector('.tarot-face--back'), i);
         cardEl.addEventListener('click', (e) => {
           if (phase === 'deck' && !hasFlipped) {
             e.stopPropagation();
@@ -458,7 +330,7 @@
 
         const oRect = origin.getBoundingClientRect();
         const ox = rect.width ? oRect.left + oRect.width / 2 : rect.left + rect.width / 2;
-        const oy = rect.height ? oRect.top + oRect.height / 2 : rect.top + 24 + (rect.height - 88) / 2;
+        const oy = rect.height ? oRect.top + oRect.height / 2 : rect.top + 24 + (rect.height - 56) / 2;
         const aRect = leftAnchor.getBoundingClientRect();
         leftOffset = { x: (aRect.left + aRect.width / 2) - ox, y: (aRect.top + aRect.height / 2) - oy };
 
@@ -478,8 +350,6 @@
         if (phase === 'idle') applyIdle();
         if (phase === 'reading') positionReadingCards();
       }
-
-      function setStatus(title, sub) { statusReadout.innerHTML = '<strong>' + title + '</strong> · ' + sub; }
 
       function populateExplanation(card) {
         cardTitle.textContent = card.card_name;
@@ -517,7 +387,6 @@
         clearTimers();
         cancelAnimationFrame(rafId);
         phase = 'reading';
-        setStatus('One Card Pull', 'Your card has been revealed');
 
         altarGlow.style.opacity = '0';
         mandalaRing.style.opacity = '0';
@@ -551,7 +420,6 @@
         clearTimers();
         cancelAnimationFrame(rafId);
         phase = 'idle';
-        setStatus('Formation', 'Click anywhere on the screen to shuffle');
         stage.classList.add('is-click-to-shuffle');
         explanationCol.classList.remove('is-visible');
         SLOTS.forEach((slot, i) => {
@@ -592,7 +460,6 @@
           elapsed += dt;
 
           if (elapsed < T_SHUFFLE_END) {
-            setStatus('Shuffling', 'Riffle weave across the night sky');
             const t = elapsed;
             const halfRank = Math.max(1, Math.floor(CARD_COUNT / 4));
             SLOTS.forEach((slot, i) => {
@@ -631,7 +498,7 @@
             coreGlow.style.opacity = (g * 0.55).toFixed(3);
             coreGlow.style.transform = 'scale(' + (0.35 + g * 0.35).toFixed(3) + ')';
           } else if (elapsed < T_CIRCLE_END) {
-            if (phase !== 'circle') { phase = 'circle'; setStatus('Orbital Circle', 'Rotating celestial ring'); }
+            if (phase !== 'circle') { phase = 'circle'; }
             const tau = elapsed - T_SHUFFLE_END;
             const bloomU = clamp01(tau / 0.85), r = circleRadius * easeOutQuint(bloomU);
             const theta = 0.35 * tau + 0.38 * tau * tau, rb = easeOutCubic(clamp01(tau / 0.5));
@@ -645,7 +512,7 @@
             mandalaRing.style.transform = 'scale(' + (0.35 + 0.65 * easeOutQuint(bloomU)).toFixed(3) + ') rotate(' + (-(theta * 180) / Math.PI * 0.55).toFixed(2) + 'deg)';
             coreGlow.style.opacity = (0.42 + 0.14 * Math.sin(tau * 4)).toFixed(3);
           } else if (elapsed < T_CONVERGE_END) {
-            if (phase !== 'converging') { phase = 'converging'; setStatus('Convergence', 'Spiraling into the singularity'); }
+            if (phase !== 'converging') { phase = 'converging'; }
             const dur = T_CONVERGE_END - T_CIRCLE_END, s = clamp01((elapsed - T_CIRCLE_END) / dur);
             const cd = T_CIRCLE_END - T_SHUFFLE_END, t0 = 0.35 * cd + 0.38 * cd * cd, w0 = 0.35 + 0.76 * cd;
             const theta = t0 + dur * (w0 * s + 6.2 * Math.pow(s, 2.35));
@@ -662,7 +529,7 @@
             coreGlow.style.opacity = (0.5 + 0.5 * easeInQuad(s)).toFixed(3);
             coreGlow.style.transform = 'scale(' + (0.7 + 0.85 * easeInQuart(s)).toFixed(3) + ')';
           } else if (elapsed < T_SINGULARITY_END) {
-            if (phase !== 'singularity') { phase = 'singularity'; setStatus('Singularity', 'All ' + CARD_COUNT + ' cards fused into one'); }
+            if (phase !== 'singularity') { phase = 'singularity'; }
             const post = elapsed - T_CONVERGE_END;
             if (post < 0.1) cardEls.forEach((el) => { el.style.opacity = '0'; });
             mandalaRing.style.opacity = '0';
@@ -680,7 +547,6 @@
           } else {
             if (phase !== 'deck') {
               phase = 'deck';
-              setStatus('Deck Ready', 'Click the glowing card to flip once');
               cardEls.forEach((el, i) => {
                 el.classList.add('is-interactive');
                 el.setAttribute('tabindex', i === CARD_COUNT - 1 ? '0' : '-1');
