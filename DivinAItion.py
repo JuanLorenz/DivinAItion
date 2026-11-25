@@ -2,8 +2,9 @@ import base64
 import json
 import os
 import random
-from pathlib import Path
 from bisect import bisect
+from pathlib import Path
+
 import streamlit as st
 import streamlit.components.v1 as components
 from dotenv import load_dotenv
@@ -11,6 +12,7 @@ from openai import OpenAI
 from supabase import Client, create_client
 
 st.set_page_config(page_title="DivinAItion", layout="wide")
+
 
 def calculate_zodiac(month: int, day: int) -> str:
     cutoffs = [120, 219, 321, 420, 521, 621, 723, 823, 923, 1023, 1122, 1222]
@@ -29,9 +31,9 @@ def calculate_zodiac(month: int, day: int) -> str:
         "Sagittarius",
         "Capricorn",
     ]
-
     date_num = month * 100 + day
     return signs[bisect(cutoffs, date_num)]
+
 
 load_dotenv()
 
@@ -54,14 +56,36 @@ funny life wisdom. Maintain a friendly, witty, slightly sarcastic, and mystical 
 If there is only 1 card, answer in 1 paragraph (3 sentences).
 If there is more than 1 card, separate the explanation of each card by paragraph in exact card order, with one paragraph per card."""
 
+
+def find_asset(*relative_paths: str) -> Path | None:
+    for root in (BASE_DIR, BASE_DIR.parent):
+        for rel in relative_paths:
+            candidate = root / rel
+            if candidate.exists():
+                return candidate
+    return None
+
+
+def to_data_uri(*relative_paths: str) -> str | None:
+    path = find_asset(*relative_paths)
+    if not path:
+        return None
+    b64 = base64.b64encode(path.read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{b64}"
+
+
+def load_text_asset(*relative_paths: str) -> str:
+    path = find_asset(*relative_paths)
+    if not path:
+        raise FileNotFoundError(f"Could not find any of {relative_paths} under {BASE_DIR}")
+    return path.read_text(encoding="utf-8")
+
+
 def attach_card_image(card: dict) -> dict:
     """Embed static/images/card/<id>.png as a base64 data URI so it always loads inside Streamlit's iframe."""
-    for root in (BASE_DIR, BASE_DIR.parent):
-        img_path = root / "static" / "images" / "card" / f"{card['id']}.png"
-        if img_path.exists():
-            b64 = base64.b64encode(img_path.read_bytes()).decode("ascii")
-            card["image_url"] = f"data:image/png;base64,{b64}"
-            break
+    img_uri = to_data_uri(f"static/images/card/{card['id']}.png")
+    if img_uri:
+        card["image_url"] = img_uri
     return card
 
 
@@ -168,11 +192,20 @@ def get_llm_interpretation(cards: list[dict], spread_name: str) -> str:
     return response.choices[0].message.content or ""
 
 
-def load_html_file(filename: str) -> str:
-    for candidate in (BASE_DIR / filename, BASE_DIR / "static" / "templates" / filename):
-        if candidate.exists():
-            return candidate.read_text(encoding="utf-8")
-    raise FileNotFoundError(f"Could not find {filename} in {BASE_DIR} or {BASE_DIR / 'static' / 'templates'}")
+def build_tarot_html(filename: str, payload: dict) -> str:
+    html = load_text_asset(f"static/templates/{filename}", filename)
+    css = load_text_asset("static/css/style.css")
+    bg_html = load_text_asset("static/templates/background_animation.html", "background_animation.html")
+
+    render_payload = {
+        **payload,
+        "card_back_url": payload.get("card_back_url") or to_data_uri("static/images/miscellaneous/TarotCard_Back.png"),
+    }
+
+    html = html.replace('<link rel="stylesheet" href="../css/style.css" />', f"<style>{css}</style>")
+    html = html.replace('<link rel="stylesheet" href="static/css/style.css" />', f"<style>{css}</style>")
+    html = html.replace("<!--__BACKGROUND_ANIMATION__-->", bg_html)
+    return html.replace("/*__TAROT_DATA__*/ null", json.dumps(render_payload))
 
 
 SPREAD_CONFIG = {
@@ -196,6 +229,7 @@ if session_key not in st.session_state:
     st.session_state[session_key] = {
         "cards": cards_list,
         "llm_response": llm_text,
+        "card_back_url": to_data_uri("static/images/miscellaneous/TarotCard_Back.png"),
     }
 
 # Force Streamlit container & iframe to occupy 100% of the screen
@@ -235,6 +269,5 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-html = load_html_file(html_filename)
-html = html.replace("/*__TAROT_DATA__*/ null", json.dumps(st.session_state[session_key]))
+html = build_tarot_html(html_filename, st.session_state[session_key])
 components.html(html, height=900, scrolling=False)
