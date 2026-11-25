@@ -10,332 +10,547 @@
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
-    <!-- <link rel="stylesheet" href="styles.css" /> -->
-     <style>
-        :root {
-         --bg: #0b0e1a;
-         --card-bg: #14192d;
-         --border: rgba(226, 185, 111, 0.28);
-         --gold: #e2b96f;
-         --gold-soft: rgba(226, 185, 111, 0.14);
-         --text: #f3f4f6;
-         --muted: #9ca3af;
-         }
-         
-         * {
-         box-sizing: border-box;
-         margin: 0;
-         padding: 0;
-         }
-         
-         body {
-         min-height: 100vh;
-         display: flex;
-         align-items: center;
-         justify-content: center;
-         padding: 1.5rem;
-         font-family: "Inter", sans-serif;
-         color: var(--text);
-         background: radial-gradient(circle at top, #1d2342 0%, var(--bg) 75%);
-         }
-         
-         .card {
-         width: 100%;
-         max-width: 480px;
-         padding: 2rem;
-         border-radius: 18px;
-         background: var(--card-bg);
-         border: 1px solid var(--border);
-         box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-         }
-         
-         .title {
-         font-family: "Cinzel", serif;
-         font-size: 1.7rem;
-         text-align: center;
-         color: var(--gold);
-         margin-bottom: 0.4rem;
-         }
-         
-         .subtitle {
-         text-align: center;
-         font-size: 0.92rem;
-         color: var(--muted);
-         margin-bottom: 1.6rem;
-         }
-         
-         .reading-form {
-         display: flex;
-         flex-direction: column;
-         gap: 1.35rem;
-         }
-         
-         .form-group {
-         display: flex;
-         flex-direction: column;
-         gap: 0.5rem;
-         }
-         
-         .label {
-         font-size: 0.82rem;
-         font-weight: 600;
-         text-transform: uppercase;
-         letter-spacing: 0.06em;
-         color: var(--gold);
-         }
-         
-         input[type="date"] {
-         width: 100%;
-         padding: 0.8rem 0.95rem;
-         border-radius: 10px;
-         border: 1px solid rgba(255, 255, 255, 0.15);
-         background: #0d1020;
-         color: var(--text);
-         font-family: inherit;
-         font-size: 0.95rem;
-         color-scheme: dark;
-         outline: none;
-         transition: border-color 0.2s ease;
-         }
-         
-         input[type="date"]:focus {
-         border-color: var(--gold);
-         }
-         
-         .zodiac-display {
-         padding: 0.65rem 0.9rem;
-         border-radius: 10px;
-         background: var(--gold-soft);
-         border: 1px solid rgba(226, 185, 111, 0.35);
-         font-size: 0.9rem;
-         }
-         
-         .zodiac-display strong {
-         color: #fff3d1;
-         }
-         
-         /* Reading Options */
-         .reading-options {
-         display: flex;
-         flex-direction: column;
-         gap: 0.55rem;
-         }
-         
-         .reading-option {
-         cursor: pointer;
-         }
-         
-         .reading-option input {
-         position: absolute;
-         opacity: 0;
-         pointer-events: none;
-         }
-         
-         .option-box {
-         display: block;
-         padding: 0.8rem 1rem;
-         border-radius: 10px;
-         background: #0d1020;
-         border: 1px solid rgba(255, 255, 255, 0.12);
-         font-size: 0.95rem;
-         font-weight: 500;
-         transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
-         }
-         
-         .reading-option:hover .option-box {
-         border-color: rgba(226, 185, 111, 0.6);
-         background: rgba(226, 185, 111, 0.08);
-         transform: translateX(3px);
-         }
-         
-         .reading-option input:checked + .option-box {
-         border-color: var(--gold);
-         background: var(--gold-soft);
-         color: #fff6df;
-         font-weight: 600;
-         }
-         
-         /* Meaning Box */
-         .reading-meaning {
-         margin-top: 0.25rem;
-         padding: 0.85rem 1rem;
-         border-radius: 10px;
-         background: rgba(255, 255, 255, 0.04);
-         border-left: 3px solid var(--gold);
-         font-size: 0.88rem;
-         line-height: 1.45;
-         color: #e5e7eb;
-         }
-         
-         /* Submit Button */
-         .submit-btn {
-         margin-top: 0.25rem;
-         padding: 0.9rem;
-         border: none;
-         border-radius: 10px;
-         background: linear-gradient(135deg, #f0d08a, #d29c45);
-         color: #14120c;
-         font-size: 1rem;
-         font-weight: 700;
-         cursor: pointer;
-         transition: opacity 0.2s ease, transform 0.15s ease;
-         }
-         
-         .submit-btn:hover {
-         opacity: 0.92;
-         transform: translateY(-1px);
-         }
-         
-         .submit-message {
-         margin-top: 1.25rem;
-         padding: 0.9rem 1rem;
-         border-radius: 10px;
-         background: rgba(226, 185, 111, 0.12);
-         border: 1px solid rgba(226, 185, 111, 0.4);
-         font-size: 0.9rem;
-         line-height: 1.5;
-         }
-         
-         .current-time {
-         margin-top: 1.25rem;
-         text-align: center;
-         font-size: 0.78rem;
-         color: var(--muted);
-         }
-         
-         .hidden {
-         display: none;
-         }
-     </style>
+    <style>
+      :root {
+        --bg: #080b16;
+        --card-bg: rgba(20, 25, 45, 0.9);
+        --border: rgba(226, 185, 111, 0.28);
+        --gold: #e2b96f;
+        --gold-soft: rgba(226, 185, 111, 0.14);
+        --text: #f3f4f6;
+        --muted: #9ca3af;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1.5rem;
+        font-family: "Inter", sans-serif;
+        color: var(--text);
+        background: radial-gradient(circle at top, #1b2240 0%, var(--bg) 75%);
+        overflow-x: hidden;
+      }
+
+      /* Screen Transitions */
+      .screen {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: screenFadeIn 0.45s ease;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* SCREEN 1: Birthdate Card */
+      .card {
+        width: 100%;
+        max-width: 440px;
+        padding: 2.25rem;
+        border-radius: 20px;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(12px);
+      }
+
+      .title {
+        font-family: "Cinzel", serif;
+        font-size: 1.75rem;
+        text-align: center;
+        color: var(--gold);
+        margin-bottom: 0.45rem;
+      }
+
+      .subtitle {
+        text-align: center;
+        font-size: 0.93rem;
+        color: var(--muted);
+        margin-bottom: 1.8rem;
+        line-height: 1.45;
+      }
+
+      .birthdate-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--gold);
+      }
+
+      input[type="date"] {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: #0c1020;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.95rem;
+        color-scheme: dark;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      input[type="date"]:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 3px var(--gold-soft);
+      }
+
+      .btn-primary {
+        padding: 0.9rem 1.4rem;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f1d28c, #d19b43);
+        color: #15120b;
+        font-family: "Cinzel", serif;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(226, 185, 111, 0.3);
+      }
+
+      .btn-primary:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .current-time {
+        margin-top: 1.4rem;
+        text-align: center;
+        font-size: 0.76rem;
+        color: var(--muted);
+      }
+
+      /* SCREEN 2: Floating Reading Cards */
+      .readings-wrapper {
+        width: 100%;
+        max-width: 900px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .top-bar {
+        width: 100%;
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: 1rem;
+      }
+
+      .back-btn {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: var(--muted);
+        padding: 0.45rem 0.9rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: color 0.2s, border-color 0.2s;
+      }
+
+      .back-btn:hover {
+        color: var(--gold);
+        border-color: var(--gold);
+      }
+
+      .floating-grid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 0.75rem 0 1.8rem;
+      }
+
+      .floating-card {
+        position: relative;
+        cursor: pointer;
+        border-radius: 18px;
+        padding: 2rem 1.35rem;
+        min-height: 240px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        background: linear-gradient(160deg, rgba(28, 35, 64, 0.95), rgba(14, 18, 34, 0.95));
+        border: 1px solid var(--border);
+        box-shadow: 0 22px 45px rgba(0, 0, 0, 0.6), inset 0 0 24px rgba(226, 185, 111, 0.04);
+        animation: floatCard 4.5s ease-in-out infinite;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+        user-select: none;
+      }
+
+      /* Staggered floating rhythm */
+      .floating-card:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .floating-card:nth-child(2) {
+        animation-delay: 0.7s;
+      }
+      .floating-card:nth-child(3) {
+        animation-delay: 1.4s;
+      }
+
+      .floating-card:hover {
+        animation-play-state: paused;
+        transform: translateY(-14px) scale(1.03);
+        border-color: rgba(226, 185, 111, 0.75);
+        box-shadow: 0 28px 55px rgba(0, 0, 0, 0.7), 0 0 26px rgba(226, 185, 111, 0.22);
+      }
+
+      .floating-card.selected {
+        animation-play-state: paused;
+        transform: translateY(-10px);
+        border: 2px solid var(--gold);
+        background: linear-gradient(160deg, rgba(42, 48, 82, 0.95), rgba(20, 24, 43, 0.98));
+        box-shadow: 0 26px 50px rgba(0, 0, 0, 0.7), 0 0 32px rgba(226, 185, 111, 0.32);
+      }
+
+      /* Decorative mini card graphics inside each floating card */
+      .card-emblem {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 54px;
+        margin-bottom: 1.1rem;
+        color: var(--gold);
+      }
+
+      .mini-tarot {
+        display: inline-block;
+        width: 24px;
+        height: 38px;
+        border: 1.5px solid var(--gold);
+        border-radius: 4px;
+        background: rgba(226, 185, 111, 0.12);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      }
+
+      .mini-tarot-stack {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .mini-tarot-stack .mini-tarot:nth-child(1) {
+        transform: rotate(-12deg) translateX(6px);
+      }
+      .mini-tarot-stack .mini-tarot:nth-child(2) {
+        z-index: 2;
+        background: rgba(226, 185, 111, 0.22);
+      }
+      .mini-tarot-stack .mini-tarot:nth-child(3) {
+        transform: rotate(12deg) translateX(-6px);
+      }
+
+      .celtic-emblem {
+        font-size: 2rem;
+        line-height: 1;
+        text-shadow: 0 0 15px rgba(226, 185, 111, 0.5);
+      }
+
+      .card-name {
+        font-family: "Cinzel", serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #fff6df;
+        margin-bottom: 0.4rem;
+      }
+
+      .card-tag {
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--gold);
+      }
+
+      /* Meaning Display Panel */
+      .meaning-panel {
+        width: 100%;
+        max-width: 650px;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        background: rgba(20, 25, 45, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-left: 3px solid var(--gold);
+        text-align: center;
+        font-size: 0.94rem;
+        line-height: 1.5;
+        color: #e5e7eb;
+        margin-bottom: 1.5rem;
+        min-height: 3.6rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .submit-reading-btn {
+        min-width: 220px;
+      }
+
+      .confirmation-box {
+        margin-top: 1.4rem;
+        width: 100%;
+        max-width: 500px;
+        padding: 1rem 1.2rem;
+        border-radius: 12px;
+        background: var(--gold-soft);
+        border: 1px solid rgba(226, 185, 111, 0.45);
+        text-align: center;
+        font-size: 0.92rem;
+        line-height: 1.55;
+        animation: screenFadeIn 0.3s ease;
+      }
+
+      @keyframes floatCard {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      @keyframes screenFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .floating-grid {
+          grid-template-columns: 1fr;
+          max-width: 340px;
+        }
+
+        .floating-card {
+          min-height: 185px;
+          padding: 1.5rem 1.2rem;
+        }
+      }
+    </style>
   </head>
   <body>
-    <main class="card">
-      <h1 class="title">Welcome to DivinAItion!</h1>
-      <p class="subtitle">Enter your birth date and pick a reading</p>
+    <!-- SCREEN 1: Birthdate Input -->
+    <section id="screenBirthdate" class="screen">
+      <div class="card">
+        <h1 class="title">Welcome to DivinAItion!</h1>
+        <p class="subtitle">Enter your birth date to continue to your reading options.</p>
 
-      <form id="readingForm" class="reading-form">
-        <!-- Birthdate Input + Derived Astrology Sign -->
-        <div class="form-group">
-          <label for="birthdate" class="label">Birth Date</label>
-          <input type="date" id="birthdate" name="birthdate" required />
+        <form id="birthdateForm" class="birthdate-form">
+          <div class="form-group">
+            <label for="birthdate" class="label">Birth Date</label>
+            <input type="date" id="birthdate" name="birthdate" required />
+          </div>
 
-          <div id="zodiacDisplay" class="zodiac-display hidden">
-            Your Astrology Sign: <strong id="zodiacText"></strong>
+          <button type="submit" class="btn-primary">Continue ✦</button>
+        </form>
+
+        <p id="currentTime" class="current-time"></p>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: Floating Card Reading Options -->
+    <section id="screenReadings" class="screen hidden">
+      <div class="readings-wrapper">
+        <div class="top-bar">
+          <button type="button" id="backBtn" class="back-btn">← Change Birth Date</button>
+        </div>
+
+        <h1 class="title">Choose Your Card Reading</h1>
+        <p class="subtitle">Hover over or click a floating card to see what that reading means.</p>
+
+        <div class="floating-grid" role="radiogroup" aria-label="Card Reading Options">
+          <!-- Card 1 -->
+          <div
+            class="floating-card"
+            tabindex="0"
+            role="radio"
+            aria-checked="false"
+            data-value="One-Card Pull"
+            data-meaning="One-Card Pull – Draws one random card for a quick reflection."
+          >
+            <div class="card-emblem">
+              <span class="mini-tarot"></span>
+            </div>
+            <h2 class="card-name">One-Card Pull</h2>
+            <span class="card-tag">1 Card</span>
+          </div>
+
+          <!-- Card 2 -->
+          <div
+            class="floating-card"
+            tabindex="0"
+            role="radio"
+            aria-checked="false"
+            data-value="Three-Card Spread"
+            data-meaning="Three-Card Spread – Draws three cards representing Past, Present, and Future."
+          >
+            <div class="card-emblem">
+              <div class="mini-tarot-stack">
+                <span class="mini-tarot"></span>
+                <span class="mini-tarot"></span>
+                <span class="mini-tarot"></span>
+              </div>
+            </div>
+            <h2 class="card-name">Three-Card Spread</h2>
+            <span class="card-tag">3 Cards</span>
+          </div>
+
+          <!-- Card 3 -->
+          <div
+            class="floating-card"
+            tabindex="0"
+            role="radio"
+            aria-checked="false"
+            data-value="Celtic Cross Spread"
+            data-meaning="Celtic Cross Spread – Draws ten cards for a more detailed reading."
+          >
+            <div class="card-emblem">
+              <span class="celtic-emblem">✦</span>
+            </div>
+            <h2 class="card-name">Celtic Cross Spread</h2>
+            <span class="card-tag">10 Cards</span>
           </div>
         </div>
 
-        <!-- Card Reading Options -->
-        <div class="form-group">
-          <span class="label">Choose a Card Reading</span>
-
-          <div class="reading-options" role="radiogroup" aria-label="Card Reading Options">
-            <label class="reading-option" data-reading="one-card">
-              <input type="radio" name="reading" value="One-Card Pull" required />
-              <span class="option-box">One-Card Pull</span>
-            </label>
-
-            <label class="reading-option" data-reading="three-card">
-              <input type="radio" name="reading" value="Three-Card Spread" />
-              <span class="option-box">Three-Card Spread</span>
-            </label>
-
-            <label class="reading-option" data-reading="celtic-cross">
-              <input type="radio" name="reading" value="Celtic Cross Spread" />
-              <span class="option-box">Celtic Cross Spread</span>
-            </label>
-          </div>
-
-          <!-- Displays what the hovered or clicked reading means -->
-          <div id="readingMeaning" class="reading-meaning">
-            Hover over or click a reading option to see what it means.
-          </div>
+        <!-- Hover / Click Meaning Display -->
+        <div id="readingMeaning" class="meaning-panel">
+          Hover over or click a floating card above to see its meaning.
         </div>
 
-        <button type="submit" class="submit-btn">Submit</button>
-      </form>
+        <button type="button" id="submitReadingBtn" class="btn-primary submit-reading-btn" disabled>
+          Submit
+        </button>
 
-      <!-- Form submission confirmation -->
-      <div id="submitMessage" class="submit-message hidden"></div>
-
-      <p id="currentTime" class="current-time"></p>
-    </main>
+        <div id="confirmationBox" class="confirmation-box hidden"></div>
+      </div>
+    </section>
 
     <script>
-      const birthdateInput = document.getElementById("birthdate");
-      const readingOptions = document.querySelectorAll(".reading-option");
-      const readingMeaning = document.getElementById("readingMeaning");
-      const readingForm = document.getElementById("readingForm");
-      const submitMessage = document.getElementById("submitMessage");
-      const currentTimeEl = document.getElementById("currentTime");
+      document.addEventListener("DOMContentLoaded", () => {
+        const screenBirthdate = document.getElementById("screenBirthdate");
+        const screenReadings = document.getElementById("screenReadings");
+        const birthdateForm = document.getElementById("birthdateForm");
+        const birthdateInput = document.getElementById("birthdate");
+        const backBtn = document.getElementById("backBtn");
 
-      const READING_DESCRIPTIONS = {
-        "one-card": "One-Card Pull – Draws one random card for a quick reflection.",
-        "three-card": "Three-Card Spread – Draws three cards representing Past, Present, and Future.",
-        "celtic-cross": "Celtic Cross Spread – Draws ten cards for a more detailed reading."
-      };
+        const floatingCards = document.querySelectorAll(".floating-card");
+        const readingMeaning = document.getElementById("readingMeaning");
+        const submitReadingBtn = document.getElementById("submitReadingBtn");
+        const confirmationBox = document.getElementById("confirmationBox");
+        const currentTimeEl = document.getElementById("currentTime");
 
-      function sendToStreamlit(type, data = {}) {
-        window.parent.postMessage({ isStreamlitMessage: true, type, ...data }, "*");
-      }
+        const DEFAULT_MEANING =
+          "Hover over or click a floating card above to see its meaning.";
+        let selectedCard = null;
 
-      sendToStreamlit("streamlit:componentReady", { apiVersion: 1 });
-      sendToStreamlit("streamlit:setFrameHeight", {
-        height: Math.max(document.documentElement.scrollHeight, 800),
-      });
+        // Screen 1 -> Screen 2 transition on birthdate submit
+        birthdateForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          if (!birthdateInput.value) return;
 
-      function showSelectedMeaning() {
-        const checked = document.querySelector('input[name="reading"]:checked');
-        if (!checked) {
-          readingMeaning.textContent = "Hover over or click a reading option to see what it means.";
-          return;
+          screenBirthdate.classList.add("hidden");
+          screenReadings.classList.remove("hidden");
+        });
+
+        // Back button to edit birthdate
+        backBtn.addEventListener("click", () => {
+          screenReadings.classList.add("hidden");
+          screenBirthdate.classList.remove("hidden");
+          confirmationBox.classList.add("hidden");
+        });
+
+        // Hover & click behavior on the floating cards
+        floatingCards.forEach((card) => {
+          card.addEventListener("mouseenter", () => {
+            readingMeaning.textContent = card.dataset.meaning;
+          });
+
+          card.addEventListener("mouseleave", () => {
+            readingMeaning.textContent = selectedCard
+              ? selectedCard.dataset.meaning
+              : DEFAULT_MEANING;
+          });
+
+          const selectThisCard = () => {
+            floatingCards.forEach((c) => {
+              c.classList.remove("selected");
+              c.setAttribute("aria-checked", "false");
+            });
+
+            card.classList.add("selected");
+            card.setAttribute("aria-checked", "true");
+            selectedCard = card;
+
+            readingMeaning.textContent = card.dataset.meaning;
+            submitReadingBtn.disabled = false;
+            confirmationBox.classList.add("hidden");
+          };
+
+          card.addEventListener("click", selectThisCard);
+          card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              selectThisCard();
+            }
+          });
+        });
+
+        // Submit button on Screen 2
+        submitReadingBtn.addEventListener("click", () => {
+          if (!selectedCard) return;
+
+          confirmationBox.innerHTML = `
+            <strong>Reading Selected!</strong><br />
+            Birth Date: ${birthdateInput.value}<br />
+            Chosen Spread: <strong>${selectedCard.dataset.value}</strong>
+          `;
+          confirmationBox.classList.remove("hidden");
+        });
+
+        // Current Time
+        function showTime() {
+          currentTimeEl.textContent = new Date().toLocaleString();
         }
-        const key = checked.closest(".reading-option").dataset.reading;
-        readingMeaning.textContent = READING_DESCRIPTIONS[key];
-      }
-
-      readingOptions.forEach((option) => {
-        const key = option.dataset.reading;
-        const radio = option.querySelector("input");
-
-        option.addEventListener("mouseenter", () => {
-          readingMeaning.textContent = READING_DESCRIPTIONS[key];
-        });
-        option.addEventListener("mouseleave", showSelectedMeaning);
-        radio.addEventListener("change", () => {
-          readingMeaning.textContent = READING_DESCRIPTIONS[key];
-        });
+        showTime();
+        setInterval(showTime, 1000);
       });
-
-      readingForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-
-        const birthdate = birthdateInput.value;
-        const selected = document.querySelector('input[name="reading"]:checked');
-        if (!birthdate || !selected) return;
-
-        const spreadKey = selected.closest(".reading-option").dataset.reading;
-
-        submitMessage.innerHTML = `
-          <strong>Consulting the cards...</strong><br />
-          Birth Date: ${birthdate}<br />
-          Selected Reading: ${selected.value}
-        `;
-        submitMessage.classList.remove("hidden");
-
-        sendToStreamlit("streamlit:setComponentValue", {
-          value: {
-            birthdate: birthdate, // "YYYY-MM-DD"
-            spread: spreadKey,
-          },
-          dataType: "json",
-        });
-      });
-
-      function showTime() {
-        currentTimeEl.textContent = new Date().toLocaleString();
-      }
-      showTime();
-      setInterval(showTime, 1000);
     </script>
   </body>
 </html>
