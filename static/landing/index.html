@@ -10,7 +10,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="./style.css" />
-  <style>.hidden { display: none !important; }</style>
+  <style>
+    .hidden { display: none !important; }
+    html.awaiting-render .index-shell { opacity: 0 !important; }
+  </style>
+  <script>
+    if (window.parent && window.parent !== window) {
+      document.documentElement.classList.add('awaiting-render');
+    }
+  </script>
 </head>
 <body class="index-page">
   <div id="starfieldMount"><!--__BACKGROUND_ANIMATION__--></div>
@@ -87,7 +95,7 @@
           <p id="dateError" class="date-error" role="alert"></p>
 
           <button type="submit" id="continueBtn" class="tarot-btn tarot-btn--primary index-submit-btn">
-            Reveal Constellation
+            Submit
           </button>
         </form>
       </div>
@@ -568,6 +576,50 @@
       let selectedCard = null;
       let animRaf = 0;
       let animTimers = [];
+      let appliedInitialViewKey = '';
+
+      function applySavedBirthdateAndOpenReadings(isoDate) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate || '')) return false;
+        const parts = isoDate.split('-');
+        const y = Number(parts[0]);
+        const m = Number(parts[1]);
+        const d = Number(parts[2]);
+        if (!y || m < 1 || m > 12 || d < 1 || d > 31) return false;
+
+        birthMonthEl.value = String(m);
+        birthYearEl.value = String(y);
+        birthYearSelectEl.value = String(y);
+        syncDayOptions();
+        birthDayEl.value = String(d);
+        updateZodiacWhisper();
+
+        selectedBirthdate = isoDate;
+        selectedZodiac = calculateZodiac(m, d);
+
+        const niceDate = MONTH_NAMES[m] + ' ' + d + ', ' + y;
+        readingsIdentity.innerHTML =
+          '<span>' + niceDate + '</span>' +
+          '<span class="zodiac-whisper-sep" aria-hidden="true">&middot;</span>' +
+          '<span class="readings-identity-sign">' + createZodiacGlyphSvg(selectedZodiac, 15) + selectedZodiac + '</span>';
+
+        spreadCards.forEach((c) => {
+          c.classList.remove('is-selected');
+          c.setAttribute('aria-checked', 'false');
+        });
+        selectedCard = null;
+        readingMeaning.textContent = DEFAULT_MEANING;
+        submitReadingBtn.disabled = true;
+        submitReadingBtn.textContent = 'Begin Reading';
+        confirmationBox.classList.add('hidden');
+
+        clearAnimationState();
+        screenBirthdate.classList.add('hidden');
+        screenBirthdate.classList.remove('is-leaving', 'is-entering');
+        constellationStage.classList.add('hidden');
+        constellationStage.classList.remove('is-active', 'is-fading-out');
+        screenReadings.classList.remove('hidden', 'is-leaving', 'is-entering');
+        return true;
+      }
 
       function sendToStreamlit(type, data = {}) {
         if (window.parent && window.parent !== window) {
@@ -595,8 +647,20 @@
           injectedCardBackUrl = args.card_back_url;
           populateMiniCardBacks();
         }
+        if (args.initial_view === 'readings' && typeof args.saved_birthdate === 'string' && args.saved_birthdate) {
+          const viewKey = String(args.render_seq || '') + ':' + args.saved_birthdate;
+          if (appliedInitialViewKey !== viewKey) {
+            appliedInitialViewKey = viewKey;
+            applySavedBirthdateAndOpenReadings(args.saved_birthdate);
+          }
+        }
+        document.documentElement.classList.remove('awaiting-render');
         updateFrameHeight();
       });
+
+      setTimeout(() => {
+        document.documentElement.classList.remove('awaiting-render');
+      }, 450);
 
       ensureStylesheetLoaded();
       loadBackgroundAnimation();

@@ -202,7 +202,7 @@ def extract_between(text: str, start_marker: str, end_marker: str) -> str:
 
 
 def load_curtain_parts() -> tuple[str, str, str]:
-    raw = load_text_asset("testing/correct_curtains.html", "correct_curtains.html")
+    raw = load_text_asset("testing/correct_curtains.html", "correct_curtains.html", "curtains.html")
     curtain_style = extract_between(raw, "<!--__CURTAINS_STYLE_START__-->", "<!--__CURTAINS_STYLE_END__-->")
     curtain_html = extract_between(raw, "<!--__CURTAINS_HTML_START__-->", "<!--__CURTAINS_HTML_END__-->")
     curtain_script = extract_between(raw, "<!--__CURTAINS_SCRIPT_START__-->", "<!--__CURTAINS_SCRIPT_END__-->")
@@ -264,6 +264,7 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>What Stirs Within Your Soul? · DivinAItion</title>
+  <script>document.documentElement.classList.add('curtain-pending');</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -280,6 +281,59 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
       padding: 0;
       overflow: hidden;
       background: #020524;
+    }}
+
+    html.curtain-pending .soul-screen,
+    html.curtain-pending #starfieldMount,
+    html.curtain-pending .starfield-bg {{
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }}
+
+    .curtain-stage:not(.is-curtain-ready) {{
+      background: radial-gradient(circle at 50% 45%, #120e44 0%, #060722 70%, #030416 100%);
+    }}
+
+    .curtain-cue {{
+      position: fixed;
+      inset: 0;
+      z-index: 58;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      transition: opacity 420ms ease;
+    }}
+
+    .curtain-cue.is-hidden {{
+      opacity: 0;
+    }}
+
+    .curtain-cue-title {{
+      margin: 0;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 600;
+      font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+      letter-spacing: 0.04em;
+      color: #fef3c7;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.85), 0 0 24px rgba(253, 230, 138, 0.45);
+      animation: cuePulse 2.4s ease-in-out infinite;
+    }}
+
+    .curtain-cue-sub {{
+      margin: 10px 0 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(226, 232, 240, 0.72);
+    }}
+
+    @keyframes cuePulse {{
+      0%, 100% {{ opacity: 0.72; }}
+      50% {{ opacity: 1; }}
     }}
 
     .soul-screen {{
@@ -527,6 +581,25 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
   </style>
 </head>
 <body>
+  {curtain_html}
+  <div class="curtain-cue" id="curtainCue" aria-hidden="true">
+    <p class="curtain-cue-title">Click anywhere to part the veil</p>
+    <p class="curtain-cue-sub">{spread_label} &middot; {zodiac_sign}</p>
+  </div>
+  {curtain_script}
+  <script>
+    (function () {{
+      const curtainStage = document.getElementById('curtainStage');
+      if (typeof window.setCurtainsOpen === 'function') {{
+        window.setCurtainsOpen(false, true);
+      }}
+      requestAnimationFrame(() => {{
+        if (curtainStage) curtainStage.classList.add('is-curtain-ready');
+        document.documentElement.classList.remove('curtain-pending');
+      }});
+    }})();
+  </script>
+
   <!-- render_seq: {render_seq} -->
   {bg_html}
 
@@ -545,7 +618,6 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
         class="soul-textarea"
         placeholder="Whisper your question or dilemma into the cosmos..."
         aria-label="What stirs within your soul?"
-        autofocus
       ></textarea>
     </div>
     <p class="soul-hint">Press Enter to cast your {spread_label} &middot; {zodiac_sign}</p>
@@ -562,39 +634,49 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
     <p class="mystic-subtext">Aligning {spread_label} &middot; {zodiac_sign}</p>
   </section>
 
-  {curtain_html}
-  {curtain_script}
-
   <script>
     (function () {{
       const curtainStage = document.getElementById('curtainStage');
+      const curtainCue = document.getElementById('curtainCue');
       const soulScreen = document.getElementById('soulScreen');
       const soulBox = document.getElementById('soulBox');
       const soulInput = document.getElementById('soulInput');
       const mysticLoader = document.getElementById('mysticLoader');
+      let hasUnveiled = false;
       let hasSubmitted = false;
 
-      // Start closed, then sweep open to reveal "What Stirs Within Your Soul ?"
-      if (typeof window.setCurtainsOpen === 'function') {{
-        window.setCurtainsOpen(false, true);
-        setTimeout(() => {{
-          if (typeof window.openCurtains === 'function') {{
-            window.openCurtains();
+      function unveilPrompt() {{
+        if (hasUnveiled) return;
+        hasUnveiled = true;
+        if (curtainCue) curtainCue.classList.add('is-hidden');
+
+        if (typeof window.openCurtains === 'function') {{
+          window.openCurtains();
+        }}
+
+        window.addEventListener('curtains:settled', (e) => {{
+          if (e.detail && e.detail.isOpen && curtainStage) {{
+            curtainStage.classList.add('is-curtain-tucked');
+            if (soulInput) soulInput.focus();
           }}
-        }}, 110);
+        }}, {{ once: true }});
+
+        setTimeout(() => {{
+          if (soulInput) soulInput.focus();
+        }}, 700);
+
+        setTimeout(() => {{
+          if (curtainStage) curtainStage.classList.add('is-curtain-tucked');
+          if (soulInput) soulInput.focus();
+        }}, 2400);
       }}
 
-      window.addEventListener('curtains:settled', (e) => {{
-        if (e.detail && e.detail.isOpen && curtainStage) {{
-          curtainStage.classList.add('is-curtain-tucked');
-          if (soulInput) soulInput.focus();
-        }}
-      }});
-
-      // Safety fallback in case user begins typing before settle completes
-      setTimeout(() => {{
-        if (curtainStage) curtainStage.classList.add('is-curtain-tucked');
-      }}, 2400);
+      document.addEventListener('click', (e) => {{
+        if (hasUnveiled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        unveilPrompt();
+      }}, true);
 
       function submitToStreamlit(questionText) {{
         const parentDoc = window.parent && window.parent.document;
@@ -653,6 +735,7 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
 </html>
 """
 
+
 def build_tarot_html(filename: str, payload: dict, spread_mode: str, render_seq: int) -> str:
     html = load_text_asset(f"static/templates/{filename}", filename)
     css = load_text_asset("static/css/style.css")
@@ -669,36 +752,52 @@ def build_tarot_html(filename: str, payload: dict, spread_mode: str, render_seq:
     html = html.replace("<!--__BACKGROUND_ANIMATION__-->", bg_html)
     html = html.replace("/*__TAROT_DATA__*/ null", json.dumps(render_payload))
 
-    reading_bridge_block = f"""
-  <!-- render_seq: {render_seq} -->
+    curtain_head_block = f"""
+  <script>document.documentElement.classList.add('curtain-pending');</script>
   {curtain_style}
   <style>
-    .reading-intro-veil {{
+    html.curtain-pending .tarot-app,
+    html.curtain-pending #starfieldMount,
+    html.curtain-pending .starfield-bg {{
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }}
+
+    .curtain-stage:not(.is-curtain-ready) {{
+      background: radial-gradient(circle at 50% 45%, #120e44 0%, #060722 70%, #030416 100%);
+    }}
+
+    .curtain-cue {{
       position: fixed;
       inset: 0;
-      z-index: 48;
+      z-index: 58;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(circle at center, rgba(20, 10, 56, 0.88) 0%, rgba(2, 5, 36, 0.94) 100%);
-      pointer-events: auto;
-      opacity: 1;
-      transition: opacity 550ms ease;
-    }}
-
-    .reading-intro-veil.is-gone {{
-      opacity: 0;
       pointer-events: none;
+      transition: opacity 420ms ease;
     }}
 
-    .reading-intro-veil p {{
+    .curtain-cue.is-hidden {{
+      opacity: 0;
+    }}
+
+    .curtain-cue-title {{
+      margin: 0;
       font-family: "Cormorant Garamond", Georgia, serif;
       font-style: italic;
-      font-size: clamp(1.5rem, 3vw, 2.1rem);
+      font-weight: 600;
+      font-size: clamp(1.5rem, 3.2vw, 2.25rem);
+      letter-spacing: 0.04em;
       color: #fef3c7;
-      text-shadow: 0 0 20px rgba(253, 230, 138, 0.5);
-      margin: 0;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.85), 0 0 24px rgba(253, 230, 138, 0.45);
+      animation: cuePulse 2.4s ease-in-out infinite;
+    }}
+
+    @keyframes cuePulse {{
+      0%, 100% {{ opacity: 0.72; }}
+      50% {{ opacity: 1; }}
     }}
 
     .ask-another-btn {{
@@ -736,40 +835,81 @@ def build_tarot_html(filename: str, payload: dict, spread_mode: str, render_seq:
       transform: translateY(-2px);
     }}
   </style>
+"""
 
-  <div class="reading-intro-veil" id="readingIntroVeil">
-    <p>Calling the universe&rsquo;s response&hellip;</p>
-  </div>
-
-  <button type="button" class="ask-another-btn" id="askAnotherBtn">
-    Ask Another Question
-  </button>
-
+    curtain_front_block = f"""
+  <!-- render_seq: {render_seq} -->
   {curtain_html}
+  <div class="curtain-cue" id="curtainCue" aria-hidden="true">
+    <p class="curtain-cue-title">Click anywhere to unveil your reading</p>
+  </div>
   {curtain_script}
+  <script>
+    (function () {{
+      const curtainStage = document.getElementById('curtainStage');
+      if (typeof window.setCurtainsOpen === 'function') {{
+        window.setCurtainsOpen(false, true);
+      }}
+      requestAnimationFrame(() => {{
+        if (curtainStage) curtainStage.classList.add('is-curtain-ready');
+        document.documentElement.classList.remove('curtain-pending');
+      }});
+    }})();
+  </script>
+"""
+
+    reading_bridge_block = f"""
+  <button type="button" class="ask-another-btn" id="askAnotherBtn">
+    Read Again
+  </button>
 
   <script>
     (function () {{
       const SPREAD_MODE = {json.dumps(spread_mode)};
       const curtainStage = document.getElementById('curtainStage');
-      const introVeil = document.getElementById('readingIntroVeil');
+      const curtainCue = document.getElementById('curtainCue');
       const askAnotherBtn = document.getElementById('askAnotherBtn');
+      let hasUnveiled = false;
+      let hasStartedShuffle = false;
       let btnShown = false;
       let isReturning = false;
 
-      if (typeof window.setCurtainsOpen === 'function') {{
-        window.setCurtainsOpen(true, true);
-      }}
-      if (curtainStage) {{
-        curtainStage.classList.add('is-curtain-tucked');
+      function startShuffleOnce() {{
+        if (hasStartedShuffle || isReturning) return;
+        hasStartedShuffle = true;
+        document.dispatchEvent(new MouseEvent('click', {{ bubbles: true }}));
       }}
 
-      setTimeout(() => {{
-        if (introVeil) introVeil.classList.add('is-gone');
+      function handleFirstClick(e) {{
+        if (hasUnveiled) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === 'function') {{
+          e.stopImmediatePropagation();
+        }}
+        hasUnveiled = true;
+        document.removeEventListener('click', handleFirstClick, true);
+
+        if (curtainCue) curtainCue.classList.add('is-hidden');
+
+        if (typeof window.openCurtains === 'function') {{
+          window.openCurtains();
+        }}
+
+        window.addEventListener('curtains:settled', (ev) => {{
+          if (ev.detail && ev.detail.isOpen && curtainStage) {{
+            curtainStage.classList.add('is-curtain-tucked');
+          }}
+        }}, {{ once: true }});
+
         setTimeout(() => {{
-          document.dispatchEvent(new MouseEvent('click', {{ bubbles: true }}));
-        }}, 360);
-      }}, 180);
+          if (curtainStage) curtainStage.classList.add('is-curtain-tucked');
+        }}, 2300);
+
+        setTimeout(startShuffleOnce, 950);
+      }}
+
+      document.addEventListener('click', handleFirstClick, true);
 
       function isFinalReadingReached() {{
         if (SPREAD_MODE === 'one_card') {{
@@ -860,7 +1000,10 @@ def build_tarot_html(filename: str, payload: dict, spread_mode: str, render_seq:
     }})();
   </script>
 """
+    html = html.replace("</head>", curtain_head_block + "\n</head>")
+    html = html.replace("<body>", "<body>\n" + curtain_front_block)
     return html.replace("</body>", reading_bridge_block + "\n</body>")
+
 
 SPREAD_CONFIG = {
     "one_card": ("One Card Pull", "one_card.html", one_card),
@@ -878,6 +1021,10 @@ if "stage" not in st.session_state:
     st.session_state["stage"] = "landing"
 if "render_seq" not in st.session_state:
     st.session_state["render_seq"] = 0
+if "landing_seq" not in st.session_state:
+    st.session_state["landing_seq"] = 0
+if "landing_view" not in st.session_state:
+    st.session_state["landing_view"] = "birthdate"
 
 stage = st.session_state["stage"]
 
@@ -959,7 +1106,7 @@ st.markdown(
 # STAGE 1: Landing (index.html in front, closed correct_curtains.html behind)
 # ==============================================================================
 if stage == "landing":
-    curtains_only_html = load_text_asset("testing/correct_curtains.html", "correct_curtains.html")
+    curtains_only_html = load_text_asset("testing/correct_curtains.html", "correct_curtains.html", "curtains.html")
     components.html(curtains_only_html, height=900, scrolling=False)
 
     landing_css = load_text_asset("static/css/style.css") + """
@@ -974,12 +1121,16 @@ if stage == "landing":
         css_text=landing_css,
         bg_html='<div class="starfield-bg" style="display:none" aria-hidden="true"></div>',
         card_back_url=to_data_uri("static/images/miscellaneous/TarotCard_Back.png"),
-        key="landing_form",
+        initial_view=st.session_state.get("landing_view", "birthdate"),
+        saved_birthdate=st.session_state.get("saved_birthdate", ""),
+        render_seq=st.session_state["landing_seq"],
+        key=f"landing_form_{st.session_state['landing_seq']}",
     )
     if form_data:
         zodiac_sign = get_zodiac_from_birthdate(form_data["birthdate"])
         spread_mode = form_data["spread"].replace("-", "_")
 
+        st.session_state["saved_birthdate"] = form_data["birthdate"]
         st.session_state["reading_request"] = {
             "birthdate": form_data["birthdate"],
             "zodiac_sign": zodiac_sign,
@@ -1047,7 +1198,9 @@ elif stage == "reading":
     reading_return = st.button("DIVINAITION_RETURN_PROMPT", key="reading_return_btn")
     if reading_return:
         st.session_state.pop("tarot_payload", None)
-        st.session_state["stage"] = "soul_prompt"
+        st.session_state["landing_view"] = "readings"
+        st.session_state["landing_seq"] += 1
+        st.session_state["stage"] = "landing"
         st.session_state["render_seq"] += 1
         st.rerun()
     else:

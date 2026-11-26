@@ -8,6 +8,14 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/style.css" />
+  <style>
+    .tarot-card.is-rainbow-card .tarot-card-inner {
+      transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease;
+    }
+    .tarot-card.is-rainbow-card.is-arc-hover .tarot-card-inner {
+      transform: translate3d(0, -24px, 0) scale(1.12);
+    }
+  </style>
 </head>
 <body>
   <div id="starfieldMount"><!--__BACKGROUND_ANIMATION__--></div>
@@ -123,6 +131,81 @@
         return paras.map((p) => '<p>' + formatInlineText(p) + '</p>').join('');
       }
 
+      function alignLlmParagraphs(llmRaw, rawCards) {
+        const count = rawCards.length;
+        const paras = splitLlmParagraphs(llmRaw, count);
+        const perCard = new Array(count).fill('');
+        let extras = [];
+        if (!paras.length) return { perCard: perCard, extras: extras };
+
+        const ROMAN_MAP = { I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8, IX: 9, X: 10 };
+        function parseCardNumber(p) {
+          const clean = String(p).replace(/^[#*\s]+/, '');
+          const mNum = clean.match(/^(?:card\s*)?(\d{1,2})\s*(?:[.):]|[-—–]\s)/i);
+          if (mNum) {
+            const n = parseInt(mNum[1], 10);
+            if (n >= 1 && n <= count) return n;
+          }
+          const mRom = clean.match(/^(X|IX|IV|V?I{1,3})\s*(?:[.):]|[-—–]\s)/);
+          if (mRom && ROMAN_MAP[mRom[1]] && ROMAN_MAP[mRom[1]] <= count) {
+            return ROMAN_MAP[mRom[1]];
+          }
+          return null;
+        }
+
+        const numberedBuckets = Array.from({ length: count }, () => []);
+        const trailing = [];
+        let matchedCount = 0;
+        let currentSlot = -1;
+        let seenLastCard = false;
+
+        for (let i = 0; i < paras.length; i++) {
+          const p = paras[i];
+          const num = parseCardNumber(p);
+          if (num != null && (!seenLastCard || !numberedBuckets[num - 1].length)) {
+            currentSlot = num - 1;
+            numberedBuckets[currentSlot].push(p);
+            matchedCount++;
+            if (num === count) seenLastCard = true;
+          } else if (currentSlot === -1) {
+            continue;
+          } else if (seenLastCard) {
+            trailing.push(p);
+          } else {
+            numberedBuckets[currentSlot].push(p);
+          }
+        }
+
+        if (matchedCount >= Math.min(2, count)) {
+          for (let k = 0; k < count; k++) {
+            perCard[k] = numberedBuckets[k].join('\n\n');
+          }
+          return { perCard: perCard, extras: trailing };
+        }
+
+        const working = paras.slice();
+        if (working.length > count) {
+          const first = working[0].trim();
+          const firstCardName = String((rawCards[0] && rawCards[0].card_name) || '').toLowerCase();
+          const firstHasCard = firstCardName && first.toLowerCase().includes(firstCardName);
+          const secondHasCard = firstCardName && working[1] && working[1].toLowerCase().includes(firstCardName);
+          const looksLikeHeading =
+            first.length <= 90 &&
+            (/^#+\s*/.test(first) || /:$/.test(first) || !/[.!?]$/.test(first) || /\b(reading|spread|three card)\b/i.test(first));
+          if (!firstHasCard && (secondHasCard || looksLikeHeading)) {
+            working.shift();
+          }
+        }
+
+        for (let k = 0; k < count; k++) {
+          perCard[k] = working[k] || '';
+        }
+        if (working.length > count) {
+          extras = working.slice(count);
+        }
+        return { perCard: perCard, extras: extras };
+      }
+
       function normalizeCard(raw, llmParagraph) {
         const isRev = Boolean(raw && raw.is_reverse);
         const dbMeaning = raw && (raw.meaning || (isRev ? (raw.reversed_meaning || raw.reversed_additional) : (raw.upright_meaning || raw.upright_additional))) || '';
@@ -147,12 +230,11 @@
           const llmRaw = !Array.isArray(RAW_INJECTED_DATA)
             ? (RAW_INJECTED_DATA.llm_response || RAW_INJECTED_DATA.llm_interpretation || RAW_INJECTED_DATA.interpretation || RAW_INJECTED_DATA.explanation || RAW_INJECTED_DATA.paragraphs)
             : null;
-          const llmParas = splitLlmParagraphs(llmRaw, 3);
-          if (llmParas.length > 3) {
-            extraSummaryParagraphs = llmParas.slice(3);
-          }
           if (rawCards && rawCards.length >= 3) {
-            return rawCards.slice(0, 3).map((c, idx) => normalizeCard(c, llmParas[idx] || ''));
+            const selected = rawCards.slice(0, 3);
+            const aligned = alignLlmParagraphs(llmRaw, selected);
+            extraSummaryParagraphs = aligned.extras;
+            return selected.map((c, idx) => normalizeCard(c, aligned.perCard[idx] || ''));
           }
         }
         const used = new Set();
@@ -344,6 +426,26 @@
       loadBackgroundAnimation();
       setCardBackContent(singularityCard, 'sing');
 
+      function setHoveredCard(nextIdx) {
+        if (hoveredIdx === nextIdx) return;
+        const prevIdx = hoveredIdx;
+        hoveredIdx = nextIdx;
+        if (prevIdx !== null && cardEls[prevIdx]) {
+          const prevEl = cardEls[prevIdx];
+          prevEl.classList.remove('is-arc-hover');
+          if (phase === 'rainbow' && pickedIndices.indexOf(prevIdx) === -1) {
+            prevEl.style.zIndex = String(prevIdx + 2);
+          }
+        }
+        if (nextIdx !== null && cardEls[nextIdx]) {
+          const nextEl = cardEls[nextIdx];
+          if (phase === 'rainbow' && pickedIndices.indexOf(nextIdx) === -1 && pickedIndices.length < 3) {
+            nextEl.classList.add('is-arc-hover');
+            nextEl.style.zIndex = String(CARD_COUNT + 40);
+          }
+        }
+      }
+
       const cardEls = SLOTS.map((_, i) => {
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -356,12 +458,13 @@
         setCardBackContent(btn.querySelector('.tarot-face--back'), i);
         btn.addEventListener('mouseenter', () => {
           if (phase === 'rainbow' && pickedIndices.indexOf(i) === -1 && pickedIndices.length < 3) {
-            hoveredIdx = i;
-            layoutCards();
+            setHoveredCard(i);
           }
         });
         btn.addEventListener('mouseleave', () => {
-          if (hoveredIdx === i) { hoveredIdx = null; layoutCards(); }
+          if (hoveredIdx === i) {
+            setHoveredCard(null);
+          }
         });
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -452,25 +555,25 @@
           const isPicked = slotIdx !== -1;
           let tx = 0, ty = 0, rot = 0, sc = 1, op = 1, z = i + 2;
 
-          el.classList.remove('is-next-glow', 'is-active-card', 'is-arc-hover');
+          el.classList.remove('is-next-glow', 'is-active-card', 'is-arc-hover', 'is-rainbow-card');
           el.style.transitionDelay = phase === 'rainbow' && !rainbowSettled ? Math.min(i * 12, 240) + 'ms' : '0ms';
 
           if (phase === 'rainbow') {
             if (isPicked) {
               const target = slotOffsets[slotIdx];
-              tx = target.x; ty = target.y; rot = 0; sc = slotScale; z = 35 + slotIdx;
+              tx = target.x; ty = target.y; rot = 0; sc = slotScale; z = CARD_COUNT + 20 + slotIdx;
               el.classList.remove('is-interactive');
             } else {
               const t = CARD_COUNT === 1 ? 0.5 : i / (CARD_COUNT - 1);
               const angleDeg = (t - 0.5) * (isMobile ? 74 : 88);
               const rad = (angleDeg * Math.PI) / 180;
               const isHover = hoveredIdx === i && pickedIndices.length < 3;
-              const lift = isHover ? (isMobile ? 20 : 28) : 0;
-              tx = Math.sin(rad) * (arcRadius + lift);
-              ty = arcTopY + (1 - Math.cos(rad)) * arcYDrop - lift;
+              tx = Math.sin(rad) * arcRadius;
+              ty = arcTopY + (1 - Math.cos(rad)) * arcYDrop;
               rot = angleDeg * 0.72;
-              sc = isHover ? 1.12 : 1;
-              z = isHover ? 50 : i + 2;
+              sc = 1;
+              z = isHover ? CARD_COUNT + 40 : i + 2;
+              el.classList.add('is-rainbow-card');
               if (isHover) el.classList.add('is-arc-hover');
               el.classList.toggle('is-interactive', pickedIndices.length < 3);
             }
@@ -621,7 +724,10 @@
           measure();
           requestAnimationFrame(() => {
             layoutCards();
-            timers.push(setTimeout(() => { rainbowSettled = true; }, 720));
+            timers.push(setTimeout(() => {
+              rainbowSettled = true;
+              cardEls.forEach((el) => { el.style.transitionDelay = '0ms'; });
+            }, 720));
           });
         });
       }
@@ -712,7 +818,7 @@
         SLOTS.forEach((slot, i) => {
           const el = cardEls[i];
           el.style.transitionDelay = '0ms';
-          el.classList.remove('tarot-glide', 'is-flipped', 'is-next-glow', 'is-active-card', 'is-arc-hover');
+          el.classList.remove('tarot-glide', 'is-flipped', 'is-next-glow', 'is-active-card', 'is-arc-hover', 'is-rainbow-card');
           el.classList.add('is-interactive');
           el.style.transform = 'translate3d(' + (slot.dx * layoutScale) + 'px, ' + (slot.dy * layoutScale) + 'px, 0) rotate(0deg) scale(1)';
           el.style.opacity = '1';
@@ -743,7 +849,7 @@
         singularityCard.style.visibility = 'visible';
         cardEls.forEach((el) => {
           el.style.transitionDelay = '0ms';
-          el.classList.remove('tarot-glide', 'is-flipped', 'is-next-glow', 'is-active-card', 'is-arc-hover', 'is-interactive');
+          el.classList.remove('tarot-glide', 'is-flipped', 'is-next-glow', 'is-active-card', 'is-arc-hover', 'is-rainbow-card', 'is-interactive');
         });
 
         let lastTs = performance.now();
