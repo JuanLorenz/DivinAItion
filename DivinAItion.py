@@ -196,12 +196,26 @@ CONTEXT_HINT_PATTERNS = [
     r"\bcan(?:'t| not)\s+read\s+(?:a\s+blank|nothing|your mind)\b",
 ]
 
+REFUSAL_HINT_PATTERNS = [
+    r"\b(?:cannot|can't|unable to|won't|will not)\s+(?:provide|give|offer|make)\s+(?:medical|financial|legal|psychological|professional|life-changing)\b",
+    r"\b(?:cannot|can't|unable to)\s+(?:diagnose|treat|prescribe)\b",
+    r"\bcannot\s+(?:accurately\s+)?predict\s+the\s+future\b",
+    r"\bentertainment\s+(?:purposes?\s+)?only\b",
+]
+
 
 def looks_like_lacking_context(text: str) -> bool:
     if not text:
         return False
     lower = text.lower()
     return any(re.search(pat, lower) for pat in CONTEXT_HINT_PATTERNS)
+
+
+def looks_like_refusal(text: str) -> bool:
+    if not text:
+        return False
+    lower = text.lower()
+    return any(re.search(pat, lower) for pat in REFUSAL_HINT_PATTERNS)
 
 
 def _clean_single_paragraph(text: str) -> str:
@@ -241,30 +255,54 @@ def _extract_json_object(raw_text: str) -> dict | None:
 def parse_llm_output(raw_text: str, cards: list[dict]) -> dict:
     """
     Parse AI output into either:
-      - {"status": "modal", "message": "..."} when context is lacking or security refusal triggers
-      - {"status": "ok", "interpretations": [...], "summary": "..."} mapped 1:1 to drawn cards
+      - {"status": "modal", "modal_title": "...", "modal_btn": "...", "message": "..."}
+      - {"status": "ok", "interpretations": [...], "summary": "..."}
     """
     expected_count = len(cards)
     raw = (raw_text or "").strip()
 
     if "beyond my capabilities as a tarot reader" in raw.lower():
-        return {"status": "modal", "message": "That goes beyond my capabilities as a tarot reader~"}
+        return {
+            "status": "modal",
+            "modal_title": "Beyond My Capabilities",
+            "modal_btn": "Ask Another Question",
+            "message": "That goes beyond my capabilities as a tarot reader~",
+        }
 
     data = _extract_json_object(raw)
     if data is not None:
-        if data.get("refusal"):
-            return {"status": "modal", "message": str(data["refusal"]).strip()}
+        ai_status = str(data.get("status") or "").strip().lower()
 
-        if data.get("needs_context") or data.get("lacks_context"):
-            msg = (
-                str(data.get("context_message") or data.get("message") or "").strip()
+        if data.get("refusal") or ai_status == "rejected":
+            msg = str(
+                data.get("refusal")
+                or data.get("modal_message")
+                or data.get("context_message")
+                or "DivinAItion is strictly for lighthearted reflection and cannot provide practical, medical, legal, financial, psychological, or guaranteed predictive advice."
+            ).strip()
+            return {
+                "status": "modal",
+                "modal_title": str(data.get("modal_title") or "Beyond the Cards' Reach").strip(),
+                "modal_btn": "Ask Another Question",
+                "message": msg,
+            }
+
+        if ai_status == "needs_context" or data.get("needs_context") or data.get("lacks_context"):
+            msg = str(
+                data.get("modal_message")
+                or data.get("context_message")
+                or data.get("message")
                 or "The cosmos needs a little more to work with—share what is actually stirring in your life!"
-            )
-            return {"status": "modal", "message": msg}
+            ).strip()
+            return {
+                "status": "modal",
+                "modal_title": str(data.get("modal_title") or "The Cards Require Context").strip(),
+                "modal_btn": "Share More Context",
+                "message": msg,
+            }
 
         raw_cards = data.get("cards")
         if isinstance(raw_cards, list):
-            # Sort by position if provided, otherwise preserve order
             if all(isinstance(item, dict) and item.get("position") is not None for item in raw_cards):
                 raw_cards = sorted(raw_cards, key=lambda item: int(item.get("position", 0)))
 
@@ -284,15 +322,52 @@ def parse_llm_output(raw_text: str, cards: list[dict]) -> dict:
                     interps.append(cleaned)
 
             if not interps:
-                fallback_msg = str(data.get("context_message") or data.get("message") or "").strip()
+                fallback_msg = str(
+                    data.get("modal_message") or data.get("context_message") or data.get("message") or ""
+                ).strip()
                 if fallback_msg:
-                    return {"status": "modal", "message": fallback_msg}
+                    is_ref = looks_like_refusal(fallback_msg)
+                    return {
+                        "status": "modal",
+                        "modal_title": str(
+                            data.get("modal_title")
+                            or ("Beyond the Cards' Reach" if is_ref else "The Cards Require Context")
+                        ).strip(),
+                        "modal_btn": "Ask Another Question" if is_ref else "Share More Context",
+                        "message": fallback_msg,
+                    }
 
-            if len(interps) < expected_count and interps and looks_like_lacking_context(interps[0]):
-                return {"status": "modal", "message": interps[0]}
+            if len(interps) < expected_count and interps:
+                if looks_like_refusal(interps[0]):
+                    return {
+                        "status": "modal",
+                        "modal_title": "Beyond the Cards' Reach",
+                        "modal_btn": "Ask Another Question",
+                        "message": interps[0],
+                    }
+                if looks_like_lacking_context(interps[0]):
+                    return {
+                        "status": "modal",
+                        "modal_title": "The Cards Require Context",
+                        "modal_btn": "Share More Context",
+                        "message": interps[0],
+                    }
 
-            if len(interps) == 1 and expected_count == 1 and looks_like_lacking_context(interps[0]):
-                return {"status": "modal", "message": interps[0]}
+            if len(interps) == 1 and expected_count == 1:
+                if looks_like_refusal(interps[0]):
+                    return {
+                        "status": "modal",
+                        "modal_title": "Beyond the Cards' Reach",
+                        "modal_btn": "Ask Another Question",
+                        "message": interps[0],
+                    }
+                if looks_like_lacking_context(interps[0]):
+                    return {
+                        "status": "modal",
+                        "modal_title": "The Cards Require Context",
+                        "modal_btn": "Share More Context",
+                        "message": interps[0],
+                    }
 
             summary = str(data.get("summary") or "").strip()
             if expected_count == 1:
@@ -315,11 +390,28 @@ def parse_llm_output(raw_text: str, cards: list[dict]) -> dict:
         if len(by_line) > len(paragraphs):
             paragraphs = by_line
 
+    joined = " ".join(paragraphs)
     if paragraphs and (
-        (len(paragraphs) <= 2 and len(paragraphs) < expected_count and looks_like_lacking_context(" ".join(paragraphs)))
-        or (expected_count == 1 and looks_like_lacking_context(" ".join(paragraphs)))
+        (len(paragraphs) <= 2 and len(paragraphs) < expected_count and looks_like_refusal(joined))
+        or (expected_count == 1 and looks_like_refusal(joined))
     ):
-        return {"status": "modal", "message": "\n\n".join(paragraphs)}
+        return {
+            "status": "modal",
+            "modal_title": "Beyond the Cards' Reach",
+            "modal_btn": "Ask Another Question",
+            "message": "\n\n".join(paragraphs),
+        }
+
+    if paragraphs and (
+        (len(paragraphs) <= 2 and len(paragraphs) < expected_count and looks_like_lacking_context(joined))
+        or (expected_count == 1 and looks_like_lacking_context(joined))
+    ):
+        return {
+            "status": "modal",
+            "modal_title": "The Cards Require Context",
+            "modal_btn": "Share More Context",
+            "message": "\n\n".join(paragraphs),
+        }
 
     cleaned_paras = [_clean_single_paragraph(_strip_card_prefix(p)) for p in paragraphs if _strip_card_prefix(p)]
     interps = cleaned_paras[:expected_count]
@@ -475,6 +567,8 @@ def build_soul_prompt_html(
     zodiac_sign: str,
     render_seq: int,
     modal_message: str = "",
+    modal_title: str = "The Cards Require Context",
+    modal_btn_label: str = "Share More Context",
     prefill_question: str = "",
     error_message: str = "",
 ) -> str:
@@ -489,6 +583,8 @@ def build_soul_prompt_html(
     escaped_zodiac = html_lib.escape(zodiac_sign)
     escaped_prefill = html_lib.escape(prefill_question)
     escaped_error = html_lib.escape(error_message)
+    escaped_modal_title = html_lib.escape(modal_title or "The Cards Require Context")
+    escaped_modal_btn = html_lib.escape(modal_btn_label or "Share More Context")
     modal_body_html = "<br />".join(html_lib.escape(line) for line in modal_message.splitlines()) if modal_message else ""
     cue_hidden_class = " is-hidden" if skip_curtains else ""
     modal_visible_class = " is-visible" if modal_message else ""
@@ -701,7 +797,7 @@ def build_soul_prompt_html(
       transform: translateY(0);
     }}
 
-    /* Context Required Modal */
+    /* Context & Rejection Modal */
     .context-modal-backdrop {{
       position: fixed;
       inset: 0;
@@ -973,13 +1069,13 @@ def build_soul_prompt_html(
     <p class="soul-error{' is-visible' if escaped_error else ''}" id="soulError" role="alert">{escaped_error}</p>
   </main>
 
-  <div class="context-modal-backdrop{modal_visible_class}" id="contextModalBackdrop" aria-hidden="{ 'false' if modal_message else 'true' }">
+  <div class="context-modal-backdrop{modal_visible_class}" id="contextModalBackdrop" aria-hidden="{'false' if modal_message else 'true'}">
     <div class="context-modal" role="dialog" aria-modal="true" aria-labelledby="contextModalTitle">
       <div class="context-modal-star" aria-hidden="true"></div>
-      <h2 class="context-modal-title" id="contextModalTitle">The Cards Require Context</h2>
+      <h2 class="context-modal-title" id="contextModalTitle">{escaped_modal_title}</h2>
       <p class="context-modal-body" id="contextModalBody">{modal_body_html}</p>
       <button type="button" class="tarot-btn tarot-btn--primary context-modal-btn" id="contextModalBtn">
-        Share More Context
+        {escaped_modal_btn}
       </button>
     </div>
   </div>
@@ -1557,6 +1653,8 @@ if stage == "landing":
         }
         st.session_state.pop("tarot_payload", None)
         st.session_state.pop("context_modal_message", None)
+        st.session_state.pop("context_modal_title", None)
+        st.session_state.pop("context_modal_btn", None)
         st.session_state.pop("soul_error_message", None)
         st.session_state.pop("user_question", None)
         st.session_state["stage"] = "soul_prompt"
@@ -1585,6 +1683,8 @@ elif stage == "soul_prompt":
         # Server-side guard: never invoke the AI on an empty/whitespace prompt
         if not question_text:
             st.session_state.pop("context_modal_message", None)
+            st.session_state.pop("context_modal_title", None)
+            st.session_state.pop("context_modal_btn", None)
             st.session_state["soul_error_message"] = (
                 "Please share a question or life context before invoking the cards."
             )
@@ -1594,6 +1694,8 @@ elif stage == "soul_prompt":
         st.session_state["user_question"] = question_text
         st.session_state.pop("soul_error_message", None)
         st.session_state.pop("context_modal_message", None)
+        st.session_state.pop("context_modal_title", None)
+        st.session_state.pop("context_modal_btn", None)
 
         result = draw_fn()
         cards_list = result if isinstance(result, list) else ([result] if result else [])
@@ -1611,6 +1713,8 @@ elif stage == "soul_prompt":
 
         if parsed["status"] == "modal":
             st.session_state["context_modal_message"] = parsed["message"]
+            st.session_state["context_modal_title"] = parsed.get("modal_title", "The Cards Require Context")
+            st.session_state["context_modal_btn"] = parsed.get("modal_btn", "Share More Context")
             st.session_state["render_seq"] += 1
             st.rerun()
 
@@ -1636,6 +1740,8 @@ elif stage == "soul_prompt":
             zodiac_sign=zodiac_sign,
             render_seq=st.session_state["render_seq"],
             modal_message=st.session_state.get("context_modal_message", ""),
+            modal_title=st.session_state.get("context_modal_title", "The Cards Require Context"),
+            modal_btn_label=st.session_state.get("context_modal_btn", "Share More Context"),
             prefill_question=st.session_state.get("user_question", ""),
             error_message=st.session_state.get("soul_error_message", ""),
         )
@@ -1653,6 +1759,8 @@ elif stage == "reading":
     if reading_return:
         st.session_state.pop("tarot_payload", None)
         st.session_state.pop("context_modal_message", None)
+        st.session_state.pop("context_modal_title", None)
+        st.session_state.pop("context_modal_btn", None)
         st.session_state.pop("soul_error_message", None)
         st.session_state.pop("user_question", None)
         st.session_state["landing_view"] = "readings"
