@@ -31,11 +31,30 @@
           <div class="explanation-col" id="explanationCol">
             <h1 class="script-title">Celtic Cross Spread</h1>
             <div class="explain-box">
-              <div class="explain-header" style="align-items:center;">
-                <div class="pos-num-tabs" id="posNumTabs"></div>
-                <button type="button" class="tarot-btn tarot-btn--indigo" id="summaryBtn" style="display:none;">Summary</button>
+              <div class="explain-nav-dock">
+                <div class="celtic-nav-groups">
+                  <div class="celtic-nav-group">
+                    <span class="celtic-group-label">The Cross · I–VI</span>
+                    <div class="pos-num-tabs pos-num-tabs--cross" id="posCrossTabs"></div>
+                  </div>
+                  <div class="celtic-nav-group">
+                    <span class="celtic-group-label">The Staff · VII–X</span>
+                    <div class="pos-num-tabs pos-num-tabs--staff" id="posStaffTabs"></div>
+                  </div>
+                </div>
               </div>
-              <div id="explainContent"></div>
+              <div class="explain-scroll">
+                <div id="explainContent"></div>
+              </div>
+              <div class="explain-footer" id="explainFooter">
+                <div class="explain-hint" id="celticHint"></div>
+              </div>
+            </div>
+            <div class="explain-external-cta" id="summaryCtaWrap">
+              <button type="button" class="tarot-btn tarot-btn--summary" id="summaryBtn" style="display:none;">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0l1.7 6.3L16 8l-6.3 1.7L8 16l-1.7-6.3L0 8l6.3-1.7L8 0z"/></svg>
+                <span>Overall Reading</span>
+              </button>
             </div>
           </div>
         </div>
@@ -45,9 +64,12 @@
         <div class="summary-wrap" id="summaryWrap">
           <h1 class="script-title" style="text-align:center;">Celtic Cross Spread</h1>
           <div class="summary-box">
-            <div class="explain-header" style="align-items:center;">
-              <h2 class="explain-card-name">Complete Reading Summary</h2>
-              <button type="button" class="tarot-btn tarot-btn--primary" id="backToCrossBtn">Back to Celtic Cross</button>
+            <div class="explain-header explain-header--row">
+              <div>
+                <p class="explain-eyebrow">Ten-Card Synthesis</p>
+                <h2 class="explain-card-name">Overall Reading</h2>
+              </div>
+              <button type="button" class="tarot-btn tarot-btn--ghost" id="backToCrossBtn">&#8592; Back to Spread</button>
             </div>
             <div class="explain-body" id="summaryBody"></div>
             <div class="summary-10-grid" id="summaryCardsGrid"></div>
@@ -331,8 +353,13 @@
       const celticPrompt = document.getElementById('celticPrompt');
       const celticPromptText = document.getElementById('celticPromptText');
       const explanationCol = document.getElementById('explanationCol');
-      const posNumTabs = document.getElementById('posNumTabs');
+      const explainScroll = explanationCol.querySelector('.explain-scroll');
+      const posCrossTabs = document.getElementById('posCrossTabs');
+      const posStaffTabs = document.getElementById('posStaffTabs');
+      const explainFooter = document.getElementById('explainFooter');
       const explainContent = document.getElementById('explainContent');
+      const celticHint = document.getElementById('celticHint');
+      const summaryCtaWrap = document.getElementById('summaryCtaWrap');
       const summaryBtn = document.getElementById('summaryBtn');
       const summaryWrap = document.getElementById('summaryWrap');
       const summaryBody = document.getElementById('summaryBody');
@@ -349,6 +376,47 @@
 
       loadBackgroundAnimation();
       setCardBackContent(singularityCard, 'sing');
+
+      function preloadImageCandidates(candidates) {
+        return new Promise((resolve) => {
+          if (!candidates || !candidates.length) { resolve(); return; }
+          let idx = 0;
+          const img = new Image();
+          const done = () => {
+            if (typeof img.decode === 'function') {
+              img.decode().catch(() => {}).finally(resolve);
+            } else {
+              resolve();
+            }
+          };
+          img.onload = done;
+          img.onerror = () => {
+            idx += 1;
+            if (idx < candidates.length) {
+              img.src = candidates[idx];
+            } else {
+              resolve();
+            }
+          };
+          img.src = candidates[0];
+        });
+      }
+
+      function waitForDomImages() {
+        const imgs = Array.from(document.querySelectorAll('img')).slice(0, 6);
+        return Promise.all(imgs.map((img) => {
+          if (img.complete) {
+            return typeof img.decode === 'function' ? img.decode().catch(() => {}) : Promise.resolve();
+          }
+          return new Promise((resolve) => {
+            img.addEventListener('load', () => {
+              if (typeof img.decode === 'function') img.decode().catch(() => {}).finally(resolve);
+              else resolve();
+            }, { once: true });
+            img.addEventListener('error', () => resolve(), { once: true });
+          });
+        }));
+      }
 
       const cardEls = SLOTS.map((_, i) => {
         const btn = document.createElement('button');
@@ -373,7 +441,8 @@
         b.type = 'button';
         b.className = 'tarot-btn tarot-btn--num tarot-btn--secondary';
         b.textContent = pos.numeral;
-        b.title = pos.numeral + '. ' + pos.label;
+        b.title = pos.numeral + '. ' + pos.label + ' — ' + pos.subtitle;
+        b.setAttribute('aria-label', pos.numeral + '. ' + pos.label);
         b.disabled = true;
         b.addEventListener('click', () => {
           if (idx < revealedCount) {
@@ -385,7 +454,7 @@
             renderExplanation();
           }
         });
-        posNumTabs.appendChild(b);
+        (idx < 6 ? posCrossTabs : posStaffTabs).appendChild(b);
         return b;
       });
 
@@ -533,6 +602,11 @@
       }
 
       function renderExplanation() {
+        const celestialDivider =
+          '<div class="explain-celestial-rule" aria-hidden="true">' +
+            '<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 6.2L16 8l-6.2 1.8L8 16l-1.8-6.2L0 8l6.2-1.8L8 0z"/></svg>' +
+          '</div>';
+
         tabBtns.forEach((btn, idx) => {
           const unlocked = idx < revealedCount;
           const isNext = idx === revealedCount;
@@ -544,9 +618,15 @@
           );
         });
 
-        summaryBtn.style.display = revealedCount === 10 ? 'inline-flex' : 'none';
+        const allRevealed = revealedCount === 10;
+        const isSummaryView = phase === 'summary';
+        summaryBtn.style.display = allRevealed ? 'inline-flex' : 'none';
+        summaryBtn.className = 'tarot-btn tarot-btn--summary' + (isSummaryView ? ' tarot-btn--primary is-active' : '');
+        summaryCtaWrap.classList.toggle('is-visible', !isSummaryView && allRevealed);
+        explainFooter.classList.toggle('is-hidden', isSummaryView || allRevealed);
+        if (explainScroll) explainScroll.scrollTop = 0;
 
-        if (phase === 'summary') {
+        if (isSummaryView) {
           summaryBody.innerHTML = buildCelticSummary(drawnTen);
           summaryCardsGrid.innerHTML = '';
           drawnTen.forEach((c, idx) => {
@@ -556,7 +636,7 @@
             b.type = 'button';
             b.className = 'summary-10-btn';
             b.innerHTML =
-              '<div class="summary-10-pos">' + pos.numeral + '. ' + pos.label + '</div>' +
+              '<div class="summary-10-pos">' + pos.numeral + ' · ' + pos.label + '</div>' +
               '<div class="summary-10-name">' + escapeHtml(c.card_name) + '</div>' +
               '<div class="summary-10-orient' + (c.is_reverse ? ' is-reversed' : '') + '">' + orient + '</div>';
             b.addEventListener('click', () => {
@@ -575,20 +655,28 @@
         const card = drawnTen[activeSlot];
         const pos = CELTIC_CROSS_POSITIONS[activeSlot];
         const orient = card.is_reverse ? 'Reversed' : 'Upright';
+        const metaParts = [pos.subtitle, orient];
+        if (card.arcana) metaParts.push(card.arcana);
+        else if (card.suit) metaParts.push(card.suit);
         const nextPos = CELTIC_CROSS_POSITIONS[Math.min(revealedCount, 9)];
-        const hint = revealedCount < 10
-          ? '<p class="explain-hint">Next (' + (revealedCount + 1) + ' / 10): Click the glowing ' + nextPos.numeral + '. ' + nextPos.label + ' card on the Celtic Cross.</p>'
-          : '<p class="explain-hint" style="color:#c7d2fe;">All 10 cards revealed · Click any card or tab to re-read, or open Summary.</p>';
+
+        if (!allRevealed) {
+          celticHint.style.display = '';
+          celticHint.className = 'explain-hint';
+          celticHint.innerHTML = '<span aria-hidden="true">&#10022;</span><span>Next (' + (revealedCount + 1) + ' / 10): Click the glowing ' + nextPos.numeral + '. ' + nextPos.label + ' card on the cross.</span>';
+        } else {
+          celticHint.style.display = 'none';
+          celticHint.innerHTML = '';
+        }
 
         explainContent.innerHTML =
-          '<div style="margin-top:16px;">' +
-            '<div class="explain-header" style="border-bottom:0; padding-bottom:0;">' +
-              '<h2 class="explain-card-name">' + escapeHtml(card.card_name) + '</h2>' +
-              '<span class="explain-archetype' + (card.is_reverse ? ' is-reversed' : '') + '">' + pos.numeral + '. ' + pos.label + ' — ' + pos.subtitle + ' · ' + orient + '</span>' +
-            '</div>' +
-            '<div class="explain-body">' + renderParagraphsHtml(card.meaning) + '</div>' +
-            hint +
-          '</div>';
+          '<p class="explain-eyebrow">' + pos.numeral + ' · ' + pos.label + '</p>' +
+          '<div class="explain-header">' +
+            '<h2 class="explain-card-name">' + escapeHtml(card.card_name) + '</h2>' +
+            '<span class="explain-archetype' + (card.is_reverse ? ' is-reversed' : '') + '">' + escapeHtml(metaParts.join(' · ')) + '</span>' +
+          '</div>' +
+          celestialDivider +
+          '<div class="explain-body">' + renderParagraphsHtml(card.meaning) + '</div>';
       }
 
       function openCelticCross() {
@@ -615,6 +703,9 @@
 
         explanationCol.classList.remove('is-visible');
         summaryWrap.classList.remove('is-visible');
+        summaryCtaWrap.classList.remove('is-visible');
+        summaryBtn.style.display = 'none';
+        summaryBtn.className = 'tarot-btn tarot-btn--summary';
         celticPromptText.innerHTML = 'Click the glowing <strong>I. Present</strong> card at the heart of the cross';
         celticPrompt.classList.add('is-visible');
 
@@ -688,6 +779,9 @@
         celticPrompt.classList.remove('is-visible');
         explanationCol.classList.remove('is-visible');
         summaryWrap.classList.remove('is-visible');
+        summaryCtaWrap.classList.remove('is-visible');
+        summaryBtn.style.display = 'none';
+        summaryBtn.className = 'tarot-btn tarot-btn--summary';
         SLOTS.forEach((slot, i) => {
           const el = cardEls[i];
           el.style.transitionDelay = '0ms';
@@ -718,6 +812,9 @@
         celticPrompt.classList.remove('is-visible');
         explanationCol.classList.remove('is-visible');
         summaryWrap.classList.remove('is-visible');
+        summaryCtaWrap.classList.remove('is-visible');
+        summaryBtn.style.display = 'none';
+        summaryBtn.className = 'tarot-btn tarot-btn--summary';
         singularityCard.style.opacity = '0';
         singularityCard.style.visibility = 'visible';
         cardEls.forEach((el) => {
@@ -861,12 +958,21 @@
         if (phase === 'idle') startRitual();
       });
 
+      window.__startTarotShuffle = startRitual;
+      window.__tarotAssetsReady = Promise.race([
+        Promise.all([
+          preloadImageCandidates(getCardBackCandidates()),
+          ...drawnTen.map((c) => preloadImageCandidates(getCardImageCandidates(c))),
+          waitForDomImages(),
+          (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(() => {}) : Promise.resolve()
+        ]),
+        new Promise((resolve) => setTimeout(resolve, 2200))
+      ]);
+
       window.addEventListener('resize', measure);
       if (window.ResizeObserver) new ResizeObserver(measure).observe(stage);
       measure();
     })();
-
-    //
   </script>
 </body>
 </html>

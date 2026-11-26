@@ -6,6 +6,7 @@ import random
 import re
 from bisect import bisect
 from pathlib import Path
+from tkinter.constants import FALSE
 
 import streamlit as st
 import streamlit.components.v1 as components
@@ -427,6 +428,9 @@ def parse_llm_output(raw_text: str, cards: list[dict]) -> dict:
         "summary": summary,
     }
 
+## Set to False when you want real OpenAI readings again
+TEST_WITHOUT_TOKENS = True
+
 
 def get_llm_interpretation(
     cards: list[dict],
@@ -434,6 +438,29 @@ def get_llm_interpretation(
     zodiac_sign: str,
     user_question: str,
 ) -> str:
+    if TEST_WITHOUT_TOKENS:
+        mock_cards = [
+            {
+                "position": idx,
+                "interpretation": (
+                    f"[TEST MODE] {c['card_name']} ({'Reversed' if c['is_reverse'] else 'Upright'}) "
+                    f"for {zodiac_sign} regarding \"{user_question}\". {c.get('meaning', '')}"
+                ),
+            }
+            for idx, c in enumerate(cards, start=1)
+        ]
+        summary_text = (
+            f"[TEST MODE] Complete {spread_name} synthesis for {zodiac_sign} reflecting on "
+            f"\"{user_question}\" across all {len(cards)} drawn cards."
+            if len(cards) > 1
+            else ""
+        )
+        return json.dumps({
+            "status": "ok",
+            "cards": mock_cards,
+            "summary": summary_text,
+        })
+
     positions = SPREAD_POSITIONS.get(spread_name, [])
     card_lines = []
     for idx, c in enumerate(cards, start=1):
@@ -1356,7 +1383,7 @@ def build_tarot_html(filename: str, payload: dict, spread_mode: str, render_seq:
   <!-- render_seq: {render_seq} -->
   {curtain_html}
   <div class="curtain-cue" id="curtainCue" aria-hidden="true">
-    <p class="curtain-cue-title">Click anywhere to unveil your reading</p>
+    <p class="curtain-cue-title">Aligning your cards&hellip;</p>
   </div>
   {curtain_script}
   <script>
@@ -1389,21 +1416,31 @@ def build_tarot_html(filename: str, payload: dict, spread_mode: str, render_seq:
       let btnShown = false;
       let isReturning = false;
 
-      function startShuffleOnce() {{
-        if (hasStartedShuffle || isReturning) return;
-        hasStartedShuffle = true;
-        document.dispatchEvent(new MouseEvent('click', {{ bubbles: true }}));
-      }}
-
-      function handleFirstClick(e) {{
+      function blockEarlyClick(e) {{
         if (hasUnveiled) return;
         e.preventDefault();
         e.stopPropagation();
         if (typeof e.stopImmediatePropagation === 'function') {{
           e.stopImmediatePropagation();
         }}
+      }}
+
+      document.addEventListener('click', blockEarlyClick, true);
+
+      function startShuffleOnce() {{
+        if (hasStartedShuffle || isReturning) return;
+        hasStartedShuffle = true;
+        if (typeof window.__startTarotShuffle === 'function') {{
+          window.__startTarotShuffle();
+        }} else {{
+          document.dispatchEvent(new MouseEvent('click', {{ bubbles: true }}));
+        }}
+      }}
+
+      function autoUnveilReading() {{
+        if (hasUnveiled || isReturning) return;
         hasUnveiled = true;
-        document.removeEventListener('click', handleFirstClick, true);
+        document.removeEventListener('click', blockEarlyClick, true);
 
         if (curtainCue) curtainCue.classList.add('is-hidden');
 
@@ -1421,10 +1458,20 @@ def build_tarot_html(filename: str, payload: dict, spread_mode: str, render_seq:
           if (curtainStage) curtainStage.classList.add('is-curtain-tucked');
         }}, 2300);
 
-        setTimeout(startShuffleOnce, 950);
+        setTimeout(startShuffleOnce, 750);
       }}
 
-      document.addEventListener('click', handleFirstClick, true);
+      const windowLoaded = document.readyState === 'complete'
+        ? Promise.resolve()
+        : new Promise((resolve) => window.addEventListener('load', resolve, {{ once: true }}));
+      const assetsReady = window.__tarotAssetsReady || Promise.resolve();
+
+      Promise.race([
+        Promise.all([windowLoaded, assetsReady]),
+        new Promise((resolve) => setTimeout(resolve, 2600))
+      ]).then(() => {{
+        requestAnimationFrame(() => requestAnimationFrame(autoUnveilReading));
+      }});
 
       function isFinalReadingReached() {{
         if (SPREAD_MODE === 'one_card') {{

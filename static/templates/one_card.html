@@ -27,11 +27,17 @@
           <div class="explanation-col" id="explanationCol">
             <h1 class="script-title">One Card Pull</h1>
             <div class="explain-box">
-              <div class="explain-header">
-                <h2 class="explain-card-name" id="cardTitle"></h2>
-                <span class="explain-orientation" id="cardOrientation"></span>
+              <div class="explain-scroll">
+                <p class="explain-eyebrow">Solitary Draw · Card Interpretation</p>
+                <div class="explain-header">
+                  <h2 class="explain-card-name" id="cardTitle"></h2>
+                  <span class="explain-orientation" id="cardOrientation"></span>
+                </div>
+                <div class="explain-celestial-rule" aria-hidden="true">
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.8 6.2L16 8l-6.2 1.8L8 16l-1.8-6.2L0 8l6.2-1.8L8 0z"/></svg>
+                </div>
+                <div class="explain-body" id="cardMeaning"></div>
               </div>
-              <div class="explain-body" id="cardMeaning"></div>
             </div>
           </div>
         </div>
@@ -97,13 +103,31 @@
         return paras.map((p) => '<p>' + formatInlineText(p) + '</p>').join('');
       }
 
+      function stripLeadingHeading(paras, cardName) {
+        if (paras.length <= 1) return paras;
+        const first = paras[0].trim();
+        const nameLower = String(cardName || '').toLowerCase();
+        const firstHasCard = nameLower && first.toLowerCase().includes(nameLower);
+        const secondHasCard = nameLower && paras[1] && paras[1].toLowerCase().includes(nameLower);
+        const looksLikeHeading =
+          first.length <= 90 &&
+          (/^#+\s*/.test(first) || /:$/.test(first) || !/[.!?]$/.test(first) || /\b(reading|spread|pull|one card)\b/i.test(first));
+        if (!firstHasCard && (secondHasCard || looksLikeHeading)) {
+          return paras.slice(1);
+        }
+        return paras;
+      }
+
       function normalizeCard(raw, llmFallback) {
         const isRev = Boolean(raw && raw.is_reverse);
         const dbMeaning = raw && (raw.meaning || (isRev ? (raw.reversed_meaning || raw.reversed_additional) : (raw.upright_meaning || raw.upright_additional))) || '';
-        const llmText = (raw && (raw.llm_interpretation || raw.interpretation || raw.llm_explanation || raw.explanation)) || llmFallback || dbMeaning;
+        const cardName = (raw && raw.card_name) || ('Card #' + (raw && raw.id != null ? raw.id : 0));
+        const rawLlm = (raw && (raw.llm_interpretation || raw.interpretation || raw.llm_explanation || raw.explanation)) || llmFallback || '';
+        const cleanedParas = stripLeadingHeading(splitLlmParagraphs(rawLlm), cardName);
+        const llmText = cleanedParas.length ? cleanedParas.join('\n\n') : dbMeaning;
         return {
           id: raw && raw.id != null ? raw.id : 0,
-          card_name: (raw && raw.card_name) || ('Card #' + (raw && raw.id != null ? raw.id : 0)),
+          card_name: cardName,
           is_reverse: isRev,
           arcana: (raw && raw.arcana) || '',
           suit: (raw && raw.suit) || '',
@@ -287,6 +311,47 @@
       loadBackgroundAnimation();
       setCardBackContent(singularityCard, 'sing');
 
+      function preloadImageCandidates(candidates) {
+        return new Promise((resolve) => {
+          if (!candidates || !candidates.length) { resolve(); return; }
+          let idx = 0;
+          const img = new Image();
+          const done = () => {
+            if (typeof img.decode === 'function') {
+              img.decode().catch(() => {}).finally(resolve);
+            } else {
+              resolve();
+            }
+          };
+          img.onload = done;
+          img.onerror = () => {
+            idx += 1;
+            if (idx < candidates.length) {
+              img.src = candidates[idx];
+            } else {
+              resolve();
+            }
+          };
+          img.src = candidates[0];
+        });
+      }
+
+      function waitForDomImages() {
+        const imgs = Array.from(document.querySelectorAll('img')).slice(0, 6);
+        return Promise.all(imgs.map((img) => {
+          if (img.complete) {
+            return typeof img.decode === 'function' ? img.decode().catch(() => {}) : Promise.resolve();
+          }
+          return new Promise((resolve) => {
+            img.addEventListener('load', () => {
+              if (typeof img.decode === 'function') img.decode().catch(() => {}).finally(resolve);
+              else resolve();
+            }, { once: true });
+            img.addEventListener('error', () => resolve(), { once: true });
+          });
+        }));
+      }
+
       const cardEls = SLOTS.map((_, i) => {
         const cardEl = document.createElement('div');
         cardEl.className = 'tarot-card';
@@ -353,7 +418,10 @@
 
       function populateExplanation(card) {
         cardTitle.textContent = card.card_name;
-        cardOrientation.textContent = card.is_reverse ? 'Reversed' : 'Upright';
+        const metaParts = [card.is_reverse ? 'Reversed' : 'Upright'];
+        if (card.arcana) metaParts.push(card.arcana);
+        else if (card.suit) metaParts.push(card.suit);
+        cardOrientation.textContent = metaParts.join(' · ');
         cardOrientation.className = 'explain-orientation' + (card.is_reverse ? ' is-reversed' : '');
         cardMeaning.innerHTML = renderParagraphsHtml(card.meaning);
         const topFront = cardEls[CARD_COUNT - 1].querySelector('[data-front]');
@@ -587,6 +655,17 @@
       document.addEventListener('click', () => {
         if (phase === 'idle' && !hasShuffled) startRitual();
       });
+
+      window.__startTarotShuffle = startRitual;
+      window.__tarotAssetsReady = Promise.race([
+        Promise.all([
+          preloadImageCandidates(getCardBackCandidates()),
+          preloadImageCandidates(getCardImageCandidates(currentCard)),
+          waitForDomImages(),
+          (document.fonts && document.fonts.ready) ? document.fonts.ready.catch(() => {}) : Promise.resolve()
+        ]),
+        new Promise((resolve) => setTimeout(resolve, 2200))
+      ]);
 
       window.addEventListener('resize', measure);
       if (window.ResizeObserver) new ResizeObserver(measure).observe(stage);
