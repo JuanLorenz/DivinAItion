@@ -1,4 +1,5 @@
 import base64
+import html as html_lib
 import json
 import os
 import random
@@ -168,31 +169,248 @@ def celtic_cross():
     return drawn_cards
 
 
-def get_llm_interpretation(cards: list[dict], spread_name: str, zodiac_sign: str) -> str:
+SPREAD_POSITIONS = {
+    "One Card Pull": ["Focal Insight"],
+    "Three Card Spread": ["Past", "Present", "Future"],
+    "Celtic Cross Spread": [
+        "Present",
+        "Challenge",
+        "Foundation",
+        "Recent Past",
+        "Crowning",
+        "Near Future",
+        "Self",
+        "Environment",
+        "Hopes & Fears",
+        "Outcome",
+    ],
+}
+
+CONTEXT_HINT_PATTERNS = [
+    r"\b(?:provide|share|give|tell)\b.{0,30}\b(?:context|details|more|dilemma|situation|story)\b",
+    r"\b(?:lack(?:s|ing)?|missing|without|no)\s+(?:life\s+)?context\b",
+    r"\btoo\s+vague\b",
+    r"\bwhat(?:'s| is)\s+(?:going on|happening|troubling|on your mind)\b",
+    r"\bneed(?:s)?\s+(?:more\s+)?context\b",
+    r"\bgive me something to work with\b",
+    r"\bcan(?:'t| not)\s+read\s+(?:a\s+blank|nothing|your mind)\b",
+]
+
+
+def looks_like_lacking_context(text: str) -> bool:
+    if not text:
+        return False
+    lower = text.lower()
+    return any(re.search(pat, lower) for pat in CONTEXT_HINT_PATTERNS)
+
+
+def _clean_single_paragraph(text: str) -> str:
+    return re.sub(r"\s*\n+\s*", " ", str(text or "")).strip()
+
+
+def _strip_card_prefix(text: str) -> str:
+    cleaned = text.strip()
+    cleaned = re.sub(
+        r"^(?:#+\s*)?(?:\*\*)?(?:card\s*)?(?:\d{1,2}|X|IX|IV|V?I{1,3})\s*(?:[.):]|[-—–]\s)\s*(?:\*\*)?",
+        "",
+        cleaned,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    return cleaned.strip()
+
+
+def _extract_json_object(raw_text: str) -> dict | None:
+    if not raw_text:
+        return None
+    text = raw_text.strip()
+    fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL | re.IGNORECASE)
+    if fence_match:
+        text = fence_match.group(1).strip()
+    else:
+        brace_match = re.search(r"\{.*\}", text, re.DOTALL)
+        if brace_match:
+            text = brace_match.group(0).strip()
+    try:
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, dict) else None
+    except json.JSONDecodeError:
+        return None
+
+
+def parse_llm_output(raw_text: str, cards: list[dict]) -> dict:
+    """
+    Parse AI output into either:
+      - {"status": "modal", "message": "..."} when context is lacking or security refusal triggers
+      - {"status": "ok", "interpretations": [...], "summary": "..."} mapped 1:1 to drawn cards
+    """
+    expected_count = len(cards)
+    raw = (raw_text or "").strip()
+
+    if "beyond my capabilities as a tarot reader" in raw.lower():
+        return {"status": "modal", "message": "That goes beyond my capabilities as a tarot reader~"}
+
+    data = _extract_json_object(raw)
+    if data is not None:
+        if data.get("refusal"):
+            return {"status": "modal", "message": str(data["refusal"]).strip()}
+
+        if data.get("needs_context") or data.get("lacks_context"):
+            msg = (
+                str(data.get("context_message") or data.get("message") or "").strip()
+                or "The cosmos needs a little more to work with—share what is actually stirring in your life!"
+            )
+            return {"status": "modal", "message": msg}
+
+        raw_cards = data.get("cards")
+        if isinstance(raw_cards, list):
+            # Sort by position if provided, otherwise preserve order
+            if all(isinstance(item, dict) and item.get("position") is not None for item in raw_cards):
+                raw_cards = sorted(raw_cards, key=lambda item: int(item.get("position", 0)))
+
+            interps = []
+            for item in raw_cards:
+                if isinstance(item, dict):
+                    val = (
+                        item.get("interpretation")
+                        or item.get("meaning")
+                        or item.get("text")
+                        or ""
+                    )
+                else:
+                    val = str(item or "")
+                cleaned = _clean_single_paragraph(val)
+                if cleaned:
+                    interps.append(cleaned)
+
+            if not interps:
+                fallback_msg = str(data.get("context_message") or data.get("message") or "").strip()
+                if fallback_msg:
+                    return {"status": "modal", "message": fallback_msg}
+
+            if len(interps) < expected_count and interps and looks_like_lacking_context(interps[0]):
+                return {"status": "modal", "message": interps[0]}
+
+            if len(interps) == 1 and expected_count == 1 and looks_like_lacking_context(interps[0]):
+                return {"status": "modal", "message": interps[0]}
+
+            summary = str(data.get("summary") or "").strip()
+            if expected_count == 1:
+                summary = ""
+
+            while len(interps) < expected_count:
+                idx = len(interps)
+                interps.append(cards[idx].get("meaning", ""))
+
+            return {
+                "status": "ok",
+                "interpretations": interps[:expected_count],
+                "summary": summary,
+            }
+
+    # Plain-text fallback if model returned non-JSON prose
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n+", raw) if p.strip()]
+    if len(paragraphs) < expected_count:
+        by_line = [p.strip() for p in re.split(r"\n+", raw) if p.strip()]
+        if len(by_line) > len(paragraphs):
+            paragraphs = by_line
+
+    if paragraphs and (
+        (len(paragraphs) <= 2 and len(paragraphs) < expected_count and looks_like_lacking_context(" ".join(paragraphs)))
+        or (expected_count == 1 and looks_like_lacking_context(" ".join(paragraphs)))
+    ):
+        return {"status": "modal", "message": "\n\n".join(paragraphs)}
+
+    cleaned_paras = [_clean_single_paragraph(_strip_card_prefix(p)) for p in paragraphs if _strip_card_prefix(p)]
+    interps = cleaned_paras[:expected_count]
+    summary = "\n\n".join(cleaned_paras[expected_count:]).strip() if expected_count > 1 else ""
+
+    while len(interps) < expected_count:
+        idx = len(interps)
+        interps.append(cards[idx].get("meaning", ""))
+
+    return {
+        "status": "ok",
+        "interpretations": interps,
+        "summary": summary,
+    }
+
+
+def get_llm_interpretation(
+    cards: list[dict],
+    spread_name: str,
+    zodiac_sign: str,
+    user_question: str,
+) -> str:
+    positions = SPREAD_POSITIONS.get(spread_name, [])
     card_lines = []
     for idx, c in enumerate(cards, start=1):
         orientation = "Reversed" if c["is_reverse"] else "Upright"
+        pos_label = f" [{positions[idx - 1]}]" if idx - 1 < len(positions) else ""
         card_lines.append(
-            f"{idx}. {c['card_name']} ({orientation}) — Reference meaning: {c['meaning']}"
+            f"{idx}.{pos_label} {c['card_name']} ({orientation}) — Reference meaning: {c['meaning']}"
         )
 
     user_prompt = (
         f"Zodiac Sign: {zodiac_sign}\n"
         f"Spread: {spread_name}\n"
+        f"User Question / Life Context: {user_question}\n"
         "Cards drawn:\n"
         + "\n".join(card_lines)
-        + "\n\nProvide the interpretation following the system instructions."
+        + "\n\nRespond strictly with the JSON schema defined in the system instructions."
     )
 
-    response = client.chat.completions.create(
-        model="gpt-6-luna",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_prompt},
-        ],
-        max_completion_tokens=1200,
-    )
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-6-luna",
+            messages=messages,
+            response_format={"type": "json_object"},
+            max_completion_tokens=1800,
+        )
+    except Exception:
+        response = client.chat.completions.create(
+            model="gpt-6-luna",
+            messages=messages,
+            max_completion_tokens=1800,
+        )
+
     return response.choices[0].message.content or ""
+
+
+def apply_parsed_reading_to_cards(
+    cards: list[dict],
+    parsed: dict,
+    spread_mode: str,
+) -> tuple[list[dict], str]:
+    """Attach each parsed meaning directly onto its card and build aligned llm_response for summary views."""
+    interps = parsed["interpretations"]
+    summary = parsed.get("summary", "").strip()
+
+    updated_cards = []
+    for idx, card in enumerate(cards):
+        card_copy = dict(card)
+        card_copy["llm_interpretation"] = interps[idx] if idx < len(interps) else card.get("meaning", "")
+        updated_cards.append(card_copy)
+
+    if spread_mode == "three_card":
+        parts = [f"{i + 1}. {c['llm_interpretation']}" for i, c in enumerate(updated_cards)]
+        if summary:
+            parts.append(summary)
+        llm_response = "\n\n".join(parts)
+    elif spread_mode == "celtic_cross":
+        parts = [c["llm_interpretation"] for c in updated_cards]
+        if summary:
+            parts.append(summary)
+        llm_response = "\n\n".join(parts)
+    else:
+        llm_response = updated_cards[0]["llm_interpretation"] if updated_cards else ""
+
+    return updated_cards, llm_response
 
 
 def extract_between(text: str, start_marker: str, end_marker: str) -> str:
@@ -252,11 +470,28 @@ def build_local_fonts_css() -> tuple[str, str]:
     return "\n".join(rules), script_stack
 
 
-def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int) -> str:
+def build_soul_prompt_html(
+    spread_label: str,
+    zodiac_sign: str,
+    render_seq: int,
+    modal_message: str = "",
+    prefill_question: str = "",
+    error_message: str = "",
+) -> str:
     css = load_text_asset("static/css/style.css")
     bg_html = load_text_asset("static/templates/background_animation.html", "background_animation.html")
     curtain_style, curtain_html, curtain_script = load_curtain_parts()
     local_fonts_css, script_stack = build_local_fonts_css()
+
+    skip_curtains = bool(modal_message or error_message)
+    pending_script = "" if skip_curtains else "<script>document.documentElement.classList.add('curtain-pending');</script>"
+    escaped_spread = html_lib.escape(spread_label)
+    escaped_zodiac = html_lib.escape(zodiac_sign)
+    escaped_prefill = html_lib.escape(prefill_question)
+    escaped_error = html_lib.escape(error_message)
+    modal_body_html = "<br />".join(html_lib.escape(line) for line in modal_message.splitlines()) if modal_message else ""
+    cue_hidden_class = " is-hidden" if skip_curtains else ""
+    modal_visible_class = " is-visible" if modal_message else ""
 
     return f"""<!doctype html>
 <html lang="en">
@@ -264,7 +499,7 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>What Stirs Within Your Soul? · DivinAItion</title>
-  <script>document.documentElement.classList.add('curtain-pending');</script>
+  {pending_script}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -449,6 +684,109 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
       user-select: none;
     }}
 
+    .soul-error {{
+      min-height: 20px;
+      margin: 8px 0 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fca5a5;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(3px);
+      transition: opacity 200ms ease, transform 200ms ease;
+    }}
+
+    .soul-error.is-visible {{
+      opacity: 1;
+      transform: translateY(0);
+    }}
+
+    /* Context Required Modal */
+    .context-modal-backdrop {{
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(2, 5, 36, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 280ms ease;
+    }}
+
+    .context-modal-backdrop.is-visible {{
+      opacity: 1;
+      pointer-events: auto;
+    }}
+
+    .context-modal {{
+      width: min(470px, 92vw);
+      border-radius: 20px;
+      border: 2px solid rgba(240, 208, 120, 0.78);
+      background: linear-gradient(
+        180deg,
+        rgba(18, 13, 76, 0.96) 0%,
+        rgba(11, 10, 38, 0.98) 56%,
+        rgba(44, 12, 74, 0.96) 100%
+      );
+      box-shadow:
+        0 28px 70px rgba(0, 0, 0, 0.78),
+        0 0 38px rgba(251, 191, 36, 0.24),
+        inset 0 0 24px rgba(253, 230, 138, 0.08);
+      padding: 28px 26px 24px;
+      text-align: center;
+      transform: translateY(12px) scale(0.96);
+      transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    }}
+
+    .context-modal-backdrop.is-visible .context-modal {{
+      transform: translateY(0) scale(1);
+    }}
+
+    .context-modal-star {{
+      width: 34px;
+      height: 34px;
+      margin: 0 auto 12px;
+      background: linear-gradient(135deg, #fffbeb 0%, #fde68a 55%, #c4b5fd 100%);
+      clip-path: polygon(
+        50% 0%, 57% 35%, 64% 43%, 100% 50%,
+        64% 57%, 57% 65%, 50% 100%, 43% 65%,
+        36% 57%, 0% 50%, 36% 43%, 43% 35%
+      );
+      filter: drop-shadow(0 0 12px rgba(253, 230, 138, 0.75));
+    }}
+
+    .context-modal-title {{
+      margin: 0;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-style: italic;
+      font-weight: 600;
+      font-size: clamp(1.55rem, 3vw, 2rem);
+      color: #ecfa8c;
+      text-shadow: 0 0 16px rgba(236, 250, 140, 0.45);
+    }}
+
+    .context-modal-body {{
+      margin: 14px 0 22px;
+      font-size: 15px;
+      line-height: 1.65;
+      color: rgba(241, 245, 249, 0.95);
+    }}
+
+    .context-modal-btn {{
+      min-width: 190px;
+      min-height: 44px;
+      padding: 10px 24px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }}
+
     /* Mystical Loading Buffer */
     .mystic-loader {{
       position: fixed;
@@ -582,21 +920,32 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
 </head>
 <body>
   {curtain_html}
-  <div class="curtain-cue" id="curtainCue" aria-hidden="true">
+  <div class="curtain-cue{cue_hidden_class}" id="curtainCue" aria-hidden="true">
     <p class="curtain-cue-title">Click anywhere to part the veil</p>
-    <p class="curtain-cue-sub">{spread_label} &middot; {zodiac_sign}</p>
+    <p class="curtain-cue-sub">{escaped_spread} &middot; {escaped_zodiac}</p>
   </div>
   {curtain_script}
   <script>
     (function () {{
+      const SKIP_CURTAINS = {json.dumps(skip_curtains)};
       const curtainStage = document.getElementById('curtainStage');
-      if (typeof window.setCurtainsOpen === 'function') {{
-        window.setCurtainsOpen(false, true);
-      }}
-      requestAnimationFrame(() => {{
-        if (curtainStage) curtainStage.classList.add('is-curtain-ready');
+      if (SKIP_CURTAINS) {{
+        if (typeof window.setCurtainsOpen === 'function') {{
+          window.setCurtainsOpen(true, true);
+        }}
+        if (curtainStage) {{
+          curtainStage.classList.add('is-curtain-ready', 'is-curtain-tucked');
+        }}
         document.documentElement.classList.remove('curtain-pending');
-      }});
+      }} else {{
+        if (typeof window.setCurtainsOpen === 'function') {{
+          window.setCurtainsOpen(false, true);
+        }}
+        requestAnimationFrame(() => {{
+          if (curtainStage) curtainStage.classList.add('is-curtain-ready');
+          document.documentElement.classList.remove('curtain-pending');
+        }});
+      }}
     }})();
   </script>
 
@@ -618,10 +967,22 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
         class="soul-textarea"
         placeholder="Whisper your question or dilemma into the cosmos..."
         aria-label="What stirs within your soul?"
-      ></textarea>
+      >{escaped_prefill}</textarea>
     </div>
-    <p class="soul-hint">Press Enter to cast your {spread_label} &middot; {zodiac_sign}</p>
+    <p class="soul-hint">Press Enter to cast your {escaped_spread} &middot; {escaped_zodiac}</p>
+    <p class="soul-error{' is-visible' if escaped_error else ''}" id="soulError" role="alert">{escaped_error}</p>
   </main>
+
+  <div class="context-modal-backdrop{modal_visible_class}" id="contextModalBackdrop" aria-hidden="{ 'false' if modal_message else 'true' }">
+    <div class="context-modal" role="dialog" aria-modal="true" aria-labelledby="contextModalTitle">
+      <div class="context-modal-star" aria-hidden="true"></div>
+      <h2 class="context-modal-title" id="contextModalTitle">The Cards Require Context</h2>
+      <p class="context-modal-body" id="contextModalBody">{modal_body_html}</p>
+      <button type="button" class="tarot-btn tarot-btn--primary context-modal-btn" id="contextModalBtn">
+        Share More Context
+      </button>
+    </div>
+  </div>
 
   <section class="mystic-loader" id="mysticLoader" aria-live="polite" aria-label="Calling the universe's response">
     <div class="mystic-sigil" aria-hidden="true">
@@ -631,19 +992,66 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
       <div class="mystic-star"></div>
     </div>
     <p class="mystic-text">Calling the universe&rsquo;s response&hellip;</p>
-    <p class="mystic-subtext">Aligning {spread_label} &middot; {zodiac_sign}</p>
+    <p class="mystic-subtext">Aligning {escaped_spread} &middot; {escaped_zodiac}</p>
   </section>
 
   <script>
     (function () {{
+      const SKIP_CURTAINS = {json.dumps(skip_curtains)};
+      const HAS_MODAL = {json.dumps(bool(modal_message))};
       const curtainStage = document.getElementById('curtainStage');
       const curtainCue = document.getElementById('curtainCue');
       const soulScreen = document.getElementById('soulScreen');
       const soulBox = document.getElementById('soulBox');
       const soulInput = document.getElementById('soulInput');
+      const soulError = document.getElementById('soulError');
       const mysticLoader = document.getElementById('mysticLoader');
-      let hasUnveiled = false;
+      const contextModalBackdrop = document.getElementById('contextModalBackdrop');
+      const contextModalBtn = document.getElementById('contextModalBtn');
+      let hasUnveiled = SKIP_CURTAINS;
       let hasSubmitted = false;
+
+      function focusSoulInputAtEnd() {{
+        if (!soulInput) return;
+        soulInput.focus();
+        const len = soulInput.value.length;
+        try {{
+          soulInput.setSelectionRange(len, len);
+        }} catch (_) {{}}
+      }}
+
+      function closeContextModal() {{
+        if (!contextModalBackdrop) return;
+        contextModalBackdrop.classList.remove('is-visible');
+        contextModalBackdrop.setAttribute('aria-hidden', 'true');
+        focusSoulInputAtEnd();
+      }}
+
+      if (HAS_MODAL && contextModalBtn) {{
+        setTimeout(() => contextModalBtn.focus(), 60);
+      }} else if (SKIP_CURTAINS) {{
+        setTimeout(focusSoulInputAtEnd, 60);
+      }}
+
+      if (contextModalBtn) {{
+        contextModalBtn.addEventListener('click', closeContextModal);
+      }}
+      if (contextModalBackdrop) {{
+        contextModalBackdrop.addEventListener('click', (e) => {{
+          if (e.target === contextModalBackdrop) {{
+            closeContextModal();
+          }}
+        }});
+      }}
+      document.addEventListener('keydown', (e) => {{
+        if (
+          e.key === 'Escape' &&
+          contextModalBackdrop &&
+          contextModalBackdrop.classList.contains('is-visible')
+        ) {{
+          closeContextModal();
+        }}
+      }});
 
       function unveilPrompt() {{
         if (hasUnveiled) return;
@@ -657,17 +1065,15 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
         window.addEventListener('curtains:settled', (e) => {{
           if (e.detail && e.detail.isOpen && curtainStage) {{
             curtainStage.classList.add('is-curtain-tucked');
-            if (soulInput) soulInput.focus();
+            focusSoulInputAtEnd();
           }}
         }}, {{ once: true }});
 
-        setTimeout(() => {{
-          if (soulInput) soulInput.focus();
-        }}, 700);
+        setTimeout(focusSoulInputAtEnd, 700);
 
         setTimeout(() => {{
           if (curtainStage) curtainStage.classList.add('is-curtain-tucked');
-          if (soulInput) soulInput.focus();
+          focusSoulInputAtEnd();
         }}, 2400);
       }}
 
@@ -706,16 +1112,29 @@ def build_soul_prompt_html(spread_label: str, zodiac_sign: str, render_seq: int)
         }}, 140);
       }}
 
+      soulInput.addEventListener('input', () => {{
+        if (soulError) {{
+          soulError.textContent = '';
+          soulError.classList.remove('is-visible');
+        }}
+      }});
+
       soulInput.addEventListener('keydown', (e) => {{
         if (e.key === 'Enter' && !e.shiftKey) {{
           e.preventDefault();
           if (hasSubmitted) return;
+          if (contextModalBackdrop && contextModalBackdrop.classList.contains('is-visible')) return;
 
           const text = soulInput.value.trim();
           if (!text) {{
             soulBox.classList.remove('is-nudged');
             void soulBox.offsetWidth;
             soulBox.classList.add('is-nudged');
+            if (soulError) {{
+              soulError.textContent = 'Please share a question or life context before invoking the cards.';
+              soulError.classList.add('is-visible');
+            }}
+            focusSoulInputAtEnd();
             return;
           }}
 
@@ -1137,6 +1556,9 @@ if stage == "landing":
             "spread": spread_mode if spread_mode in SPREAD_CONFIG else "one_card",
         }
         st.session_state.pop("tarot_payload", None)
+        st.session_state.pop("context_modal_message", None)
+        st.session_state.pop("soul_error_message", None)
+        st.session_state.pop("user_question", None)
         st.session_state["stage"] = "soul_prompt"
         st.session_state["render_seq"] += 1
         st.rerun()
@@ -1158,22 +1580,51 @@ elif stage == "soul_prompt":
     prompt_submit = st.button("DIVINAITION_SUBMIT_PROMPT", key="soul_prompt_submit")
 
     if prompt_submit:
-        st.session_state["user_question"] = (prompt_val or "").strip()
+        question_text = (prompt_val or "").strip()
+
+        # Server-side guard: never invoke the AI on an empty/whitespace prompt
+        if not question_text:
+            st.session_state.pop("context_modal_message", None)
+            st.session_state["soul_error_message"] = (
+                "Please share a question or life context before invoking the cards."
+            )
+            st.session_state["render_seq"] += 1
+            st.rerun()
+
+        st.session_state["user_question"] = question_text
+        st.session_state.pop("soul_error_message", None)
+        st.session_state.pop("context_modal_message", None)
+
         result = draw_fn()
         cards_list = result if isinstance(result, list) else ([result] if result else [])
+
         try:
-            llm_text = (
-                get_llm_interpretation(cards_list, spread_label, zodiac_sign)
+            raw_llm_text = (
+                get_llm_interpretation(cards_list, spread_label, zodiac_sign, question_text)
                 if cards_list
                 else ""
             )
         except Exception:
-            llm_text = ""
+            raw_llm_text = ""
+
+        parsed = parse_llm_output(raw_llm_text, cards_list)
+
+        if parsed["status"] == "modal":
+            st.session_state["context_modal_message"] = parsed["message"]
+            st.session_state["render_seq"] += 1
+            st.rerun()
+
+        updated_cards, llm_response = apply_parsed_reading_to_cards(
+            cards_list,
+            parsed,
+            spread_mode,
+        )
 
         st.session_state["tarot_payload"] = {
-            "cards": cards_list,
-            "llm_response": llm_text,
+            "cards": updated_cards,
+            "llm_response": llm_response,
             "zodiac_sign": zodiac_sign,
+            "user_question": question_text,
             "card_back_url": to_data_uri("static/images/miscellaneous/TarotCard_Back.png"),
         }
         st.session_state["stage"] = "reading"
@@ -1184,6 +1635,9 @@ elif stage == "soul_prompt":
             spread_label=spread_label,
             zodiac_sign=zodiac_sign,
             render_seq=st.session_state["render_seq"],
+            modal_message=st.session_state.get("context_modal_message", ""),
+            prefill_question=st.session_state.get("user_question", ""),
+            error_message=st.session_state.get("soul_error_message", ""),
         )
         components.html(soul_html, height=900, scrolling=False)
 
@@ -1198,6 +1652,9 @@ elif stage == "reading":
     reading_return = st.button("DIVINAITION_RETURN_PROMPT", key="reading_return_btn")
     if reading_return:
         st.session_state.pop("tarot_payload", None)
+        st.session_state.pop("context_modal_message", None)
+        st.session_state.pop("soul_error_message", None)
+        st.session_state.pop("user_question", None)
         st.session_state["landing_view"] = "readings"
         st.session_state["landing_seq"] += 1
         st.session_state["stage"] = "landing"
