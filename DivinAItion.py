@@ -429,7 +429,7 @@ def parse_llm_output(raw_text: str, cards: list[dict]) -> dict:
     }
 
 ## Set to False when you want real OpenAI readings again
-TEST_WITHOUT_TOKENS = True
+TEST_WITHOUT_TOKENS = False
 
 
 def get_llm_interpretation(
